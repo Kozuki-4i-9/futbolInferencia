@@ -1466,9 +1466,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
     
     Returns:
 
-      - seleccion: Serie contenedora de la informacion de rendimiento registrada para el 
-      ultimo partido jugado por (equipo) en (df_fixture_), formateada segun el lugar que 
-      tomará el (equipo) en la próxima fase "home o away"
+      - seleccion: Serie contenedora de la informacion de rendimiento registrada para el ultimo partido jugado por (equipo) en (df_fixture_), formateada segun el lugar que tomará el (equipo) en la próxima fase "home o away"
     """
     indice_0 = df_fixture_[df_fixture_.home==equipo].index
     indice_1 = df_fixture_[df_fixture_.away==equipo].index
