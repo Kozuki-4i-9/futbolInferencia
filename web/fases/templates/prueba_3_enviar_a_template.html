@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <div id="data-container"></div>
+
+    <script>
+        const dataframe = JSON.parse("{{ dataframe|escapejs }}");
+
+        window.onload = function()
+        {
+            let matriz0 = [];
+            const container = document.getElementById("data-container");
+            dataframe.forEach(row=>
+            {
+                listilla = [];
+                const rowElement = document.createElement("p");
+                rowElement.textContent = `${row.Nombre}, ${row.Edad}, ${row.Ciudad}`
+                container.appendChild(rowElement);
+                listilla.push(row.Nombre);
+                listilla.push(row.Edad);
+                listilla.push(row.Ciudad);
+                //console.log(`ESTA ES LA listilla:\n\n${listilla}\n`);
+                matriz0.push(listilla);
+            });
+
+            matriz0.forEach(mat=>{
+                console.log(`ESTA ES LA mat:\n\n${mat[0]} --- ${mat[1]} --- ${mat[2]}`);
+            })
+        };
+    </script>
+
+</head>
+<body>
+    
+</body>
+</html>

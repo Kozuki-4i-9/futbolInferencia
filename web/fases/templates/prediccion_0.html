@@ -1,0 +1,599 @@
+<form method="POST" action="{% url 'procesar_recepcion_0' %}">
+    {% csrf_token %}
+
+    <h1>Predice el resultado de algún mundial</h1>
+
+    <div id="input-container_0"></div>
+    <div id="input-container_1"></div>
+    <div id="input-container_2"></div>
+    
+    <input type="hidden" name="recepcion" id="recepcion">
+    <input type="hidden" name="ApagadoEncendido" id="onoff" value="off">
+    
+    <button type="button" onclick="enviarSeleccion_1()">Predecir</button>
+    <input type="hidden" id="EsteEsMiMensaje" name="mensajeOculto" value="{{ partidos_reales }}">
+
+</form>
+    
+    <script>
+        /*
+            ESTE PROGRAMA ES PARA EJECUTAR PREDICCIONES CON EL MODELO, ANTE
+            PREDICCIONES DEL USUARIO.
+        */
+        let datas = ["partidos_2022.csv"];
+        let container_0 = document.getElementById("input-container_0");
+        let container_1 = document.getElementById("input-container_1");
+        let container_2 = document.getElementById("input-container_2");
+        var entradas = [];
+        let dataset = [];
+
+        var DicHomeAwayIds = new Map();
+        
+        const dic_torneos = {1934:{"octavos":8,"cuartos":5,"semifinal":2,"3er_lugar":1, "final":1},
+        1938:{"octavos":10,"cuartos":5,"semifinal":2,"3er_lugar":1,"final":1},
+                             1950:{"Fase de Grupos":16,"Fase Final":6},
+                             1954:{"Fase de Grupos":18,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1958:{"Fase de Grupos":27, "cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1962:{"Fase de Grupos":24, "cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1966:{"Fase de Grupos":24, "cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1970:{"Fase de Grupos":24, "cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1974:{"Fase de Grupos":24, "Fase Inicial":12,"3er_lugar":1,"final":1},
+                             1978:{"Fase de Grupos":24, "Fase Inicial":12,"3er_lugar":1,"final":1},
+                             1982:{"Fase de Grupos":36, "Fase Inicial":12,"semifinal":2,"3er_lugar":1,"final":1},
+                             1986:{"Fase de Grupos":36, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1990:{"Fase de Grupos":36, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1994:{"Fase de Grupos":36, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             1998:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2002:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2006:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2010:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2014:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2018:{"Fase de Grupos":48, "octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2022:{"Fase de Grupos":48,"octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1},
+                             2026:{"16vos":16,"octavos":8,"cuartos":4,"semifinal":2,"3er_lugar":1,"final":1}
+                            };
+        
+        function genera_torneos_del_agno(event, dic_back, agno)
+        {
+            const newValue = event.target;
+            /* meto en la variable "opciones_0" todas las fases presentes en los options 
+               del en el label que llama a "genera_torneos_del_agno" */
+            opciones_0 = newValue.options;
+            let fase_actual = "";
+            let opcion_id = "";
+            let selagno = "";
+
+            if(!(container_2.innerHTML==''))
+            {
+                // si "container_2" tiene contenido, lo vacio para añadir
+                container_2.innerHTML = '';
+            }
+
+            for(let i=0; i<opciones_0.length; i++)
+            {
+                /* referenciando con el indice de cada una, voy accediendo a todas las 
+                   options de "opciones_0"
+                   */
+                op_0 = opciones_0[i];
+                /* op_0.value debe ser actual al value de la fase que presione para que
+                   se aplique la funcion acomodador
+                   */
+                if(op_0.value==newValue.value)
+                {
+                    fase_actual = op_0.text;
+                    /* paso a "acomodador" el "id" (igual al numero de partidos de la fase seleccionada), y el año "agno" seleccionado
+                    */
+                    opcion_id = op_0.id;
+                    selagno = agno;
+                }
+            }
+
+            acomodador([fase_actual, opcion_id], selagno);
+        }
+
+        function syncInputs_1(event)
+        {
+            const newValue = event.target;
+            let soporte = "";
+            let cuenta_0 = 0;
+            let cuenta_1 = 0;
+            let arraylista = [];
+            let listilla = [];
+            var dic_c_v = new Map();
+
+            for(let i=0; i<2; i++)
+            {
+                if(i==0)
+                {
+                    /* Se itera el contenido de "entradas" (selection_0, selection_1) con
+                       la variable "inp_0"
+                    */
+                    entradas.forEach((inp_0) =>
+                    {
+                        /* Si la clase (unica por equipo) de alguno de los selects iterados
+                           coincide con la del que yo seleccioné 
+                        */
+                        if (inp_0.class == newValue.class)
+                        {
+                            let estado_select = container_1.querySelector('select').value;
+                            if((newValue.value != inp_0.value) || (cuenta_0==0) && estado_select==0)
+                            {
+                                soporte = inp_0.value;
+                            }
+                            
+                            if(estado_select!=0)
+                            {
+                                soporte = newValue.id;
+                                inp_0.id = newValue.value;
+                            }
+                            console.log(`estado_select\n${estado_select}`);
+                            
+                            dic_c_v.set(newValue.value, inp_0.class);
+                            inp_0.value = newValue.value;
+                            cuenta_0+=1;
+                        }
+                    });
+                }
+
+                else if(i==1)
+                {
+                    entradas.forEach(inp_1 =>
+                    {
+                        /* sustituyo los seleccionados con el inicial
+                        */
+                        if (newValue.value==inp_1.value && dic_c_v.get(newValue.value)!=inp_1.class)
+                        {
+                            inp_1.value = soporte;
+                            inp_1.id = soporte;
+                        }
+                    });
+                }
+            }
+
+            /* querySelector: devuelve el primer elemento por: "elemento",
+                  "id" o "clase" pasada como parametro
+            */
+            for(let select_0 of document.querySelectorAll(`select`))
+            {
+                /* selectedIndex: devuelve el índice de la opción seleccionada
+                                  en un elemento select
+                */
+                if(select_0.class!="mundiales" && select_0.class!="torneos")
+                {
+                    let texto_0 = select_0.options[select_0.selectedIndex].text;
+                    listilla.push(texto_0);
+                    cuenta_1++;
+                    if(cuenta_1==2)
+                    {
+                        arraylista.push(listilla);
+                        listilla = [];
+                        cuenta_1 = 0;
+                    }
+                }
+                if(select_0.class=="mundiales")
+                {
+                    arraylista.push(select_0.options[select_0.selectedIndex].text);
+                }
+            }
+            /* Recordar que hay que unificar esta funcion con "arraylista", con 
+               la que tenemos mas abajo de nombre "actualizarRecepcion"
+            */
+            console.log(`----- arraylista: -----\n${arraylista}\n----- arraylista: -----`);
+        }
+
+        function busca_torneos_del_agno(event)
+        {
+            if(!(container_1.innerHTML==''))
+            {
+                container_1.innerHTML = '';
+            }
+
+            let cuenta = 0;
+            // creo un select "select_0_torneos" para almacenar el nombre de cada
+            // fase del mundial del año indicado.
+            let select_0_torneos = document.createElement("select");
+            let agno = 0;
+
+            var new_vardic = "";
+
+            // Contiene los años a iterar
+            const newValue = event.target;
+            select_0_torneos.class = "torneos";
+
+            for(i=0; i<Object.keys(dic_torneos).length; i++)
+            {
+                if(newValue.children[i].value==newValue.value)
+                {
+                    // valor del año iterado desde "dic_torneos"
+                    new_vardic = dic_torneos[newValue.children[i].text];
+                    // año registrado por el option donde se dio click en el select
+                    agno = newValue.children[i].text;
+                    Object.entries(new_vardic).forEach(([clave_1, valor_1])=>
+                    {
+                       // voy almacenando las fases de cada mundial y un id para cada una
+                       op1 = new Option(clave_1, cuenta);
+                       op1.id = valor_1;
+                       // almaceno en el select, el option con el contenido de ese mundial
+                       select_0_torneos.appendChild(op1);
+                       cuenta+=1;
+                    });
+                }
+            }
+            /* Tras definir los desafios del mundial en "new_vardic" y el nombre de este
+               en "agno" agrego al select, con estas variables mencionadas como argumento,
+               la funcion "genera_torneos_del_agno" */
+            select_0_torneos.addEventListener("click", function(event) // change
+            {
+                entradas.length = 0;
+                genera_torneos_del_agno(event, new_vardic, agno);
+            });
+            // agrego al container "container_1" el select "genera_torneos_del_agno" con los argumentos
+            // mencionados
+            container_1.appendChild(select_0_torneos);
+        }
+        
+        async function leerCSV(agno0)
+        {
+            const inputValue = document.getElementById('EsteEsMiMensaje').value;
+            const dataArray = JSON.parse(inputValue);
+            console.log(`- EsteEsMiMensaje\n${dataArray}`);
+
+            let cuenta = 0;
+            dataset.push(["home","score","away","year"]);
+            dataArray.forEach((item, index) => {
+                    dataset.push([cuenta, item.home, item.score, item.away, item.year]);
+                    cuenta++;
+                });
+            console.log(`- dataset\n${dataset}`);
+        }
+
+        async function acomodador(Id_Op_FasesMundial, agno)
+        {
+            /* Id_Op_FasesMundial: id de la fase seleccionada por el selectagno: año   
+                                   seleccionado (numero   de  partidos  de  la  fase seleccionada)
+            */
+           
+            let grupos = [];
+            let initialValue = 0;
+
+            var paises_ = [];
+            var paises_0 = [];
+            var ListHomAwy_FaseActual = [];
+            var puntajes = [];
+            let principio = 0;
+            let fin = 0;
+
+            leerCSV(agno);
+            cuenta = 0;
+
+            /* del diccionario con los desafios del mundial actual, averiguo 
+            si alguna de  sus fases coincide  con la "fase_actual" que no 
+            es mas que el ".text" de la opcion que acabo de seleccionar
+            */  ////
+            for(CLFasesMundial of Object.entries(dic_torneos[agno]))
+            {
+                /* sumatoria del numero de partidos que se disputan hasta alcanzar
+                   la fase actual seleccionada
+                */
+                principio+=(CLFasesMundial[1]);
+                
+                /* de darse la coincidencia, el fin será el tamaño acumulado de partidos
+                   disputados, y el principio sera el fin menos el tamaño de la fase actual
+                   */
+                //console.log(`CLFasesMundial\n${CLFasesMundial}\n\n Id_Op_FasesMundial\n${Id_Op_FasesMundial}`)
+                if(Id_Op_FasesMundial[0]==CLFasesMundial[0])
+                {
+                    //console.log(`esta es mi fase_actual\n${Id_Op_FasesMundial, CLFasesMundial[0]}`);
+                    fin = principio;
+                    principio = principio - CLFasesMundial[1];
+                    break;
+                }
+            }
+
+            // ListHomAwy_FaseActual recibe al "home" y "away" que juegan cada partido del mundial seleccionado
+            for (let conte of dataset.slice(principio+1, fin+1))
+            {
+                ListHomAwy_FaseActual.push([conte[1], conte[3]]);
+                puntajes.push(conte[2]);
+            }
+
+            /* creo un id para cada pais pasando por "home" y "away" secuencialmente
+               en ese orden
+            */
+            for(i in ListHomAwy_FaseActual)
+            {
+                DicHomeAwayIds.set(ListHomAwy_FaseActual[i][0], cuenta);
+                cuenta+=1;
+                DicHomeAwayIds.set(ListHomAwy_FaseActual[i][1], cuenta);
+                cuenta+=1;
+            }
+            cuenta = 0;
+            DicHomeAwayIds.delete("Unnamed: 0");
+
+            /* del archivo leido por "leerCSV" voy almacenando, del inicio al fin de
+               la fase en la que me estoy concentrando, los "home" y "away"
+            */ 
+            for (let conte of dataset.slice(principio+1, fin+1))
+            {
+                paises_.push([conte[1], DicHomeAwayIds.get(conte[1])]);
+                paises_.push([conte[3], DicHomeAwayIds.get(conte[3])]);
+            }
+
+            /* con "JSON.stringify" pasamos un valor javascript a un JSON string y
+               con "Set" almacenamos los valores unicos de "paises_"
+            */
+            paises_00 = [...new Set(paises_.map(item => JSON.stringify([item[0], item[1]])))];
+            /* con ".map" aplicamos un ".parse" a cada entrada de "paises_00" para
+               pasarlas de JSON a un formato legible
+            */
+            paises_00 = paises_00.map(item => JSON.parse(item));
+
+            /* con "psto0" voy obteniendo todos los valores unicos de los equipos que disputan
+               la fase y almaceno pequeños diccionarios {text:,value:} en "paises_0"
+            */
+            for(let psto0 of paises_00)
+            {
+                paises_0.push({ text: psto0[0], value: psto0[1] });
+            }
+
+            for (let i0=0; i0<Id_Op_FasesMundial[1]; i0++)
+            /* n° de partidos que haya en la fase actual de interés para
+               el usuario (48 partidos fase de grupos, pj) creamos 1
+               estructura 'tr' para posicionar unos select y se añade el
+               "tr" a la lista 'grupos'
+            */
+            {
+                let nuevo_div0 = document.createElement("table");
+                let nuevo_div1 = document.createElement("tbody");
+                let nuevo_div2 = document.createElement("tr");
+
+                // metemos el "tr" en el "tbody"
+                nuevo_div1.appendChild(nuevo_div2);
+                // metemos el "tr - tbody" en un "table"
+                nuevo_div0.appendChild(nuevo_div1);
+                // metemos el "tr" en la lista "grupos"
+                grupos.push(nuevo_div0.lastChild.lastChild);
+            }
+
+            //console.log(`-- puntajes\n${principio+1} - ${fin+1}`);
+
+            cuenta_1 = 0;
+            for (let fase in grupos)
+            // Se van agregando, a cada una de las 6 estructuras 'tr' anteriores
+            // los 'inputs' y 'select' en el orden adecuado y con el formato
+            // apropiado.
+            {
+                /* creo los "select" donde irán los pises disputantes del desafio o
+                   o fase elegida
+                */
+                const selection_0 = document.createElement("select");
+                const selection_1 = document.createElement("select");
+
+                entradas.push(selection_0);
+                entradas.push(selection_1);
+
+                /* creo los "input" donde irán los pises disputantes del desafio o
+                   o fase elegida
+                */
+                let input_0 = document.createElement('input');
+                let input_1 = document.createElement('input');
+
+                input_0.type = 'text';
+                // initialValue: contenido por defecto de los "input"
+                puntos = puntajes[cuenta_1].split(":");
+                input_0.value = puntos[0]
+                input_0.style.width = '25px';
+                input_0.style.height = '20px';
+
+                input_1.type = 'text';
+                // initialValue: contenido por defecto de los "input"
+                input_1.value = puntos[1] // puntajes[cuenta_1].slice(2,puntajes[cuenta_1].length);
+                input_1.style.height = "20px";
+                input_1.style.width = "25px";
+                cuenta_1++;
+
+                for(let psto of paises_0)
+                {
+                    /* agrego el contenido "text" y "value" a los "option" que irán a 
+                       "selection_0" y "selection_1"
+                    */
+                    let opcion_0 = new Option(psto.text, psto.value);
+                    let opcion_1 = new Option(psto.text, psto.value);
+
+                    selection_0.appendChild(opcion_0);
+                    selection_0.addEventListener('change', syncInputs_1);
+                    selection_1.appendChild(opcion_1);
+                    selection_1.addEventListener('change', syncInputs_1);
+                }
+
+                /* Defino las "class", "value" y "id" segun el los ids registrados en 
+                   "DicHomeAwayIds" para cada clave "home" "away" que juegue la fase
+                   del mundial en la que se concentre el usuario
+                */
+                selection_0.class = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][0]);
+                selection_1.class = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][1]);
+
+                selection_0.value = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][0]);
+                selection_1.value = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][1]);
+
+                selection_0.id = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][0]);
+                selection_1.id = DicHomeAwayIds.get(ListHomAwy_FaseActual[fase][1]);
+
+                /* Definimos mediante una referencia a la lista "grupos" que contiene 
+                   la cantidad de "tr" que de partidos hay en la fase actual de interes
+                   para el usuario
+                */
+                fase_0 = grupos[fase];
+
+                fase_0.appendChild(selection_0);
+                fase_0.appendChild(input_0);
+                fase_0.appendChild(input_1);
+                fase_0.appendChild(selection_1);
+
+                container_2.appendChild(fase_0);
+            }
+            dataset=[];
+        }
+console
+        function enviarSeleccion_0()
+        {
+            let datos = {};
+            if(document.getElementById("onoff").value=="off")
+            {
+                //console.log(`si esta en of\n${document.getElementById("onoff").value}\n\n`);
+                const fecha = document.getElementById("mundiales");
+                const valorSeleccionado = fecha.options[fecha.selectedIndex].text;
+                //console.log(`esta es la fecha\n-${valorSeleccionado}-\n\n`);
+
+                // Crear los datos que se enviarán al servidor
+                datos = {
+                    fecha: valorSeleccionado
+                };
+                //console.log(`aqui están los datos\n${datos}`);
+            }
+
+            // Enviar la solicitud POST al servidor
+            fetch("{% url 'procesar_recepcion_0' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // Token CSRF para seguridad
+                },
+                body: JSON.stringify(datos) // Convertir los datos a JSON
+            })
+            .then(response => 
+            {
+                return response.json(); // Cambiado a json() para recibir un objeto
+            })
+            .then(data => 
+            {
+                document.getElementById("EsteEsMiMensaje").value = data.partidos_reales;
+            })
+            dataset=[];
+        }
+
+        function enviarSeleccion_1()
+        {
+            let valores = [];
+            let ArrayLlis = [];
+            let cuenta_2 = 0;
+            let cuenta_3 = 1;
+            let entradas_0 = document.querySelectorAll('input');
+
+            for (let select_0 of document.querySelectorAll(`select`)) 
+            {
+                if (select_0.class != "mundiales" && select_0.class != "torneos") 
+                {
+                    let texto_0 = select_0.options[select_0.selectedIndex].text;
+                    valores.push(texto_0);
+                    cuenta_2++;
+                    if (cuenta_2 == 2) {
+                        valores.push(entradas_0[cuenta_3].value);
+                        cuenta_3++;
+                        valores.push(entradas_0[cuenta_3].value);
+                        cuenta_3++;
+                        ArrayLlis.push(valores);
+                        valores = [];
+                        cuenta_2 = 0;
+                    }
+                }
+                if (select_0.class == "torneos") 
+                {
+                    ArrayLlis.push(select_0.options[select_0.selectedIndex].text);
+                }
+                if (select_0.class == "mundiales") 
+                {
+                    ArrayLlis.push(select_0.options[select_0.selectedIndex].text);
+                }
+            }
+            console.log(`ArrayLlis-0\n${ArrayLlis}`);
+
+            // Enviar datos al backend como JSON
+            fetch("{% url 'procesar_recepcion_1' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'), // Asegúrate de incluir el token CSRF
+                },
+                body: JSON.stringify({ recepcion: ArrayLlis }) // Envía como JSON
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Maneja la respuesta aquí
+                // console.log(data);
+                if (data.error)
+                {
+                    alert(data.error);
+                } 
+                else 
+                {
+                    // Actualiza la parte de la página que necesites
+                    //document.getElementById("EsteEsMiMensaje").value = JSON.parse(data.partidos);
+                    document.getElementById("EsteEsMiMensaje").value = data.partidos;
+
+                    agno_selec = document.getElementById("mundiales").options[document.getElementById("mundiales").selectedIndex].text;
+                    fase_selec = document.getElementsByClassName("torneos");
+                    //console.log(`agno_selec -${agno_selec}-\nfase_selec -${fase_selec}-`);
+                    n_partidos = dic_torneos[agno_selec][fase_selec];
+
+                    //console.log(`- Este Es Mi Mensaje\n${document.getElementById("EsteEsMiMensaje").value}`);
+
+                    acomodador([fase_selec, n_partidos], agno_selec);
+                }
+            })
+        }
+
+        // Función para obtener el token CSRF
+        function getCookie(name) 
+        {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') 
+            {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) 
+                {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) 
+                    {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function inicio()
+        {
+            let cuenta = 0;
+            // al iniciar el documento creo este select "select_0_mundiales"
+            let select_0_mundiales = document.createElement("select");
+            select_0_mundiales.class = "mundiales";
+            select_0_mundiales.id = "mundiales";
+
+            Object.entries(dic_torneos).forEach(([clave_0])=>
+            {
+                op0 = new Option(clave_0, cuenta);
+
+                /* voy agregando al "select_0_mundiales" los option de nombre "clave_0"
+                   (o sea el año de cada mundial) y valor "cuenta"*/
+                select_0_mundiales.appendChild(op0);
+
+                cuenta+=1;
+            });
+
+            /* agrego al select "select_0_mundiales" la funcion "busca_torneos_del_agno"
+            */
+            select_0_mundiales.addEventListener("change", busca_torneos_del_agno);
+            select_0_mundiales.onchange=function(){enviarSeleccion_0()};
+            /* referencio al contenedor de inputs "container_0" que dejo de antemano
+               en  el "document" para agregarle el select "select_0_mundiales" donde
+               tengo todo el nombre de cada año.*/
+            container_0.appendChild(select_0_mundiales);
+        }
+
+        document.addEventListener('DOMContentLoaded', inicio);
+
+</script>
+</body>
+</html>

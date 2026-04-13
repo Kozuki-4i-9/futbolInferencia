@@ -1,0 +1,45 @@
+<form method="POST" action="{% url 'procesar_recepcion' %}">
+    {% csrf_token %}
+    <div class="columna">
+        <select id="select_1">
+            <option value="opcion1">Opción 1</option>
+            <option value="opcion2">Opción 2</option>
+        </select>
+        <select id="select_2">
+            <option value="opcion1">Opción 1</option>
+            <option value="opcion2">Opción 2</option>
+        </select>
+        <!-- Repite para los 16 select -->
+    </div>
+
+    <!-- Campo oculto para almacenar la variable "recepcion" -->
+    <input type="hidden" name="recepcion" id="recepcion">
+
+    <button type="submit" onclick="actualizarRecepcion()">Enviar</button>
+</form>
+
+<script>
+    /*
+        ESTE PROGRAMA ES UNO BASE PARA MOSTRAR COMO COMUNICAR EL FRONTEND Y EL BACKEND
+        CON METODO POST USANDO DJANGO.
+    */
+    function actualizarRecepcion()
+    {
+        // Crear un array para almacenar los valores de los select
+        let valores = [];
+
+        // Recorrer los 16 select y obtener sus valores
+        for (let i = 1; i <= 16; i++) {
+            let select = document.getElementById(`select_${i}`);
+            if (select) {
+                valores.push(select.value); // Agregar el valor seleccionado al array
+            }
+        }
+
+        // Convertir el array en una cadena (por ejemplo, JSON o separado por comas)
+        let recepcion = JSON.stringify(valores);
+
+        // Asignar la cadena al campo oculto
+        document.getElementById('recepcion').value = recepcion;
+    }
+</script>
