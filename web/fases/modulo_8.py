@@ -1441,29 +1441,18 @@ class func_prediccion_orden(normali): # PEND PEND PEND
   def seleccionar(self, df_fixture_, equipo, ind0):
     """
     ¿QUE HACE?
-    Entrega las ultiimas metricas de rendimiento registradas, ya sea por fase de grupos o por alguno de 
-    los rounds de la fase final en el parámetro (fixture_), para el equipo de interés 
-    entregado en el parámetro (equipo), ordenando la respuesta segun se indique el el 
-    parámetro (ind0)
+    Entrega las ultiimas metricas de rendimiento registradas, ya sea por fase de grupos o por alguno de los rounds de la fase final en el parámetro (fixture_), para el equipo de interés entregado en el parámetro (equipo), ordenando la respuesta segun se indique el el parámetro (ind0)
 
     ¿COMO LO HACE?
-    0-) se definen unas variables (indice_0, indice_1) que poseen los indices de las filas del 
-    df (df_fixture_) donde esté el (equipo), ya sea como home o away
+    0-) se definen unas variables (indice_0, indice_1) que poseen los indices de las filas del df (df_fixture_) donde esté el (equipo), ya sea como home o away
 
     1-) se define una variable (mas_g) con el index máximo entre (indice_0, indice_1)
 
-    2-) se tienen 2 condicionles para actuar segun si el index máximo está entre los partidos 
-    jugados como home o away
+    2-) se tienen 2 condicionles para actuar segun si el index máximo está entre los partidos jugados como home o away
 
-      2.0) si el máximo está en la lista de partidos home: se toman dentro de una variable 
-      (seleccion) las primeras 10 columnas (0-9) con la informacion del rendimiento acumulada 
-      ahi ----(home, PTS, PG, PP, PE, D, tsGF, tsGC, score_0)----, se sustituye el nombre home 
-      por away si (ind0) dice away y se entrega (seleccion)
+      2.0) si el máximo está en la lista de partidos home: se toman dentro de una variable (seleccion) las primeras 10 columnas (0-9) con la informacion del rendimiento acumulada ahi ----(home, PTS, PG, PP, PE, D, tsGF, tsGC, score_0)----, se sustituye el nombre home por away si (ind0) dice away y se entrega (seleccion)
 
-      2.1) si el máximo está en la lista de partidos away: se toman dentro de una variable 
-      (seleccion) las ultimas 10 columnas (10-19) con la informacion del rendimiento acumulada 
-      ahi ----(away, PTS, PG, PP, PE, D, tsGF, tsGC, score_1)----, se sustituye el nombre away 
-      por home si (ind0) dice home y se entrega (seleccion)
+      2.1) si el máximo está en la lista de partidos away: se toman dentro de una variable (seleccion) las ultimas 10 columnas (10-19) con la informacion del rendimiento acumulada ahi ----(away, PTS, PG, PP, PE, D, tsGF, tsGC, score_1)----, se sustituye el nombre away por home si (ind0) dice home y se entrega (seleccion)
 
     Args:
 
@@ -1667,17 +1656,14 @@ class func_prediccion_orden(normali): # PEND PEND PEND
   def ordenar_elm_smpl(self, df_encuentro_jugado, df_encuentro_siguiente, tipo="Winner"):
       """
       ¿QUE HACE?
-      Organiza los equipos que jugarán los partidos de cada round de la fase final desde el primero hasta el ultimo, valiendose de los nombres presentes en la seccion del fixture entregada como (df_encuentro_siguiente) para obtener a los equipos desde el df (df_encuentro_jugado), según las victorias y derrotas por partido, marcadas en (dic_matches), dejando en un df (df_encuentro_siguiente) nuevo con el orden y la informacion de rendimiento necesaria para la inferencia en la funcion (get_winner)
+      Organiza los equipos que jugarán los partidos de cada round de la fase final desde el primero hasta el ultimo, valiendose de los nombres presentes en la seccion del fixture entregada como(df_encuentro_siguiente) para obtener a los equipos desde el df (df_encuentro_jugado), según las victorias y derrotas por partido, marcadas en (dic_matches), dejando en un df (df_encuentro_siguiente) nuevo con el orden y la informacion de rendimiento necesaria para la inferencia en la funcion (get_winner)
 
       ¿COMO LO HACE?
-      0-) se define un df (dffix) vacio para la recepcion del orden de juego y rendimiento de 
-      cada equipo, una variable (columnas) con el nombre de las columnas del df 
-      (df_encuentro_jugado), una variable (tamagno_1) con el número de columnas en el df 
-      (df_encuentro_siguiente) para determinar si se organiza hacia una prediccion del usuario o tras esta
+      0-) se define un df (dffix) vacio para la recepcion del orden de juego y rendimiento de cada equipo, una variable (columnas) con el nombre de las columnas del df (df_encuentro_jugado), una variable (tamagno_1) con el número de columnas en el df (df_encuentro_siguiente) para determinar si se organiza hacia una prediccion del usuario o tras esta
       
-      1-) se tienen 2 condicionales para dirigir el ordenamiento de partidos segun el numero de partidos del siguiente round. 
+      1-) Se tienen 2 condicionales para dirigir el ordenamiento de partidos segun el numero de partidos del siguiente round
         
-        1.0) para cuando (tipo) sea "Winner" y no sea la final (1 solo partido por round). Se iteran los nombres de los equipos que jugarán como home y away en el próximo round df (df_encuentro_siguiente).
+        1.0) Para cuando (tipo) sea "Winner" y no sea la final (1 solo partido por round). Se iteran los nombres de los equipos que jugarán como home y away en el próximo round df (df_encuentro_siguiente)
 
           1.0.0) se tienen 2 condicionales
 
@@ -1724,7 +1710,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
           elif(tamagno_1==2 or tamagno_1==4):
             equipo0, equipo1 = home, away
 
-          rndTeam0 = self.seleccionar(df_encuentro_jugado.iloc[:,:-3], equipo0, "home") # visualizar como es (df_encuentro_jugado)
+          rndTeam0 = self.seleccionar(df_encuentro_jugado.iloc[:,:-3], equipo0, "home") 
           rndTeam0 = pd.DataFrame(data=[rndTeam0.values], columns=rndTeam0.index).reset_index(drop=True)
           
           rndTeam1 = self.seleccionar(df_encuentro_jugado.iloc[:,:-3], equipo1, "away")
@@ -1756,19 +1742,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
 
       return(dffix)
 
-
-
-
-
 # ----------------------------------------------
-# ----------------------------------------------
-# ----------------------------------------------
-# ----------------------------------------------
-# ----------------------------------------------
-
-
-
-
 
 clasificaciones = formar_dataset_real("clasificaciones")
 
