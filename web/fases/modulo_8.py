@@ -2363,7 +2363,7 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
 
         14.5.0.10-) Se actualiza la variable (dict_table) con la función (fase_de_grupos) del objeto (objs) con parametros (df_fixture_doce[1] (diccionario de grupos de la 2da fase de grupos con dfs de metricas de rendimiento o puntajes para cada equipo de la misma), df_fixture_doce[0].iloc[:,:-3] (df de la 2da fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), modelo (modelo entrenado cargado previamente)) para predecir los resultados de la 2da fase de grupos del mundial de interes, tanto los nuevos puntajes como los parametros de rendimiento actualizados tras la predicción, almacenandose en el df (df_fixture_doce)
 
-        14.5.0.11-) Se llama a la función (camb_grp_elm_smpl) del objeto (objs) con parametros (df_fixture_doce[0].iloc[:,:-3] (df de la 2da fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), df_fixture_third (corte del fixture del mundial en su partido por el tercer lugar o df de consulta del usuario para dicho partido por el tercer lugar) y dict_table (diccionario con los grupos y equipos que jugaron el mundial de interes, con puntajes por equipo actualizados tras la predicción de la 2da fase de grupos)) para definir los equipos que jugarán el partido por el tercer lugar, según los resultados predichos en la 2da fase de grupos, actualizandose al df (df_fixture_third) con el orden correcto del partido y definiendose los equipos que jugarán el partido por el tercer lugar
+        14.5.0.11-) Se llama a la función (camb_grp_elm_smpl) del objeto (objs) con parametros (df_fixture_doce[0].iloc[:,:-3] (df de la 2da fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), df_fixture_third (corte del fixture del mundial en su partido por el tercer lugar o df de consulta del usuario para dicho partido por el tercer lugar), dict_table (diccionario con los grupos y equipos que jugaron el mundial de interes, con puntajes por equipo actualizados tras la predicción de la 2da fase de grupos)) y el atributo (year) actualizado al año del mundial de interes para definir los equipos que jugarán el partido por el tercer lugar, según los resultados predichos en la 2da fase de grupos, actualizandose al df (df_fixture_third) con el orden correcto del partido y definiendose los equipos que jugarán el partido por el tercer lugar
 
         14.5.0.12-) Se coloca el atributo (ind0) del objeto (objs) en su indice 0 como "third" para indicar la fase actual de inferencia
 
@@ -2465,9 +2465,33 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
 
         14.6.0.7-) Se crea una variable (dict_table) llamando a la función (fase_de_grupos) del objeto (objs) con parametros (dict_g_1982G0 (diccionario con los grupos y equipos que jugaron el mundial de interes, con parametros de rendimiento seteados en 0), df_fixture_group_ (df de fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), modelo (modelo entrenado cargado previamente)) para predecir los resultados de la 1ra fase de grupos del mundial de interes, tanto los nuevos puntajes como los parametros de rendimiento actualizados tras la predicción, almacenandose en el df (df_fixture_group_)
         
-        14.6.0.8-) 
+        14.6.0.8-) Se llama a la funcion (camb_grp_elm_smpl) del objeto (objs) con parametros (df_fixture_group_ (df de fase de grupos del fixture del mundial jugado o de consulta del usuario ahora con parametros de rendimiento actualizados), df_fixture_doce (corte del fixture del mundial en su 2da fase de grupos o df de consulta del usuario para dicha 2da fase de grupos), dict_table (diccionario con los grupos y equipos que jugaron la 1ra fase de grupos, con puntajes por equipo actualizados)) y el atributo (year) actualizado al año del mundial de interes para reorganizar los equipos que jugarán la 2da fase de grupos, según los puntajes obtenidos en la 1ra fase de grupos, actualizandose al df (df_fixture_doce) con el orden correcto de los partidos y definiendose los equipos que jugarán cada partido 
 
-  - Args:
+        14.6.0.9-) Se coloca el atributo (ind0) del objeto (objs) en su indice 0 como "doce" para indicar la fase actual de inferencia
+
+        14.6.0.10-) Se actualiza la variable (dict_table) con la función (fase_de_grupos) del objeto (objs) con parametros (df_fixture_doce[1] (diccionario de grupos de la 2da fase de grupos con dfs de metricas de rendimiento o puntajes para cada equipo de la misma), df_fixture_doce[0].iloc[:,:-3] (df de la 2da fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), modelo (modelo entrenado cargado previamente)) para predecir los resultados de la 2da fase de grupos del mundial de interes, tanto los nuevos puntajes como los parametros de rendimiento actualizados tras la predicción, almacenandose en el df (df_fixture_doce)  
+
+        14.6.0.11-) Se actualiza el atributo (n_partidos) del objeto (objs) sumandole el numero de partidos de la fase de grupos y el numero de partidos de la 2da fase de grupos (df_fixture_doce) y 1, para actualizar el indice indicador de los partidos a predecir en la fase final
+        
+        14.6.0.12-) Se llama a la función (camb_grp_elm_smpl) del objeto (objs) con parametros (df_fixture_doce[0].iloc[:,:-3] (df de la 2da fase de grupos del fixture del mundial jugado o de consulta del usuario, con features agregadas), df_fixture_semi (corte del fixture del mundial en su fase de semifinales o df de consulta del usuario para dicha fase de semifinales) y dict_table (diccionario con los grupos y equipos que jugaron el mundial de interes, con puntajes por equipo actualizados tras la predicción de la 2da fase de grupos), actualizandose al df (df_fixture_semi) con el orden correcto de los partidos y definiendose los equipos que jugarán cada partido de semifinales
+
+        14.6.0.13-) Se coloca el atributo (ind0) del objeto (objs) en su indice 0 como "semi" para indicar la fase actual de inferencia
+
+        14.6.0.14-) Se llama a la funcion (get_winner) del objeto (objs) con parametros (df_fixture_semi) (corte del fixture del mundial en su fase de semifinales o df de consulta del usuario para dicha fase de semifinales) y modelo (modelo entrenado cargado previamente)) para predecir los resultados de las semifinales, actualizandose el df (df_fixture_semi) tanto en los scores como en los parametros de rendimiento de cada equipo
+        
+        14.6.0.15-) Se emplea el metodo (ordenar_elm_smpl) del objeto (objs) con parametros (df_fixture_semi (df de las semifinales del fixture del mundial jugado o de consulta del usuario para dicha fase de semifinales, con features agregadas y resultados predichos), df_fixture_third (corte del fixture del mundial en su partido por el tercer lugar o df de consulta del usuario para dicho partido por el tercer lugar) y el parametro (tipo) con valor "Loser" para definir el orden correcto de los equipos que jugarán el partido por el tercer lugar, según los resultados predichos en las semifinales, actualizandose al df (df_fixture_third) con el orden correcto del partido y definiendose los equipos que jugarán el partido por el tercer lugar
+ 
+        14.6.0.16-) Se coloca el atributo (ind0) del objeto (objs) en su indice 0 como "third" para indicar la fase actual de inferencia
+
+        14.6.0.17-) Se llama a la función (get_winner) del objeto (objs) con parametros (df_fixture_third) (corte del fixture del mundial en su partido por el tercer lugar o df de consulta del usuario para dicho partido por el tercer lugar) y modelo (modelo entrenado cargado previamente)) para predecir los resultados del partido por el tercer lugar, actualizandose el df (df_fixture_third) tanto en los scores como en los parametros de rendimiento de cada equipo
+
+        14.6.0.18-) Se emplea el metodo (ordenar_elm_smpl) del objeto (objs) con parametros (df_fixture_semi (df de las semifinales del fixture del mundial jugado o de consulta del usuario para dicha fase de semifinales, con features agregadas y resultados predichos), df_fixture_final (corte del fixture del mundial en su final o df de consulta del usuario para dicha final) actualizandose al df (df_fixture_final) con el orden correcto del partido y definiendose los equipos que jugarán la final
+        
+        14.6.0.19-) Se llama al metodo (get_winner) del objeto (objs) con parametros (df_fixture_final) (corte del fixture del mundial en su final o df de consulta del usuario para dicha final) y modelo (modelo entrenado cargado previamente)) para predecir los resultados de la final, actualizandose el df (df_fixture_final) tanto en los scores como en los parametros de rendimiento de cada equipo
+
+        14.6.0.20-) Finalmente, se retorna un df (df_ent) con los dfs (df_fixture_group_, df_fixture_doce[0], df_fixture_semi, df_fixture_third, df_fixture_final) concatenados cada uno, con los resultados predichos para cada fase del mundial de interes y nombres de equipos ya en formato texto
+
+    - Args:
 
     - pregunta_0: cadena de texto con la consulta del usuario, que incluye el año del mundial a predecir y la fase o ronda de interés
 
@@ -2475,7 +2499,7 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
   
   - Return: 
 
-    - 
+    - df_ent: df con los resultados predichos para cada fase del mundial de interes y nombres de equipos ya en formato texto, con las alteraciones que el usuario haya hecho en su consulta, concatenando los dfs de cada fase del mundial de interes (fase de grupos, 2da fase de grupos, semifinales, partido por el tercer lugar y final) cada uno con sus resultados predichos y nombres de equipos ya en formato texto
 
   """
 
@@ -2589,16 +2613,16 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
       df_fixture_final = df1[1].copy()
 
     objs.ind0[0] = "grupo"
-    dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo) # df_fixture_group_: solo pide "home", "score_0", "score_1", "away" y lo modifica
+    dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo) 
 
     objs.n_partidos = df_fixture_group_.shape[0] + df_fixture_knockout.shape[0] + 1
-    df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table) # df_fixture_knockout: solo pide "home", "away"
+    df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table) 
 
     objs.ind0[0] = "knockout"
-    objs.get_winner(df_fixture_knockout, modelo) # df_fixture_knockout: pide "home", "away", "score_0", "score_1" devuelve "home", "away" y metricas de rendimiento 
+    objs.get_winner(df_fixture_knockout, modelo) 
 
     print("indice base", objs.n_partidos)
-    df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter) # df_fixture_knockout: pide metricas de rendimiento, para df_fixture_quarter: solo pide "home", "away"
+    df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter) 
 
     objs.ind0[0] = "quarter"
     objs.get_winner(df_fixture_quarter, objs, modelo)
@@ -2974,12 +2998,6 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
 
     return(df_ent)
 
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
   elif "1982" in pregunta_0:
 
     if("grupo" in pregunta_0):
@@ -3034,34 +3052,26 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
 
     df_fixture_doce = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_doce, dict_table, year=int(pregunta_0[-4:]))
 
-    # PASO 11.1 (GENERO LOS DICCIONARIOS QUE CORRESPONDAN A MIS FASES DE GRUPO)
-    # para la 2da fase de grupos, ingreso el diccionario obtenido en el paso anterior y los partidos
-    # a disputarse, definidos en la fase anterior
     objs.ind0[0] = "doce"
-    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:,:-3], objs, modelo)
+    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:,:-3], modelo)
 
     objs.n_partidos = df_fixture_group_.shape[0] + df_fixture_doce[0].shape[0] + 1
-    # PASO 12.1 (DEFINIR EQUIPOS PARTICIPARÁN EN LA SEMIFINAL TRAS LA 2DA FASE DE GRUPOS)
+    
     df_fixture_semi = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:,:-3], df_fixture_semi, dict_table)
 
-    # PASO 17 (OBTENER A LOS GANADORES Y PERDEDORES DE SEMIFINAL O EQUIVALENTE SEGUN EL MUNDIAL)
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, objs, modelo)
+    objs.get_winner(df_fixture_semi, modelo)
 
-    # PASO 18 (DEFINIR EQUIPOS PARA 3ER LUGAR O EQUIVALENTE SEGUN EL MUNDIAL)
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
-    # PASO 19 (OBTENER A LOS GANADORES Y PERDEDORES DE 3ER LUGAR O EQUIVALENTE SEGUN EL MUNDIAL)
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, objs, modelo)
+    objs.get_winner(df_fixture_third, modelo)
 
-    # PASO 20 (DEFINIR EQUIPOS PARA FINAL O EQUIVALENTE SEGUN EL MUNDIAL)
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
-    # PASO 21 (OBTENER A LOS GANADORES Y PERDEDORES DE FINAL O EQUIVALENTE SEGUN EL MUNDIAL)
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, objs, modelo)
+    objs.get_winner(df_fixture_final, modelo)
 
     print(f"\ndf_fixture_group_\n{df_fixture_group_}, df_fixture_doce\n{df_fixture_doce}")
 
@@ -3071,9 +3081,3 @@ def consulta_general(pregunta_0, df5): # EN PROCESO
     df_ent.away = df_ent.away.map(objs.id_pais)
 
     return(df_ent)
-
-
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------------------------------------------
-
