@@ -143,6 +143,10 @@ def formar_dataset_real(ind0, valores=None): # PEND (arreglar los default .Pts, 
 
 def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0): # TERMINADO
   """
+  ¿QUE HACE?
+  Calcula y acumula las métricas de desempeño (PTS, PJ, PG, PP, PE, GF, GC, D) para el equipo (pais) indicado, iterando los partidos presentes en el df (df0). Puede ser usado para generar el rendimiento acumulado en la fase eliminatoria previa al mundial (ind0=0), o para ajustar dicho rendimiento en el df (df0) tras las predicciones de goles del modelo para alguna fase del mundial (ind0=1)
+
+  ¿COMO LO HACE?
   0-) Se crea un diccionario (dic_dsp) vacio - Se agregan 2 claves "year, pais" al (dic_dsp) con valores iguales a los parametros (agno) y (pais) respectivamente - Se crea un df vacio (primero) - Se crean los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0) y (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1) y se les da el valor "None" a todos
 
   1-) Se inicia un bucle for enumerate con la variable de iteracion (partido) de todas las filas como tupla, de una copia del parametro (df0) que contiene ya sea los valores "home", "score_0", "score_1" y "away" de los partidos de la fase eliminatoria previa al mundial, o los parametros de rendimiento de los equipos "home" y "away" de cierta fase o round del mundial
@@ -203,7 +207,7 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0): # TERMINA
 
     3.3-) Si dentro del (partido) iterado, el "score_1" del "away" es menor al "score_0" del "home"
 
-      3.3.0-) En (dic_dsp) a la clave (PP0) se le suma 1 - a la clave (GF0) se le suma el "score_0" del (partido) - a la clave (GC0) se le suma "score_1" del (partido)
+      3.3.0-) En (dic_dsp) a la clave (PP1) se le suma 1 - a la clave (GF1) se le suma el "score_1" del (partido) - a la clave (GC1) se le suma "score_0" del (partido)
     
     3.4-) Si dentro del (partido) iterado, el "score_1" del "away" es igual al "score_0" del "home"
 
@@ -329,13 +333,13 @@ def calculo_metricas_0(df_desempegno):
   ¿COMO LO HACE?
   0-) Se crea un df vacio (df_nw_desempegno) 
   
-  1-) Se crean 2 listas (col0_, col1_) contenedoreas de las columnas del df (df_desempegno), a partir de una copia del orden de juego para los equipos "home" y "away" (omitiendose las columnas: "PJ_0", "GF_0", "GC_0", "score_0" y "PJ_1", "GF_1", "GC_1", "score_1") del df (df_desempegno) capturando solo nombres de los equipos que juegan la fase inferida y sus parametros de rendimiento mediante slicing y drop a columnas respectivamente
+  1-) Se crean 2 listas (col0_, col1_) contenedoras de los nombres de columnas del df (df_desempegno): (col0_) tomando las primeras 10 columnas mediante slicing (iloc[:,:10]) y descartando con drop las columnas "PJ_0", "GF_0", "GC_0", "D_0"; y (col1_) tomando las columnas desde la posicion 10 en adelante (iloc[:,10:]) y descartando con drop las columnas "PJ_1", "GF_1", "GC_1", "D_1"
 
     -> quedando algo como:
 
-    col0_ = ["id0"   "home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"]   
+    col0_ = ["home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"   "score_0"]   
 
-    col1_ = ["id0"   "away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"]   
+    col1_ = ["away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"   "score_1"]   
 
   2-) Se itera sobre las filas del df (df_desempegno) en forma de tupla
     
@@ -492,7 +496,7 @@ def agregar_features(df_mundial, dic_ag, ind=None): # TERMINADO
 
     - df_mundial: df contenedor de los partidos del mundial actual, para obtener las metricas de rendimiento en la fase de clasificaciones
 
-    - dic_ag: diccionario contenedor de df de los puntajes y ----metricas de rendimiento---- obtenidos por los equipos durante la clasificacion
+    - dic_ag: diccionario contenedor de df con los parametros de rendimiento (PTS, PJ, PG, PP, PE, GF, GC, D) y el nombre del pais (pais), obtenidos por los equipos durante la fase de clasificacion previa a cada mundial, con clave igual al año del mundial de interés (en formato string) y valor igual al df de rendimiento por equipo
     
     - ind: indicador de si el df (df_mundial) es de partidos historicos o de fixture del mundial en estudio
   
@@ -579,11 +583,11 @@ class normali():
     ¿COMO LO HACE?
     0-) Se coloca en una variable (df0) el resultado de la funcion "formar_dataset_real" ingresandole el argumento (ind_partidos), que será un df contenedor de todos los partidos de cierto mundial 
 
-    1-) Se coloca en la variable (df1) el año de cada partido del mundial buscado, en forma de serie 
+    1-) En el atributo de instancia (self.df2) se almacena una copia del df (df0) con el índice reseteado, conteniendo todos los partidos recuperados de la tabla indicada por (ind_partidos) 
 
     2-) Luego deja en un atributo de instancia (self.df2) una copia del o los mundiales recuperados, por "formar_dataset_real" 
 
-    3-) En otro atributo de instancia (self.df3) deja el el fixture del mundial actual, usando la funcion "formar_dataset_real" con argumentos "fixtures" y el argumento (ind_partidos) que será igual a un string con contenido "partidos"
+    3-) En otro atributo de instancia (self.df3) se almacena el fixture del mundial de interés, usando la funcion "formar_dataset_real" con argumentos "fixtures" y el parametro (ind_fixtures) que contiene el año del mundial de interés en formato string, para la búsqueda del fixture correspondiente en la DB
 
     4-) Se crea un df contenedor (self.paises) de los nombres de todos los paises que jugaron en la fase de clasificacion previa al mundial de interés y los paises que juegan el mundial en si mismo 
 
@@ -619,9 +623,9 @@ class normali():
       
       - clsif: df contenedor de partidos de clasificacion previa al mundial de interés a predecir
       
-      - ind_grupos_mundiales: indica si debe o no entrarse en la lógica de emparejamiento ---1986--- siendo "None" en el segundo caso y diferente de None, un str por ejemplo, en el caso 
+      - ind_grupos_mundiales: indica si debe o no entrarse en la lógica de emparejamiento por mejores 3ros lugares adoptada por la FIFA entre 1986 y 1994, siendo "None" en el caso de no requerirla y diferente de None (ej. "grupos") en el caso de que sí se requiera dicha lógica 
       
-      - agno: valor int que indica el año en que se busca la ubicacion de cada partido fijo o variable, para la ---lógica de emparejamientos de 1986---, dentro del atributo de instancia diccionario (self.dic_emp_1), proveniente de un slicing a los ultimos 4 elementos del argumento (pregunta_0) de la funcion "consulta_general"
+      - agno: valor int que indica el año en que se busca la ubicacion de cada partido fijo o variable, para la lógica de emparejamiento por mejores 3ros lugares de los mundiales 1986-1994, dentro del atributo de instancia diccionario (self.dic_emp_1), proveniente de un slicing a los ultimos 4 elementos del argumento (pregunta_0) de la funcion "consulta_general"
       
       - obj0: puede ser un str de la forma "-", o un slicing a los ultimos 4 elementos del argumento (pregunta_0) de la funcion "consulta_general", indicando en el 1er caso que el 1er valor de retorno de la funcion que usa este argumento desde el atributo de instancia (self.obj0), será igual a todos los partidos del mundial actual, e indicando para el 2do caso, que este 1er valor de retorno se divide entre los partidos de la fase final y los partidos del df de consulta del usuario
       
@@ -742,7 +746,7 @@ class normali():
 
       1.0-) Se guarda en una variable (emp_1) la fila correspondiente a la clave en que se hayo la coincidencia de 4 entre el parametro (cuatro_mayores) y el atributo (dic_emp_0), dentro del array atributo (emp_terceros)
     
-    2-) Se iteran en un for con zip los pares ---grupo constante de emparejamiento--- y ---grupo base de emparejamiento--- - Se añade al atributo (partidos_11) una lista contenedora de los emparejamientos entre 1ros lugares de los grupos del A al D y 3ros lugares de los demas grupos
+    2-) Se iteran en un for con zip los pares de grupos ganadores fijos ["Grupo A", "Grupo B", "Grupo C", "Grupo D"] y los grupos de 3ros lugares variables presentes en (emp_1) - Se añade al atributo (partidos_11) una lista contenedora de los emparejamientos entre 1ros lugares de los grupos del A al D y los 3ros lugares correspondientes de los demas grupos
 
     - Args:
 
@@ -844,7 +848,7 @@ class normali():
 
     1-) Referenciando a (self.embedding_layer) se accede al objeto de la funcion Embedding de tensorflow, se le pasa el (indices_tensor) como parametro y se guarda este formato embedding como array numpy en (embeddings_array)
 
-    2-) En la variable (result) se concatena como columna el array con los nombres codificados y los valores de rendimiento, correspondientes a las siguientes ---n--- columnas tras la del home o away. Se retorna (results)
+    2-) En la variable (result) se concatena como columna el array de embeddings (embeddings_array) con el array de todos los valores de rendimiento (entrada[:,1:]), correspondientes a todas las columnas de (entrada) a partir de la posicion 1, omitiendo unicamente la columna 0 que contiene el id del equipo. Se retorna (result)
 
     - Args:
 
@@ -934,7 +938,7 @@ class normali():
     ¿QUE HACE?
     Arroja las secuencias necesarias tanto de la data historica del mundial de interes, como del fixture del mismo, apuntando a adaptarse al formato del torneo que tuvo ese mundial en particular
     
-    Arrojará especificamente la ---- secuencia de fase final del mundial de interés ----, la secuencia definida por el usuario para hacer inferencia, la fase de grupos para el mundial de interés, la estructura de fixture de fase final, todo en ese orden. La idea de arrojar estos datos, es permitir la inferencia en el orden marcado por la estructura que tendria el mundial de interés para el usuario, presente desde el propio fixture de ese mundial
+    Arrojará especificamente el historico de partidos de la fase final del mundial de interés (extraídos del df historico completo o acotados solo a la fase final segun el valor del atributo obj0), la secuencia definida por el usuario para hacer inferencia, la fase de grupos para el mundial de interés, la estructura de fixture de fase final, todo en ese orden. La idea de arrojar estos datos, es permitir la inferencia en el orden marcado por la estructura que tendria el mundial de interés para el usuario, presente desde el propio fixture de ese mundial
 
     Puede tambien arrojar solo el historico de partidos completo del mundial, el historico de partidos de la fase de grupos, el fixture de la fase final
 
@@ -1026,14 +1030,14 @@ class normali():
 def emparejar_equipos(ObjNrml): # TERMINADO
   """
   ¿QUE HACE?
-  Se genera un df contenedor de los 1ros n partidos de la fase final, mediante el uso de los metodos de emparejamiento de la clase "normali". Especificamente, se accede a todos los df de los grupos de un mundial, se saca a cada uno su 3er lugar y se determina cual tuvo los 4 mejores 3ros, se generan los --- emparejamientos variables --- y finalmente se crea un df con todos los emparejamientos, tanto --- variables como estaticos ---
+  Se genera un df contenedor de los 1ros n partidos de la fase final, mediante el uso de los metodos de emparejamiento de la clase "normali". Especificamente, se accede a todos los df de los grupos de un mundial, se saca a cada uno su 3er lugar y se determina cual tuvo los 4 mejores 3ros, se generan los emparejamientos variables entre 1ros y mejores 3ros lugares y finalmente se crea un df con todos los emparejamientos del 1er round de la fase final, tanto los variables (1ros vs mejores 3ros determinados por reglamento FIFA) como los estaticos (cruces fijos predefinidos por reglamento FIFA para el formato 1986-1994)
   
   ¿COMO LO HACE?
   0-) Genera un diccionario con pares clave igual a los grupos que hay en el mundial y valor igual a los df de rendimiento vacios de dichos grupos y lo guarda en una variable (dic_g), todo mediante un llamamiento al método "grupos_anio_interes" y el uso del atributo "agno" de la clase "normali" como parámetro del atributo
 
   1-) Se emplea el atributo "cuatro_mejores_terceros" para dejar en una variable (cuatro_mayores) una lista con los grupos en los que quedaron los 4 mejores equipos en 3er lugar segun su puntaje
 
-  2-) Se emplea el método "emparejamiento_partidos_dependientes" de la clase "normali" para dejar en el atributo lista (partidos_11) una serie de 4 listas contenedoras de pares de equipos expresados en la forma ["Winner Grupo n", "Third-p Grupo n"] representando los 4 partidos con --- posicion de equipos --- variable (recordando que habrán 4 partidos con --- posicion de equipos --- fija para el formato jugado desde 1986 hasta 1994)
+  2-) Se emplea el método "emparejamiento_partidos_dependientes" de la clase "normali" para dejar en el atributo lista (partidos_11) una serie de 4 listas contenedoras de pares de equipos expresados en la forma ["Winner Grupo n", "Third-p Grupo n"] representando los 4 partidos con emparejamiento variable, cuyo rival del 3er lugar depende de cuales sean los 4 mejores 3ros (recordando que habrán 4 partidos con emparejamiento fijo predeterminado por reglamento FIFA para el formato jugado desde 1986 hasta 1994)
 
   3-) Mediante el método "octavos_1986_a_1994" y el contenido del atributo (ref_0) que estará influido por el año del mundial estudiado, se genera un df contendor de todos los partidos del 1er round de la fase final, segun los pares de equipos almacenados en los atributos (partidos_10) y (partidos_11) cuyo contenido se reposicionará en el df partido a partido en el orden segun el contenido y de los elementos del (ref_0)
 
@@ -1083,8 +1087,49 @@ def knock_out_1986_1994(df0, df1): # TERMINADO
 class func_prediccion_orden(normali): # PEND PEND PEND
   def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, ind_grupos_mundiales=None, agno=None, obj0="-", evitar="-", embedding_dim=3, ind0=[None, None], n_partidos=0):
     """
-    Si ind0=="-" entonces ejecutamos predicciones con salidas de predicciones previas
-    Si ind0!="-" entonces ejecutamos predicciones con datos historicos
+    ¿QUE HACE?
+    Inicializa la clase (func_prediccion_orden), que hereda de (normali), llamando al constructor del padre y definiendo los atributos adicionales necesarios para gestionar el flujo de predicciones secuenciales entre fases del mundial: la lista ordenada de fases, el diccionario de resultados por partido, el diccionario de fuerzas de equipos, el indicador de fase actual y objetivo, y el contador de partidos procesados
+
+    ¿COMO LO HACE?
+    0-) Se llama al constructor de la clase padre (normali) pasandole todos los parametros recibidos para inicializar los atributos heredados de esa clase
+
+    1-) Se define el atributo lista (self.lista_fases) con los nombres de las fases del mundial en el orden en que se juegan, para su uso como referencia de comparacion entre la fase actual y la fase objetivo de la inferencia
+
+    2-) Se inicializa el atributo diccionario (self.dic_matches) en None, para su posterior llenado con los resultados (ganador y perdedor) de cada partido procesado
+
+    3-) Se inicializa el atributo diccionario (self.dic_fuerza) vacio, para su posterior llenado con los promedios de goles de cada equipo como local y visitante
+
+    4-) Se almacena en el atributo (self.ind0) el parametro (ind0), que es una lista de 2 elementos indicando respectivamente la fase actual de inferencia (ind0[0]) y la fase objetivo marcada por el usuario como inicio de prediccion (ind0[1])
+
+    5-) Se almacena en el atributo (self.n_partidos) el parametro (n_partidos), que lleva la cuenta acumulada del numero total de partidos procesados
+
+    Args:
+
+      - ind_partidos: valor de tipo str que indica a la funcion "formar_dataset_real" que tabla de la DB debe consultar
+
+      - ind_fixtures: valor de tipo str con el año del mundial de interés para indicar la búsqueda correcta del fixture en la DB
+
+      - df_prediccion_usuario: df de consulta del usuario con los partidos y puntajes editados para hacer inferencias personalizadas
+
+      - clsif: df contenedor de partidos de clasificacion previa al mundial de interés
+
+      - ind_grupos_mundiales: indica si debe entrarse en la logica de emparejamiento por mejores 3ros adoptada entre 1986 y 1994, siendo None si no se requiere y un valor distinto de None (ej. "grupos") si se requiere
+
+      - agno: valor int que indica el año del mundial con formato de emparejamiento por mejores terceros, para la búsqueda en (self.dic_emp_1)
+
+      - obj0: cadena que indica si el primer valor de retorno de (create_features) incluirá todos los partidos del mundial o solo la fase final separada del df de consulta del usuario
+
+      - evitar: parametro reservado para uso futuro
+
+      - embedding_dim: valor indicador del tamaño de los vectores embedding para cada equipo
+
+      - ind0: lista de 2 elementos indicando la fase actual de inferencia (ind0[0]) y la fase objetivo marcada por el usuario (ind0[1])
+
+      - n_partidos: numero inicial de partidos ya procesados, generalmente 0 al inicio
+
+    Return:
+
+      - No retorna valor, solo inicializa los atributos de la instancia
     """
     
     normali.__init__(ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, ind_grupos_mundiales=ind_grupos_mundiales, agno=agno, obj0=obj0, evitar=evitar, embedding_dim=embedding_dim)
@@ -1197,7 +1242,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
 
     2-) Se actualiza el atributo (n_partidos) a (value_fin)
 
-    - Agrs:
+    - Args:
     
       - paso: numero que indica el tamaño de paso para dar nombre a los partidos del siguiente 
               encuentro
@@ -1450,9 +1495,9 @@ class func_prediccion_orden(normali): # PEND PEND PEND
 
     2-) se tienen 2 condicionles para actuar segun si el index máximo está entre los partidos jugados como home o away
 
-      2.0) si el máximo está en la lista de partidos home: se toman dentro de una variable (seleccion) las primeras 10 columnas (0-9) con la informacion del rendimiento acumulada ahi ----(home, PTS, PG, PP, PE, D, tsGF, tsGC, score_0)----, se sustituye el nombre home por away si (ind0) dice away y se entrega (seleccion)
+      2.0) si el máximo está en la lista de partidos home: se toman dentro de una variable (seleccion) las primeras 10 columnas (0-9) con la informacion del rendimiento acumulada ahi (home, PTS_0, PJ_0, PG_0, PP_0, PE_0, GF_0, GC_0, D_0, score_0), se sustituye el nombre home por away si (ind0) dice away y se entrega (seleccion)
 
-      2.1) si el máximo está en la lista de partidos away: se toman dentro de una variable (seleccion) las ultimas 10 columnas (10-19) con la informacion del rendimiento acumulada ahi ----(away, PTS, PG, PP, PE, D, tsGF, tsGC, score_1)----, se sustituye el nombre away por home si (ind0) dice home y se entrega (seleccion)
+      2.1) si el máximo está en la lista de partidos away: se toman dentro de una variable (seleccion) las ultimas 10 columnas (10-19) con la informacion del rendimiento acumulada ahi (away, PTS_1, PJ_1, PG_1, PP_1, PE_1, GF_1, GC_1, D_1, score_1), se sustituye el nombre away por home si (ind0) dice home y se entrega (seleccion)
 
     Args:
 
@@ -1768,7 +1813,7 @@ for des0 in agnos:
 
   dic_agnos[str(des0)] = eliminatorias # PEND
 
-def consulta_general(pregunta_0, df5): # EN PROCESO
+def consulta_general(pregunta_0, df5): # EN TERMINADO
   """
   ¿QUE HACE?
   Realiza la predicción de resultados para un mundial específico, creando el objeto de la clase (func_prediccion_orden) necesario segun el año al que quiere aplicarse inferencia, generando los datasets necesarios, generando parametros para calcular la fuerza aproximada de cada equipo, cargando el modelo entrenado y aplicando las funciones de predicción para obtener los resultados esperados
