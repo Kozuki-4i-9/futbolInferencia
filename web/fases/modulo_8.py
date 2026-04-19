@@ -1486,7 +1486,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
   def seleccionar(self, df_fixture_, equipo, ind0):
     """
     ¿QUE HACE?
-    Entrega las ultiimas metricas de rendimiento registradas, ya sea por fase de grupos o por alguno de los rounds de la fase final en el parámetro (fixture_), para el equipo de interés entregado en el parámetro (equipo), ordenando la respuesta segun se indique el el parámetro (ind0)
+    Entrega las ultiimas metricas de rendimiento registradas, ya sea por fase de grupos o por alguno de los rounds de la fase final en el parámetro (df_fixture_), para el equipo de interés entregado en el parámetro (equipo), ordenando la respuesta segun se indique el el parámetro (ind0)
 
     ¿COMO LO HACE?
     0-) se definen unas variables (indice_0, indice_1) que poseen los indices de las filas del df (df_fixture_) donde esté el (equipo), ya sea como home o away
@@ -1519,7 +1519,7 @@ class func_prediccion_orden(normali): # PEND PEND PEND
     mas_g = max(indice_0.tolist() + indice_1.tolist())
 
     if(mas_g in indice_0):
-      seleccion = df_fixture_.iloc[mas_g, :10] # ver como es (df_fixture_)
+      seleccion = df_fixture_.iloc[mas_g, :10] # PEND ver como es (df_fixture_)
       if(ind0=="away"):
         seleccion.rename(index={"home": "away"}, inplace=True)
       return(seleccion)
@@ -1813,7 +1813,7 @@ for des0 in agnos:
 
   dic_agnos[str(des0)] = eliminatorias # PEND
 
-def consulta_general(pregunta_0, df5): # EN TERMINADO
+def consulta_general(pregunta_0, df5): # EN TERMINADO 
   """
   ¿QUE HACE?
   Realiza la predicción de resultados para un mundial específico, creando el objeto de la clase (func_prediccion_orden) necesario segun el año al que quiere aplicarse inferencia, generando los datasets necesarios, generando parametros para calcular la fuerza aproximada de cada equipo, cargando el modelo entrenado y aplicando las funciones de predicción para obtener los resultados esperados

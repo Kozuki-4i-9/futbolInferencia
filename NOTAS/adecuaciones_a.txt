@@ -1,0 +1,29 @@
+PEND 
+---texto descriptivo de funcion texto descriptivo de funcion texto descriptivo de funcion---
+--- texto descriptivo de funcion texto descriptivo de funcion texto descriptivo de función ---
+# arreglar
+seleccionar
+ordenar_elm_smpl
+
+para el archivo modulo_8.py 
+
+del proyecto del folder actual, en el archivo ubicado en la carpeta fases correspondiente a la app llamada fases cuyo nombre es modulo_8.py quiero que
+- evalues toda su logica de negocio y logica de codigo
+- sigas para cada funcion el mismo formato de docstring y evalues que lo que ahi se dice coincida con las lineas de codigo a las que cada paso de las secciones del docstring ¿QUE HACE? y ¿COMO LO HACE? hacen referencia
+- De momento no ejecutes las mejoras y arreglos que hay en donde diga PEND, # arreglar y, donde haya algo como ---texto descriptivo de funcion texto descriptivo de funcion texto descriptivo de funcion---
+--- texto descriptivo de funcion texto descriptivo de funcion texto descriptivo de función --- agrega el texto adecuado de manera que los docstring queden uniformes en todo el código
+
+14 04 2026 0
+
+# acopladas con el nro de columnas por parámetros de rendimiento
+# acopladas con el nro de columnas por parámetros de rendimiento
+
+- camb_grp_elm_smpl
+- grupos_anio_interes
+- calculo_metricas_0
+- seleccionar
+
+# usa llamada a grupos default seteados a 0 en parámetros de rendimiento
+# usa llamada a grupos default seteados a 0 en parámetros de rendimiento
+
+- emparejar_equipos
