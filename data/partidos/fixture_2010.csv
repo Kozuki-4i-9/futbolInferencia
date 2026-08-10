@@ -1,0 +1,65 @@
+Unnamed: 0,home,score,away,year
+0,Sudáfrica,1:1,México,2010
+1,Uruguay,0:0,Francia,2010
+2,Sudáfrica,0:3,Uruguay,2010
+3,Francia,0:2,México,2010
+4,México,0:1,Uruguay,2010
+5,Francia,1:2,Sudáfrica,2010
+6,Corea del Sur,2:0,Grecia,2010
+7,Argentina,1:0,Nigeria,2010
+8,Argentina,4:1,Corea del Sur,2010
+9,Grecia,2:1,Nigeria,2010
+10,Grecia,0:2,Argentina,2010
+11,Nigeria,2:2,Corea del Sur,2010
+12,Inglaterra,1:1,Estados Unidos,2010
+13,Argelia,0:1,Eslovenia,2010
+14,Eslovenia,2:2,Estados Unidos,2010
+15,Inglaterra,0:0,Argelia,2010
+16,Eslovenia,0:1,Inglaterra,2010
+17,Estados Unidos,1:0,Argelia,2010
+18,Serbia,0:1,Ghana,2010
+19,Alemania,4:0,Australia,2010
+20,Alemania,0:1,Serbia,2010
+21,Ghana,1:1,Australia,2010
+22,Ghana,0:1,Alemania,2010
+23,Australia,2:1,Serbia,2010
+24,Países Bajos,2:0,Dinamarca,2010
+25,Japón,1:0,Camerún,2010
+26,Países Bajos,1:0,Japón,2010
+27,Camerún,1:2,Dinamarca,2010
+28,Dinamarca,1:3,Japón,2010
+29,Camerún,1:2,Países Bajos,2010
+30,Italia,1:1,Paraguay,2010
+31,Nueva Zelanda,1:1,Eslovaquia,2010
+32,Eslovaquia,0:2,Paraguay,2010
+33,Italia,1:1,Nueva Zelanda,2010
+34,Eslovaquia,3:2,Italia,2010
+35,Paraguay,0:0,Nueva Zelanda,2010
+36,Costa de Marfil,0:0,Portugal,2010
+37,Brasil,2:1,Corea del Norte,2010
+38,Brasil,3:1,Costa de Marfil,2010
+39,Portugal,7:0,Corea del Norte,2010
+40,Portugal,0:0,Brasil,2010
+41,Corea del Norte,0:3,Costa de Marfil,2010
+42,Honduras,0:1,Chile,2010
+43,España,0:1,Suiza,2010
+44,Chile,1:0,Suiza,2010
+45,España,2:0,Honduras,2010
+46,Chile,1:2,España,2010
+47,Suiza,0:0,Honduras,2010
+48,Winner Grupo A,Match 49,Runners-up Grupo B,2010
+49,Winner Grupo C,Match 50,Runners-up Grupo D,2010
+50,Winner Grupo D,Match 51,Runners-up Grupo C,2010
+51,Winner Grupo B,Match 52,Runners-up Grupo A,2010
+52,Winner Grupo E,Match 53,Runners-up Grupo F,2010
+53,Winner Grupo G,Match 54,Runners-up Grupo H,2010
+54,Winner Grupo F,Match 55,Runners-up Grupo E,2010
+55,Winner Grupo H,Match 56,Runners-up Grupo G,2010
+56,Winner Match 53,Match 57,Winner Match 54,2010
+57,Winner Match 49,Match 58,Winner Match 50,2010
+58,Winner Match 52,Match 59,Winner Match 51,2010
+59,Winner Match 55,Match 60,Winner Match 56,2010
+60,Winner Match 58,Match 61,Winner Match 57,2010
+61,Winner Match 59,Match 62,Winner Match 60,2010
+62,Loser Match 61,Match 63,Loser Match 62,2010
+63,Winner Match 61,Match 64,Winner Match 62,2010

@@ -1,0 +1,29 @@
+# propts
+
+me han dicho que para obtener informacion de metricas de rendimiento de futbol, como:
+goalkeeper_score mean_defense_score mean_offense_score mean_midfield_score
+para mundiales de futbol, puedo acceder a sitios web como fbref y estimarlas matematicamente basandome en variablles como:
+PJ (Partidos Jugados) \(\rightarrow \) Columna 90s (en Porteros) o MP (en Equipos).GR (Goles Recibidos) \(\rightarrow \) Columna GA (en Porteros) o GA (en Equipos).GA (Goles Anotados) \(\rightarrow \) Columna Gls (en Equipos).VI (Vallas Invictas) \(\rightarrow \) Columna CS (en Porteros).PG (Partidos con Goles anotados) \(\rightarrow \) Conteo manual de partidos donde Gls \(>0\).PTS (Puntos Obtenidos) \(\rightarrow \) Calcular sumando 3 por victoria y 1 por empate en la tabla general
+pero me pregunto en que forma puedo incorporar a esto, otras variables como:
+
+SOT: shoots on target
+PKATT: penalty kicks attemp
+PKATTALLOW: penalty kicks allowed
+
+dime:
+- de donde obtenerlas (para todos los mundiales de futbol que se han jugado)
+- desde cuando obtenerlas (si es que no se registraron para todos los mundiales sino desde alguno en particular)
+- como estimar rendimiento de equipos con ellas y con las demas que ya tengo y te pase arriba
+
+LINKS:
+https://share.google/aimode/1niupVdsZGfWAi1My
+https://share.google/aimode/yZsDcJCGT2U7bQ3ED
+
+
+
+
+
+
+# propuestas
+
+- transformar "calculo_metricas_0" en una clase intanciable con un metodo accesible desde cada funcion que la use, para calcular todas (seleccionadas por frontend) las metricas de rendimiento para el mundial

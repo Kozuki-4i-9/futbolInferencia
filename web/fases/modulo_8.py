@@ -977,9 +977,9 @@ class normali():
 
     Returns: # PEND
 
-        - CASO 1: (df1, df2, df3). (fase final fixture del mundial jugado, df consulta del usuario), (fase de grupos del fixture), (fase final del fixture) PEND
+        - CASO 1: (df1, df2, df3). (fase final del mundial jugado, df consulta del usuario), (fase de grupos del fixture), (fase final del fixture) PEND
 
-        - CASO 2: (df1, df2, df3). (contenido del mundial jugado), (fase de grupos del fixture), (fase final del fixture)
+        - CASO 2: (df1, df2, df3). (todos los partidos con formato correcto del mundial jugado), (fase de grupos del fixture), (fase final del fixture)
     """
 
     for des0 in dic_ag:

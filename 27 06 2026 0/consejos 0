@@ -1,0 +1,94 @@
+# 1. Construir la imagen desde un Dockerfile
+docker build -t mi-django-app .
+
+# 2. Levantar servicios definidos en docker-compose.yml
+docker-compose up -d
+
+# 3. Ver contenedores en ejecución
+docker ps
+
+# 4. Ver todos los contenedores (incluidos los detenidos)
+docker ps -a
+
+# 5. Detener un contenedor
+docker stop <nombre_o_id>
+
+# 6. Eliminar un contenedor
+docker rm <nombre_o_id>
+
+# 7. Ver imágenes descargadas/localmente
+docker images
+
+# 8. Eliminar una imagen
+docker rmi <nombre_o_id>
+
+# 9. Ver logs de un contenedor
+docker logs <nombre_o_id>
+
+# 10. Entrar a la terminal de un contenedor en ejecución
+docker exec -it <nombre_o_id> bash
+
+# 11. Ejecutar migraciones de Django dentro del contenedor
+docker exec -it <nombre_o_id> python manage.py migrate
+
+# 12. Crear un superusuario en Django
+docker exec -it <nombre_o_id> python manage.py createsuperuser
+
+# 13. Reiniciar un servicio con docker-compose
+docker-compose restart
+
+# 14. Detener y eliminar todos los contenedores, redes y volúmenes definidos en compose
+docker-compose down -v
+
+-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------
+
+# 1. Clonar un repositorio
+git clone https://github.com/usuario/repo.git
+
+# 2. Inicializar un repositorio local
+git init
+
+# 3. Ver estado de los archivos
+git status
+
+# 4. Agregar archivos al área de staging
+git add .
+# o archivo específico
+git add archivo.py
+
+# 5. Hacer un commit con mensaje
+git commit -m "Descripción del cambio"
+
+# 6. Ver historial de commits
+git log --oneline
+
+# 7. Conectar con un repositorio remoto
+git remote add origin https://github.com/usuario/repo.git
+
+# 8. Subir cambios a la rama principal (main/master)
+git push -u origin main
+
+# 9. Traer cambios del repositorio remoto
+git pull origin main
+
+# 10. Obtener información del remoto sin fusionar
+git fetch origin
+
+# 11. Ver diferencias entre commits o archivos
+git diff
+
+# 12. Crear una nueva rama
+git branch nueva-rama
+
+# 13. Cambiar a una rama
+git checkout nueva-rama
+# o (más moderno)
+git switch nueva-rama
+
+# 14. Fusionar una rama con la actual
+git merge nueva-rama
+
+# 15. Clonar solo una rama específica
+git clone --branch rama-especifica https://github.com/usuario/repo.git

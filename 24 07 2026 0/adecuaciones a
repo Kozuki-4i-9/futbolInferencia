@@ -1,0 +1,26 @@
+17:14
+
+goalkeeper_score - Calificación numérica (ej: 0-10) rendimiento del portero en ese partido, basada en atajadas, goles recibidos, salidas
+mean_defense_score - Promedio de calificaciones de los defensas (línea defensiva) por partido o por mundial para un equipo 
+mean_offense_score - Promedio de calificaciones de los delanteros (atacantes) por partido o por mundial para un equipo 
+mean_midfield_score - Promedio de calificaciones de los mediocampistas por partido o por mundial para un equipo 
+fifa_rank - Posición numérica que ocupa cada selección en el Ranking FIFA
+total_fifa_points - Puntaje absoluto (suma total) que tenía esa selección en el Ranking FIFA en esa fecha
+avg_fifa_points - Promedio de puntos FIFA que el equipo ha obtenido en los últimos 12 meses previos al partido
+
+paginas para obtener datos de calculo manual:
+https://fbref.com/en/comps/1/1930/keepers/1930-World-Cup-Stats
+https://fbref.com/en/comps/1/1982/keepers/1982-World-Cup-Stats
+
+chats de estrategias para obtener metricas:
+https://share.google/aimode/ieY2yfYRBjVqSB7t8
+https://chat.deepseek.com/share/b2h6rnsbwd0s5cxhc5
+
+
+goalkeeper_score - 
+mean_defense_score - 
+mean_offense_score - 
+mean_midfield_score - 
+fifa_rank - 
+total_fifa_points - 
+avg_fifa_points - 

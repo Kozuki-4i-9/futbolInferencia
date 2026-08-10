@@ -1,0 +1,111 @@
+estuve haciendo un sistema de inferencia con tensorflow basado en algunas metricas de rendimiento para futbol, la verdad quisiera agregarle mas, como estas:
+
+  'home_team_fifa_rank',  'away_team_fifa_rank', 'home_team_total_fifa_points', 'away_team_total_fifa_points', 'home_team_avg_fifa_points', 'away_team_avg_fifa_points', 'home_team_score', 'away_team_score', shoot_out (tiros desde el punto penal), 'home_team_result' (win/loss/draw), 'away_team_result' (win/loss/draw), 'home_team_goalkeeper_score', 'away_team_goalkeeper_score', 'home_team_mean_defense_score', 'home_team_mean_offense_score', 'home_team_mean_midfield_score', 'away_team_mean_defense_score', 'away_team_mean_offense_score', 'away_team_mean_midfield_score'
+
+pero no se, ni el significado de cada metrica de esa lista, ni donde conseguirlas, para los partidos de cada mundial de futbol que se ha jugado, si puedes sacar algunas con los .csv del directorio "C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data" hazlo y guardalas en una carpeta llamada "metricas_rendimiento_01072026700" en el escritorio en archivos .csv que se puedan cargar en pandas para entrenar modelos tensorflow
+
+(RECUERDA: QUIERO LAS METRICAS PARA TODOS LOS PARTIDOS DE TODOS LOS MUNDIALES JUGADOS DESDE 1930 HASTA 2022, saca las que puedas y dame ideas para obtener las demas)
+
+(dame ademas la explicacion del significado de cada una de las metricas que te pase en esa lista)
+
+
+
+1. home_team_fifa_rank / away_team_fifa_rank
+  Definición: Posición numérica que ocupa cada selección en el Ranking FIFA en la fecha exacta en que se disputó el partido (o la más cercana publicada antes del torneo).
+
+  Cómo obtenerla:
+
+    Descarga los rankings históricos de FIFA (se publican mensualmente desde 1992).
+
+    Para cada partido, busca el ranking del mes y año del partido.
+
+    Fuente: sitio oficial de FIFA o datasets en Kaggle (fifa_ranking).
+
+2. home_team_total_fifa_points / away_team_total_fifa_points
+  Definición: Puntaje absoluto (suma total) que tenía esa selección en el Ranking FIFA en esa fecha (ej: 1850 puntos).
+
+  Cómo obtenerla:
+
+    Misma fuente que el ranking. El archivo histórico incluye tanto el puesto como los puntos acumulados.
+
+    Asignas a cada partido los puntos de ese mes.
+
+3. home_team_avg_fifa_points / away_team_avg_fifa_points
+Definición: Promedio de puntos FIFA que el equipo ha obtenido en los últimos 12 meses previos al partido (o desde el último Mundial). Refleja la consistencia reciente.
+
+  Cómo obtenerla:
+
+    Toma todos los rankings mensuales del año anterior a la fecha del partido.
+
+    Saca el promedio simple de esos 12 puntajes.
+
+    Ejemplo: partido en junio 2022 → promedia jul 2021 - jun 2022.
+
+4. home_team_score / away_team_score
+Definición: Goles marcados por cada equipo en tiempo reglamentario + tiempo añadido (sin contar penales en definición).
+
+  Cómo obtenerla:
+
+    De los marcadores oficiales de cada partido (FIFA, ESPN, WorldFootball.net).
+
+    Si hubo penales, el marcador final del partido (ej: 1-1) es el que se usa aquí.
+
+5. shoot_out (tiros desde el punto penal)
+Definición: Variable booleana (Sí/No) que indica si el partido se definió por penales después del tiempo extra.
+
+  Cómo obtenerla:
+
+    Revisa el acta del partido. Si después del tiempo extra el marcador sigue empatado y hubo tanda de penales, marcas True o 1.
+
+    Fuente: mismos reportes de partidos.
+
+6. home_team_result / away_team_result
+Definición: Resultado final del partido en términos de victoria/derrota/empate (considerando solo el tiempo reglamentario + añadido, sin penales).
+
+  Cómo obtenerla:
+
+    Compara home_team_score vs away_team_score.
+
+    Si home_score > away_score → "win" para local, "loss" para visitante.
+
+    Si iguales → "draw" para ambos (incluso si luego hay penales).
+
+7. home_team_goalkeeper_score / away_team_goalkeeper_score
+Definición: Calificación numérica (ej: 0-10) del rendimiento del portero en ese partido, basada en atajadas, goles recibidos, salidas, etc.
+
+  Cómo obtenerla:
+
+    Usa estadísticas de WhoScored, SofaScore o FBref (tienen puntuaciones por jugador).
+
+    Extrae la nota del portero titular.
+
+    Si no tienes acceso, puedes crearla con: (atajadas * 0.7) - (goles_recibidos * 0.5) + (clean_sheet * 1) y normalizarla.
+
+8. home_team_mean_defense_score / away_team_mean_defense_score
+Definición: Promedio de calificaciones de los defensas (línea defensiva) en ese partido, según estadísticas de rendimiento.
+
+  Cómo obtenerla:
+
+    Toma las notas individuales de todos los defensas que jugaron (mínimo 45 min).
+
+    Calcula el promedio aritmético.
+
+    Fuentes: FBref (tiene ratings por posición).
+
+9. home_team_mean_offense_score / away_team_mean_offense_score
+Definición: Promedio de calificaciones de los delanteros (atacantes) en ese partido.
+
+  Cómo obtenerla:
+
+    Mismo procedimiento que defensa, pero filtrando por delanteros/extremos.
+
+    Promedio de sus puntuaciones individuales.
+
+10. home_team_mean_midfield_score / away_team_mean_midfield_score
+Definición: Promedio de calificaciones de los mediocampistas en ese partido.
+
+  Cómo obtenerla:
+
+    Ídem anterior, filtrando por volantes/centrocampistas.
+
+    Promedio de sus notas.
