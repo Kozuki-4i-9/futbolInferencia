@@ -1,0 +1,111 @@
+# ["PJ", "GR", "GA", "VI", "PG", "PTS"]
+
+# PJ: Partidos Jugados
+# GR: Goles Recibidos
+# GA: Goles Anotados
+# VI: Vallas Invictas
+# PG: Partidos con Goles Anotados
+# PTS: Puntos Obtenidos
+
+# SOT
+# PKATT
+# PKATTALLOW
+
+
+import pandas as pd
+
+dfBase['gkps1'] = (
+    ((dfBase['VI'] / dfBase['PJ']) * 60) + 
+    (40 - ((dfBase['GR'] - dfBase.get('PKATTALLOW', 0)) / dfBase['PJ']) * 10)
+).fillna(0)
+
+dfBase['mds1'] = (
+    ((dfBase['VI'] / dfBase['PJ']) * 50) + 
+    (50 - (((dfBase['GR'] + dfBase.get('PKATTALLOW', 0)) / dfBase['PJ']) * 10))
+).fillna(0)
+
+dfBase['mos1'] = (
+    (dfBase['GA'] / dfBase['PJ']) * 0.5 + 
+    (dfBase.get('SOT', 0) / dfBase['PJ']) * 0.3 + 
+    ((dfBase['GA'] - dfBase.get('PKATT', 0)) / dfBase.get('SOT', 1)) * 0.2
+).fillna(0)
+
+dfBase['mms1'] = (
+    ((dfBase['PTS'] / (dfBase['PJ'] * 3)) * 40) + 
+    ((dfBase['PG'] / dfBase['PJ']) * 40) + 
+    ((dfBase.get('SOT', 0) / dfBase['PJ']) * 2)
+).fillna(0)
+
+dfBase['rate_home_GF'] = (dfBase['GF_0'] / dfBase['PJ_0'].replace(0, 0.085)) * 10
+dfBase['rate_away_GF'] = (dfBase['GF_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
+dfBase['rate_home_GC'] = (dfBase['GC_0'] / dfBase['PJ_0'].replace(0, 0.085)) * 10
+dfBase['rate_away_GC'] = (dfBase['GC_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
+
+
+
+
+
+# el modelo se entreno con los datos de los partidos de todos los mundiales (947 row hasta 2022) con esta estructura de inputs:
+
+# home   PTS_0   PG_0   PP_0   PE_0   D_0   score_0   ts_GF_0   ts_GC_0   away   PTS_1   PG_1   PP_1   PE_1   D_1   score_1   ts_GF_1   ts_GC_1
+# x, y = calculo_metricas_0(df1), df1[["score_0", "score_1"]] 
+
+# se le aplica una capa Embedding de tensorflow
+# x0 = objs.hacer_embedding_a_equipos(data_0) # home   -   x1 = objs.hacer_embedding_a_equipos(data_1) # away
+
+# se le aplica una funcion para tomar lotes de entreda tamaño (n) y la correspondiente salida (modelo timestep para LSTMs)
+
+# x_tr_h, x_tr_a = objs.c_s(x0[:607]), objs.c_s(x1[:607])
+# xtr_home, xtr_away = x_tr_h[0], x_tr_a[0]
+# ytr_home, ytr_away = x_tr_h[1], x_tr_a[1]
+# X_tr = np.concatenate((xtr_home, xtr_away), axis=0)
+# Y_tr = np.concatenate((ytr_home, ytr_away), axis=0)
+# X_tr.shape, Y_tr.shape   ->  (1204, 5, 10) (1204,)
+
+# el modelo usado hasta ahora, probado y aprobado el diciembre de 2024 es:
+
+# model = tf.keras.Sequential([
+#     tf.keras.layers.LSTM(100, return_sequences=True, kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+#     tf.keras.layers.Dropout(0.20),
+#     tf.keras.layers.LSTM(57, return_sequences=True),
+#     tf.keras.layers.Dropout(0.40),
+#     tf.keras.layers.LSTM(25, return_sequences=False),
+#     tf.keras.layers.Dropout(0.15),
+#     tf.keras.layers.Dense(32, activation='relu'),
+#     tf.keras.layers.Dense(1)  # Salida para regresión
+# ])
+# # Compilar el modelo
+# model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
+
+# model.fit(X_tr, Y_tr,  batch_size=16, validation_data=(X_val, Y_val), epochs=110, callbacks=[TensorMetricas]) 
+
+
+
+
+
+# pasos a para agergar metriicas de rendimiento complejas:
+
+# 0- usar selenium para bajar datos extra (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score) de 
+#    (https://fbref.com/en/comps/1/1982/keepers/1982-World-Cup-Stats) generando un df de salida
+# 1- unir ese df (paso anterior) con el de (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\partidos\partidos.csv) y 
+#    (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\grupos\grupos_mundiales)
+# 2- recrear y adecuar el (modulo_9.py) para entrenar un modelo con la union del paso anterior (adecuar funcion (calculo_metricas_0) para calculo 
+#    de metricas de rendiimiento complejas (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score))
+# 3- adecuar (modulo_9.py) para entregar siempre al modelo en (intsc_prob_goles) (linea 1169 de (modulo_9.py)) una data de dimension (None,946,13)
+#   (home   PTS_0   PG_0   PP_0   PE_0   D_0   score_0   ts_GF_0   ts_GC_0   gkps_0   mds_0   mos_0   mms_0)
+#   (away   PTS_1   PG_1   PP_1   PE_1   D_1   score_1   ts_GF_1   ts_GC_1   gkps_1   mds_1   mos_1   mms_1)
+# 4- dejar el modelo del paso 3- en la direccion de la que (modelo_9.py) lo toma en la linea 1894 1895
+
+
+# # 11 08 2026
+# - nada de (formar_dataset_real) llega con parametros de rendimiento extra
+# - los parametros de rendimiento extra se agregan solo a df2 (fase de grupos del fixtura del mundial jugado ); df1 (partidos reales del mundial jugado (ambas fases))
+# - los parametros de rendimiento extra se agregan con agregar_features, que depende de (dic_agnos) que depende de partidos de eliminatorias (formar_dataset_real("clasificaciones"))
+# - con (seleccionar) se lleba la estructura de metricas de rendimiento base de clasificaciones al resto de las fases 
+# - con (calculo_metricas_0) actualmente se quitan (PJ_0   GF_0   GC_0   D_0) y se agrega (ts_GF_0   ts_GC_0) a (home  PTS_0  PG_0  PP_0  PE_0  D_0  score_0) formando 9 
+#   metricas para entrenamiento
+#   NOTA: (calculo_metricas_0) solo se usa para la prediccion con (self.intsc_prob_goles), el df que pasa a la siguiente fase es (df_fixture_) que entra a 
+#   (calculo_metricas_0) al inicio de la fase
+# - con (calculo_metricas_0) deberian agregarse n columnas como un lienzo fijo para metricas extra y rellenar de forma opcional las que correspondan a las escogidas por 
+#   los usuarios sustituyendo lineas como ("ts_GF_0": ts_home_GF, "ts_GC_0": ts_home_GC, "ts_GF_1": ts_away_GF, "ts_GC_1": ts_away_GC,) con diccionarios dinamico (**{}) 
+#   para metricas opcionales en lienzo fijo

@@ -100,13 +100,14 @@ model.fit(X_tr, Y_tr,  batch_size=16, validation_data=(X_val, Y_val), epochs=110
 
 
 
-
-
 # pasos a para agergar metriicas de rendimiento complejas:
 
-0- usar selenium para bajar datos extra (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score) de (https://fbref.com/en/comps/1/1982/keepers/1982-World-Cup-Stats) generando un df de salida
-1- unir ese df (paso anterior) con el de (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\partidos\partidos.csv) y (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\grupos\grupos_mundiales)
-2- recrear y adecuar el (modulo_9.py) para entrenar un modelo con la union del paso anterior (adecuar funcion (calculo_metricas_0) para calculo de metricas de rendiimiento complejas (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score))
+0- usar selenium para bajar datos extra (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score) de 
+   (https://fbref.com/en/comps/1/1982/keepers/1982-World-Cup-Stats) generando un df de salida
+1- unir ese df (paso anterior) con el de (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\partidos\partidos.csv) y 
+   (C:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\grupos\grupos_mundiales)
+2- recrear y adecuar el (modulo_9.py) para entrenar un modelo con la union del paso anterior (adecuar funcion (calculo_metricas_0) para calculo 
+   de metricas de rendiimiento complejas (goal_keeper_score, mean_defense_score, mean_ofense_score, mean_midfield_score))
 3- adecuar (modulo_9.py) para entregar siempre al modelo en (intsc_prob_goles) (linea 1169 de (modulo_9.py)) una data de dimension (None,946,13)
   (home   PTS_0   PG_0   PP_0   PE_0   D_0   score_0   ts_GF_0   ts_GC_0   gkps_0   mds_0   mos_0   mms_0)
   (away   PTS_1   PG_1   PP_1   PE_1   D_1   score_1   ts_GF_1   ts_GC_1   gkps_1   mds_1   mos_1   mms_1)
