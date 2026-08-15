@@ -402,7 +402,7 @@ def calculo_metricas_0(df_desempegno):
   dfBase['rate_away_GF'] = (dfBase['GF_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
 
   dfBase['rate_home_GC'] = (dfBase['GC_0'] / dfBase['PJ_0'].replace(0, 0.085)) * 10
-  
+
   dfBase['rate_away_GC'] = (dfBase['GC_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
 
   return dfBase
@@ -1307,7 +1307,7 @@ class func_prediccion_orden(normali):
 
     return dic_t
 
-  def get_winner(self, df_fixture_updated, *args):
+  def jugar(self, df_fixture_updated, *args):
     """
     ¿QUE HACE?
     Ejecuta la inferencia para los partidos de la fase final, empleandose una funcion completa para abarcar la inferencia solo en esta fase porque el formato de la misma, para eliminacion y seleccion entre cada round, es diferente al que se tiene para la fase de grupos
@@ -1963,30 +1963,30 @@ def consulta_general(pregunta_0, df5):
     df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table) 
 
     objs.ind0[0] = "knockout"
-    objs.get_winner(df_fixture_knockout, modelo) 
+    objs.jugar(df_fixture_knockout, modelo) 
 
     print("indice base", objs.n_partidos)
     df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter) 
 
     objs.ind0[0] = "quarter"
-    objs.get_winner(df_fixture_quarter, modelo)
+    objs.jugar(df_fixture_quarter, modelo)
 
     print("indice base", objs.n_partidos)
     df_fixture_semi = objs.ordenar_elm_smpl(df_fixture_quarter, df_fixture_semi)
 
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, modelo)
+    objs.jugar(df_fixture_semi, modelo)
 
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, modelo)
+    objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_group_[["home", "score_0", "score_1", "away"]], df_fixture_knockout[["home", "score_0", "score_1", "away"]], df_fixture_quarter[["home", "score_0", "score_1", "away"]], df_fixture_semi[["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
@@ -2038,28 +2038,28 @@ def consulta_general(pregunta_0, df5):
       df_fixture_final = df1[1].copy()
 
     objs.ind0[0] = "knockout"
-    objs.get_winner(df_fixture_knockout, modelo)
+    objs.jugar(df_fixture_knockout, modelo)
 
     df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter)
 
     objs.ind0[0] = "quarter"
-    objs.get_winner(df_fixture_quarter, modelo)
+    objs.jugar(df_fixture_quarter, modelo)
 
     df_fixture_semi = objs.ordenar_elm_smpl(df_fixture_quarter, df_fixture_semi)
 
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, modelo)
+    objs.jugar(df_fixture_semi, modelo)
 
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, modelo)
+    objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_knockout[["home", "score_0", "score_1", "away"]], df_fixture_quarter[["home", "score_0", "score_1", "away"]], df_fixture_semi[["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
@@ -2158,23 +2158,23 @@ def consulta_general(pregunta_0, df5):
     df_fixture_quarter = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_quarter, dict_table)
 
     objs.ind0[0] = "quarter"
-    objs.get_winner(df_fixture_quarter, modelo)
+    objs.jugar(df_fixture_quarter, modelo)
 
     df_fixture_semi = objs.ordenar_elm_smpl(df_fixture_quarter, df_fixture_semi)
 
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, modelo)
+    objs.jugar(df_fixture_semi, modelo)
 
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, modelo)
+    objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_group_[["home", "score_0", "score_1", "away"]], df_fixture_quarter[["home", "score_0", "score_1", "away"]], df_fixture_semi[["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
@@ -2246,28 +2246,28 @@ def consulta_general(pregunta_0, df5):
     df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table)
 
     objs.ind0[0] = "knockout"
-    objs.get_winner(df_fixture_knockout, modelo)
+    objs.jugar(df_fixture_knockout, modelo)
 
     df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter)
 
     objs.ind0[0] = "quarter"
-    objs.get_winner(df_fixture_quarter, modelo)
+    objs.jugar(df_fixture_quarter, modelo)
 
     df_fixture_semi = objs.ordenar_elm_smpl(df_fixture_quarter, df_fixture_semi)
 
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, modelo)
+    objs.jugar(df_fixture_semi, modelo)
 
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, modelo)
+    objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_group_[["home", "score_0", "score_1", "away"]], df_fixture_knockout[["home", "score_0", "score_1", "away"]], df_fixture_quarter[["home", "score_0", "score_1", "away"]], df_fixture_semi[["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
@@ -2324,15 +2324,15 @@ def consulta_general(pregunta_0, df5):
 
     objs.ind0[0] = "third"
     if df_fixture_third.shape[0] > 1:
-      objs.get_winner(df_fixture_third.iloc[0:-1], modelo)
+      objs.jugar(df_fixture_third.iloc[0:-1], modelo)
     elif df_fixture_third.shape[0] == 1:
-      objs.get_winner(df_fixture_third, modelo)
+      objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :-3], df_fixture_final, dict_table)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_group_[["home", "score_0", "score_1", "away"]], df_fixture_doce[0][["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
@@ -2403,18 +2403,18 @@ def consulta_general(pregunta_0, df5):
     df_fixture_semi = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :-3], df_fixture_semi, dict_table)
 
     objs.ind0[0] = "semi"
-    objs.get_winner(df_fixture_semi, modelo)
+    objs.jugar(df_fixture_semi, modelo)
 
     df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
 
     objs.ind0[0] = "third"
-    objs.get_winner(df_fixture_third, modelo)
+    objs.jugar(df_fixture_third, modelo)
 
     df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
-    objs.get_winner(df_fixture_final, modelo)
+    objs.jugar(df_fixture_final, modelo)
 
     df_ent = pd.concat([df_fixture_group_[["home", "score_0", "score_1", "away"]], df_fixture_doce[0][["home", "score_0", "score_1", "away"]], df_fixture_semi[["home", "score_0", "score_1", "away"]], df_fixture_third[["home", "score_0", "score_1", "away"]], df_fixture_final[["home", "score_0", "score_1", "away"]]], axis=0)
 
