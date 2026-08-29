@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from scipy.stats import poisson
 from decimal import Decimal
-from .models import partidos, fixtures, grupos, clasificaciones
+from .models import partidos, fixtures, grupos, clasificaciones#, proxy_desempegno
 
 from numpy.random import seed
 seed(1)
@@ -143,6 +143,15 @@ def formar_dataset_real(ind0, valores=None):
     df = np.array(df0)
     df = pd.DataFrame(data=df, columns=["home", "score_0", "score_1", "away", "tournament", "agno"])
     df.home, df.score_0, df.score_1, df.away, df.tournament, df.agno = df.home.astype('O'), df.score_0.astype('int64'), df.score_1.astype('int64'), df.away.astype('O'), df.tournament.astype('O'), df.agno.astype('int64')
+    return df
+  
+  elif ind0 == "proxy_desempegno":
+    df0 = list()
+    for des in proxy_desempegno.objects.all():
+      df0.append([des.gkps, des.mds, des.mos, des.mms, des.VI, des.SOT, des.PKATT, des.PKATTALLOW])
+    df = np.array(df0)
+    df = pd.DataFrame(data=df, columns=["gkps", "mds", "mos", "mms", "VI", "SOT", "PKATT", "PKATTALLOW"])
+    df.gkps, df.mds, df.mos, df.mms, df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.gkps.astype('int64'), df.mds.astype('int64'), df.mos.astype('int64'), df.mms.astype('int64'), df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
     return df
 
 def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
@@ -322,7 +331,35 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
   if ind0 == 0:
     return pd.DataFrame(dic_dsp, index=[indx])
 
-def calculo_metricas_0(df_desempegno):
+def calc_gkps(group):
+    VI = group['VI'].sum()
+    PJ = group['PJ'].sum()
+    GR = group['GR'].sum()
+    PKATTALLOW = group['PKATTALLOW'].sum() if 'PKATTALLOW' in group.columns else 0
+    return ((VI/PJ)*60) + (40 - ((GR - PKATTALLOW)/PJ)*10) if PJ > 0 else 0
+
+def calc_mds(group):
+    VI = group['VI'].sum()
+    PJ = group['PJ'].sum()
+    GR = group['GR'].sum()
+    PKATTALLOW = group['PKATTALLOW'].sum() if 'PKATTALLOW' in group.columns else 0
+    return ((VI/PJ)*50) + (50 - (((GR + PKATTALLOW)/PJ)*10)) if PJ > 0 else 0
+
+def calc_mos(group):
+    GA = group['GA'].sum()
+    PJ = group['PJ'].sum()
+    SOT = group['SOT'].sum() if 'SOT' in group.columns else 0
+    PKATT = group['PKATT'].sum() if 'PKATT' in group.columns else 0
+    return ((GA/PJ)*0.5 + (SOT/PJ)*0.3 + ((GA - PKATT)/SOT)*0.2) if PJ > 0 and SOT > 0 else 0
+
+def calc_mms(group):
+    PTS = group['PTS'].sum()
+    PJ = group['PJ'].sum()
+    PG = group['PG'].sum()
+    SOT = group['SOT'].sum() if 'SOT' in group.columns else 0
+    return (((PTS/(PJ*3))*40) + ((PG/PJ)*40) + ((SOT/PJ)*2)) if PJ > 0 else 0
+
+def calculo_metricas_0(df_desempegno, agno=None): # PEND (agegar parametro 'valor=agno')
   """
   ¿QUE HACE?
   Toma el df de desempeño (df_desempegno), que tiene el orden de juego con el nombre de los equipos y parametros de rendimiento de cada equipo que juega la fase de grupos, o en alguno de los rounds de la fase final, y le agrega 4 columnas nuevas que son "ts_GF_0", "ts_GC_0", "ts_GF_1", "ts_GC_1", que contienen los valores de tasa de goles a favor y en contra para los equipos que juegan como "home" y "away" respectivamente, calculados segun la formula: (goles a favor o en contra / partidos jugados) * 10
@@ -373,37 +410,94 @@ def calculo_metricas_0(df_desempegno):
     df_nw_desempegno = ["home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"   "ts_GF_0"   "ts_GC_0"   "D_0"   "away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"   "ts_GF_1"   "ts_GC_1"   "D_1"] (claves alusivas a los valores que tendrá la lista)
 
   """
-  dfBase = df_desempegno.copy().drop(["PJ", "GF", "GC", "D"], axis=1)
-  
-  dfBase['gkps1'] = (
-      ((dfBase['VI'] / dfBase['PJ']) * 60) + 
-      (40 - ((dfBase['GR'] - dfBase.get('PKATTALLOW', 0)) / dfBase['PJ']) * 10)
-  ).fillna(0)
+  local_mapping = {}
+  visitor_mapping = {}
 
-  dfBase['mds1'] = (
-      ((dfBase['VI'] / dfBase['PJ']) * 50) + 
-      (50 - (((dfBase['GR'] + dfBase.get('PKATTALLOW', 0)) / dfBase['PJ']) * 10))
-  ).fillna(0)
+  if(OPTIONAL_METRICS!=[]):
+    opcionales = formar_dataset_real("df_desempegno", valor=agno)
+    opcioneales = opcioneales[opcioneales['home']==df_desempegno.home.iloc[0]]
 
-  dfBase['mos1'] = (
-      (dfBase['GA'] / dfBase['PJ']) * 0.5 + 
-      (dfBase.get('SOT', 0) / dfBase['PJ']) * 0.3 + 
-      ((dfBase['GA'] - dfBase.get('PKATT', 0)) / dfBase.get('SOT', 1)) * 0.2
-  ).fillna(0)
+  # PEND: evaluar poner _0 _1 a opcionales
+  if(not 'gkps_0' in OPTIONAL_METRICS):
+    local_mapping['gkps_0'] = calc_gkps(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
+  else:
+    local_mapping['gkps_0'] = np.nan
+    
+  if(not 'gkps_1' in OPTIONAL_METRICS):
+    visitor_mapping['gkps_1'] = calc_gkps(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
+  else:
+    visitor_mapping['gkps_1'] = np.nan
 
-  dfBase['mms1'] = (
-      ((dfBase['PTS'] / (dfBase['PJ'] * 3)) * 40) + 
-      ((dfBase['PG'] / dfBase['PJ']) * 40) + 
-      ((dfBase.get('SOT', 0) / dfBase['PJ']) * 2)
-  ).fillna(0)
+  # PEND: evaluar poner _0 _1 a opcionales
+  if(not 'mds_0' in OPTIONAL_METRICS):
+    local_mapping['mds_0'] = calc_mds(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
+  else:
+    local_mapping['mds_0'] = np.nan
 
-  dfBase['rate_home_GF'] = (dfBase['GF_0'] / dfBase['PJ_0'].replace(0, 0.085)) * 10
+  if(not 'mds_1' in OPTIONAL_METRICS):
+    visitor_mapping['mds_1'] = calc_mds(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
+  else:
+    visitor_mapping['mds_1'] = np.nan
 
-  dfBase['rate_away_GF'] = (dfBase['GF_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
+  # PEND: evaluar poner _0 _1 a opcionales
+  if(not 'mos_0' in OPTIONAL_METRICS):
+    local_mapping['mos_0'] = calc_mos(df_desempegno.PJ_0, df_desempegno.GF_0, opcionales.SOT, opcionales.PKATT)
+  else:
+    local_mapping['mos_0'] = np.nan
 
-  dfBase['rate_home_GC'] = (dfBase['GC_0'] / dfBase['PJ_0'].replace(0, 0.085)) * 10
+  if(not 'mos_1' in OPTIONAL_METRICS):
+    visitor_mapping['mos_1'] = calc_mos(df_desempegno.PJ_1, df_desempegno.GF_1, opcionales.SOT, opcionales.PKATT)
+  else:
+    visitor_mapping['mos_1'] = np.nan
 
-  dfBase['rate_away_GC'] = (dfBase['GC_1'] / dfBase['PJ_1'].replace(0, 0.085)) * 10
+  # PEND: evaluar poner _0 _1 a opcionales
+  if(not 'mms_0' in OPTIONAL_METRICS):
+    local_mapping['mms_0'] = calc_mms(df_desempegno.PJ_0, df_desempegno.PTS_0, df_desempegno.PG_0, opcionales.SOT)
+  else:
+    local_mapping['mms_0'] = np.nan
+
+  if(not 'mms_1' in OPTIONAL_METRICS):
+    visitor_mapping['mms_1'] = calc_mms(df_desempegno.PJ_1, df_desempegno.PTS_1, df_desempegno.PG_1, opcionales.SOT)
+  else:
+    visitor_mapping['mms_1'] = np.nan
+
+
+  if(not 'rate_home_GF' in OPTIONAL_METRICS):
+    local_mapping['rate_home_GF'] = (df_desempegno.GF_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
+  else:
+    local_mapping['rate_home_GF'] = np.nan
+
+
+  if(not 'rate_away_GF' in OPTIONAL_METRICS):
+    visitor_mapping['rate_away_GF'] = (df_desempegno.GF_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
+  else:
+    visitor_mapping['rate_away_GF'] = np.nan
+
+
+  if(not 'rate_home_GC' in OPTIONAL_METRICS):
+    local_mapping['rate_home_GC'] = (df_desempegno.GC_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
+  else:
+    local_mapping['rate_home_GC'] = np.nan
+
+
+  if(not 'rate_away_GC' in OPTIONAL_METRICS):
+    visitor_mapping['rate_away_GC'] = (df_desempegno.GC_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
+  else:
+    visitor_mapping['rate_away_GC'] = np.nan
+
+
+  dfBase = df_desempegno.copy().drop(["PJ_0", "GF_0", "GC_0", "D_0", "PJ_1", "GF_1", "GC_1", "D_1"], axis=1) # PEND (retirar solo las no solicitadas)
+
+  data_metricas = {
+    "home": [df_desempegno.home],
+    **{key: value for _, fila in dfBase.iterrows() for key, value in fila.to_dict().items() if key[-1] == '0'},
+    **{key: [local_mapping[key]] for key in local_mapping.keys()},
+    "away": [df_desempegno.away],
+    **{key: value for _, fila in dfBase.iterrows() for key, value in fila.to_dict().items() if key[-1] == '1'},
+    **{key: [visitor_mapping[key]] for key in visitor_mapping.keys()},
+    }
+
+  dfBase = pd.DataFrame(data_metricas)
 
   return dfBase
 
@@ -906,7 +1000,7 @@ class normali():
     """
     df0 = formar_dataset_real("grupos", year)
     df0["pais"] = df0["pais"].map(self.pais_id)
-    metrics_to_zero = [col for col in df0.columns if col not in ("pais", "Grupo", "agno")]
+    metrics_to_zero = [col for col in df0.columns if col not in ("pais", "Grupo", "agno")] # PEND (quizas requiera un condicional si (if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):))
     df0.loc[:, metrics_to_zero] = 0
     dic_0 = {des0: df0[df0["Grupo"] == des0] for des0 in set(df0["Grupo"].tolist())}
     return dic_0
@@ -1197,9 +1291,9 @@ class func_prediccion_orden(normali):
 
         if round(p) >= 0.5:
           if p_h > p_a:
-            p_hm, p_aw = 3, 0
+            p_hm, p_aw = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar)
           elif p_a > p_h:
-            p_aw, p_hm = 3, 0
+            p_aw, p_hm = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar
 
         if round(p) < 0.5:
           p_hm, p_aw = 1, 1
@@ -1281,7 +1375,7 @@ class func_prediccion_orden(normali):
       paises = dfs['pais'].values
       df_fix_group_n = df_fixture_[(df_fixture_['home'].isin(paises)) & (df_fixture_['away'].isin(paises))]
 
-      df_fix_group_n = calculo_metricas_0(df_fix_group_n)
+      df_fix_group_n = calculo_metricas_0(df_fix_group_n) # PEND (agegar parametro 'valor=agno')
 
       X = df_fix_group_n.copy().to_numpy()
       
@@ -1387,7 +1481,7 @@ class func_prediccion_orden(normali):
     tamagno = df_fixture_updated.shape[0]
     self.generar_matches(tamagno)
 
-    df_fixture_partidos = calculo_metricas_0(df_fixture_updated)
+    df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
     X = df_fixture_partidos.copy().to_numpy()
 
     if len(X.shape) == 2:
@@ -1642,7 +1736,7 @@ class func_prediccion_orden(normali):
     dffix.columns = columnas
     dffix = dffix.reset_index(drop=True)
 
-    if year in (1974, 1978, 1982):
+    if year in (1974, 1978, 1982): # PEND (IA, dime si aqui tambien combiene poner la logica condicional (if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):))
       dic_f21 = {}
       if (not self.ind0[0] == "grupo" and not self.ind0[1] == "doce") or (tamagno_1 == 3):
         for des0 in dic_f20.items():
@@ -1653,7 +1747,7 @@ class func_prediccion_orden(normali):
           dic_f21[des0[0]] = new_df
         return dffix, dic_f21
 
-      else:
+      else: # PEND (IA, dime si aqui tambien combiene poner la logica condicional (if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):))
         for des0 in dic_f20.items():
           df0 = pd.DataFrame()
           punto = 0
