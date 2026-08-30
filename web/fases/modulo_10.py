@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from scipy.stats import poisson
 from decimal import Decimal
-from .models import partidos, fixtures, grupos, clasificaciones#, proxy_desempegno
+from .models import partidos, fixtures, grupos, clasificaciones, proxy_desempegno
 
 from numpy.random import seed
 seed(1)
