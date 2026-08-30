@@ -1528,6 +1528,8 @@ class func_prediccion_orden(normali):
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
+        X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
       for points_ in puntos:
