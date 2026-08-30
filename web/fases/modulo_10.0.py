@@ -148,10 +148,10 @@ def formar_dataset_real(ind0, valores=None):
   elif ind0 == "proxy_desempegno":
     df0 = list()
     for des in proxy_desempegno.objects.all():
-      df0.append([des.gkps, des.mds, des.mos, des.mms, des.VI, des.SOT, des.PKATT, des.PKATTALLOW])
+      df0.append([des.pais, des.VI, des.SOT, des.PKATT, des.PKATTALLOW])
     df = np.array(df0)
-    df = pd.DataFrame(data=df, columns=["gkps", "mds", "mos", "mms", "VI", "SOT", "PKATT", "PKATTALLOW"])
-    df.gkps, df.mds, df.mos, df.mms, df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.gkps.astype('int64'), df.mds.astype('int64'), df.mos.astype('int64'), df.mms.astype('int64'), df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
+    df = pd.DataFrame(data=df, columns=["VI", "SOT", "PKATT", "PKATTALLOW"])
+    df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
     return df
 
 def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
@@ -331,35 +331,35 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
   if ind0 == 0:
     return pd.DataFrame(dic_dsp, index=[indx])
 
-def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW): # calc_gkps(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
+def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW):
     VI = VI.sum()
     PJ = PJ_i.sum()
     GR = GC_i.sum()
     PKATTALLOW = PKATTALLOW.sum()
     return ((VI/PJ)*60) + (40 - ((GR - PKATTALLOW)/PJ)*10) if PJ > 0 else 0
 
-def calc_mds(PJ_i, GC_i, VI, PKATTALLOW): # calc_mds(df_desempegno.PJ_i, df_desempegno.GC_i, opcionales.VI, opcionales.PKATTALLOW)
+def calc_mds(PJ_i, GC_i, VI, PKATTALLOW):
     VI = VI.sum()
     PJ = PJ_i.sum()
     GR = GC_i.sum()
     PKATTALLOW = PKATTALLOW.sum()
     return ((VI/PJ)*50) + (50 - (((GR + PKATTALLOW)/PJ)*10)) if PJ > 0 else 0
 
-def calc_mos(PJ_i, GF_i, SOT, PKATT): # calc_mos(df_desempegno.PJ_i, df_desempegno.GF_i, opcionales.SOT, opcionales.PKATT)
+def calc_mos(PJ_i, GF_i, SOT, PKATT):
     GA = GF_i.sum()
     PJ = PJ_i.sum()
     SOT = SOT.sum() 
     PKATT = PKATT.sum() 
     return ((GA/PJ)*0.5 + (SOT/PJ)*0.3 + ((GA - PKATT)/SOT)*0.2) if PJ > 0 and SOT > 0 else 0
 
-def calc_mms(PJ_i, PTS_i, PG_i, SOT): # calc_mms(df_desempegno.PJ_i, df_desempegno.PTS_i, df_desempegno.PG_i, opcionales.SOT)
+def calc_mms(PJ_i, PTS_i, PG_i, SOT):
     PTS = PJ_i.sum()
     PJ = PTS_i.sum()
     PG = PG_i.sum()
     SOT = SOT.sum()
     return (((PTS/(PJ*3))*40) + ((PG/PJ)*40) + ((SOT/PJ)*2)) if PJ > 0 else 0
 
-def calculo_metricas_0(df_desempegno, agno=None): # PEND (agegar parametro 'valor=agno')
+def calculo_metricas_0(df_desempegno, agno=None):
   """
   ¿QUE HACE?
   Toma el df de desempeño (df_desempegno), que tiene el orden de juego con el nombre de los equipos y parametros de rendimiento de cada equipo que juega la fase de grupos, o en alguno de los rounds de la fase final, y le agrega 4 columnas nuevas que son "ts_GF_0", "ts_GC_0", "ts_GF_1", "ts_GC_1", que contienen los valores de tasa de goles a favor y en contra para los equipos que juegan como "home" y "away" respectivamente, calculados segun la formula: (goles a favor o en contra / partidos jugados) * 10
@@ -412,81 +412,91 @@ def calculo_metricas_0(df_desempegno, agno=None): # PEND (agegar parametro 'valo
   """
   local_mapping = {}
   visitor_mapping = {}
+  retirar = []
 
   if(OPTIONAL_METRICS!=[]):
     opcionales = formar_dataset_real("df_desempegno", valor=agno)
     opcioneales = opcioneales[opcioneales['home']==df_desempegno.home.iloc[0]]
 
 
-  if(not 'gkps_0' in OPTIONAL_METRICS):
+  if('gkps_0' in OPTIONAL_METRICS):
     local_mapping['gkps_0'] = calc_gkps(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
   else:
     local_mapping['gkps_0'] = np.nan
     
-  if(not 'gkps_1' in OPTIONAL_METRICS):
+  if('gkps_1' in OPTIONAL_METRICS):
     visitor_mapping['gkps_1'] = calc_gkps(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
   else:
     visitor_mapping['gkps_1'] = np.nan
 
 
-  if(not 'mds_0' in OPTIONAL_METRICS):
+  if('mds_0' in OPTIONAL_METRICS):
     local_mapping['mds_0'] = calc_mds(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
   else:
     local_mapping['mds_0'] = np.nan
 
-  if(not 'mds_1' in OPTIONAL_METRICS):
+  if('mds_1' in OPTIONAL_METRICS):
     visitor_mapping['mds_1'] = calc_mds(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
   else:
     visitor_mapping['mds_1'] = np.nan
 
 
-  if(not 'mos_0' in OPTIONAL_METRICS):
+  if('mos_0' in OPTIONAL_METRICS):
     local_mapping['mos_0'] = calc_mos(df_desempegno.PJ_0, df_desempegno.GF_0, opcionales.SOT, opcionales.PKATT)
   else:
     local_mapping['mos_0'] = np.nan
 
-  if(not 'mos_1' in OPTIONAL_METRICS):
+  if('mos_1' in OPTIONAL_METRICS):
     visitor_mapping['mos_1'] = calc_mos(df_desempegno.PJ_1, df_desempegno.GF_1, opcionales.SOT, opcionales.PKATT)
   else:
     visitor_mapping['mos_1'] = np.nan
 
 
-  if(not 'mms_0' in OPTIONAL_METRICS):
+  if('mms_0' in OPTIONAL_METRICS):
     local_mapping['mms_0'] = calc_mms(df_desempegno.PJ_0, df_desempegno.PTS_0, df_desempegno.PG_0, opcionales.SOT)
   else:
     local_mapping['mms_0'] = np.nan
 
-  if(not 'mms_1' in OPTIONAL_METRICS):
+  if('mms_1' in OPTIONAL_METRICS):
     visitor_mapping['mms_1'] = calc_mms(df_desempegno.PJ_1, df_desempegno.PTS_1, df_desempegno.PG_1, opcionales.SOT)
   else:
     visitor_mapping['mms_1'] = np.nan
 
 
-  if(not 'rate_home_GF' in OPTIONAL_METRICS):
+  if('rate_home_GF' in OPTIONAL_METRICS):
     local_mapping['rate_home_GF'] = (df_desempegno.GF_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
+    retirar.append("GF_0")
   else:
     local_mapping['rate_home_GF'] = np.nan
 
 
-  if(not 'rate_away_GF' in OPTIONAL_METRICS):
+  if('rate_away_GF' in OPTIONAL_METRICS):
     visitor_mapping['rate_away_GF'] = (df_desempegno.GF_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
+    retirar.append("GF_1")
   else:
     visitor_mapping['rate_away_GF'] = np.nan
 
 
-  if(not 'rate_home_GC' in OPTIONAL_METRICS):
+  if('rate_home_GC' in OPTIONAL_METRICS):
     local_mapping['rate_home_GC'] = (df_desempegno.GC_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
+    retirar.append("GC_0")
   else:
     local_mapping['rate_home_GC'] = np.nan
 
 
-  if(not 'rate_away_GC' in OPTIONAL_METRICS):
+  if('rate_away_GC' in OPTIONAL_METRICS):
     visitor_mapping['rate_away_GC'] = (df_desempegno.GC_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
+    retirar.append("GC_1")
   else:
     visitor_mapping['rate_away_GC'] = np.nan
 
+  if(('rate_home_GF' in OPTIONAL_METRICS) and ('rate_home_GC' in OPTIONAL_METRICS)):
+    retirar.append("D_0")
 
-  dfBase = df_desempegno.copy().drop(["PJ_0", "GF_0", "GC_0", "D_0", "PJ_1", "GF_1", "GC_1", "D_1"], axis=1) # PEND (retirar solo las no solicitadas)
+  if(('rate_away_GF' in OPTIONAL_METRICS) and ('rate_away_GC' in OPTIONAL_METRICS)):
+    retirar.append("D_1")
+
+  dfBase = df_desempegno.copy().drop(retirar, axis=1)
 
   data_metricas = {
     "home": [df_desempegno.home],
@@ -1374,14 +1384,14 @@ class func_prediccion_orden(normali):
     for group, dfs in dic_t.items():
       paises = dfs['pais'].values
       df_fix_group_n = df_fixture_[(df_fixture_['home'].isin(paises)) & (df_fixture_['away'].isin(paises))]
-
-      df_fix_group_n = calculo_metricas_0(df_fix_group_n) # PEND (agegar parametro 'valor=agno')
-
-      X = df_fix_group_n.copy().to_numpy()
+      X = np.array([])
       
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
+        X = df_fix_group_n.copy().to_numpy()
+        # PEND (agegar parametro 'valor=agno'))
+        df_fix_group_n = calculo_metricas_0(df_fix_group_n)
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
       for points_, row in zip(puntos, df_fix_group_n.itertuples()):
@@ -1480,14 +1490,14 @@ class func_prediccion_orden(normali):
     partido = ""
     tamagno = df_fixture_updated.shape[0]
     self.generar_matches(tamagno)
-
-    df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
-    X = df_fixture_partidos.copy().to_numpy()
+    X = np.array([]) # PEND (dar formato adecuado con "home", "away" para entrar con (alterno=1) a "intsc_prob_goles" y obtener los resultados default de los partidos previos a la fase objetivo de prediccion)
 
     if len(X.shape) == 2:
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
+        X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
       for points_, row in zip(puntos, df_fixture_updated.itertuples()):

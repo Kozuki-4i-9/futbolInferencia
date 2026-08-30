@@ -137,3 +137,7 @@ model.fit(X_tr, Y_tr,  batch_size=16, validation_data=(X_val, Y_val), epochs=110
 - definir dependencias entradas y salidas de todas las funciones de torneo
 - actualizar función orm para tomar nueva tabla métricas proxy
 - crear scraper selenium para métricas proxy
+
+# 30 08 2026 0
+
+- deben scrapearse solo estos parametros para "VI", "SOT", "PKATT", "PKATTALLOW" para fases de clasificacion o en su defecto del mundial a predecir
