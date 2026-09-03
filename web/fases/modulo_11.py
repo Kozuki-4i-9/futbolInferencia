@@ -12,21 +12,20 @@ tf.random.set_seed(2)
 
 agnos = ["1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2026", "2022"]
 
-# Metrics configuration for easy extensibility
 BASE_METRICS = ["PTS", "PJ", "PG", "PP", "PE", "GF", "GC", "D"]
-OPTIONAL_METRICS = []  # Users can add optional metrics here (e.g., 'fifa_rank')
+OPTIONAL_METRICS = [] 
 ALL_METRICS = BASE_METRICS + OPTIONAL_METRICS
+# PEND hacer a (opcionales) sensible al desempeño predicho por el momdelo desde la funcion (funcion_tabla_desempegno)
+opcionales = None
 
-# Deep learning parameter configurations
 C_S_DELETE_INDEX = 8
 C_S_Y_INDEX = 8
 N_STEPS = 0
 
-# Slicing/indexing parameters for match features in intsc_prob_goles
 MATCH_HOME_IDX = 0
-MATCH_AWAY_IDX = 1  # Note: in modulo_8.py, away was fetched from index 1 due to feature zipping.
+MATCH_AWAY_IDX = 1 
 
-def formar_dataset_real(ind0, valores=None):
+def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
   """
   ¿QUE HACE?
   Busca en la base de datos segun la tabla indicada por "ind0" y segun el año presente en valores (no lo estará en el caso de ind0="clasificaciones").
@@ -154,7 +153,7 @@ def formar_dataset_real(ind0, valores=None):
     df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
     return df
 
-def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
+def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0): # PEND (ajustar para actualizar (opcionales))
   """
   ¿QUE HACE?
   Calcula y acumula las métricas de desempeño (PTS, PJ, PG, PP, PE, GF, GC, D) para el equipo (pais) indicado, iterando los partidos presentes en el df (df0). Puede ser usado para generar el rendimiento acumulado en la fase eliminatoria previa al mundial (ind0=0), o para ajustar dicho rendimiento en el df (df0) tras las predicciones de goles del modelo para alguna fase del mundial (ind0=1)
@@ -331,185 +330,100 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
   if ind0 == 0:
     return pd.DataFrame(dic_dsp, index=[indx])
 
-def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW):
+def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
     VI = VI.sum()
     PJ = PJ_i.sum()
     GR = GC_i.sum()
     PKATTALLOW = PKATTALLOW.sum()
     return ((VI/PJ)*60) + (40 - ((GR - PKATTALLOW)/PJ)*10) if PJ > 0 else 0
 
-def calc_mds(PJ_i, GC_i, VI, PKATTALLOW):
+def calc_mds(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
     VI = VI.sum()
     PJ = PJ_i.sum()
     GR = GC_i.sum()
     PKATTALLOW = PKATTALLOW.sum()
     return ((VI/PJ)*50) + (50 - (((GR + PKATTALLOW)/PJ)*10)) if PJ > 0 else 0
 
-def calc_mos(PJ_i, GF_i, SOT, PKATT):
+def calc_mos(PJ_i, GF_i, SOT, PKATT): # PEND (falta docstring)
     GA = GF_i.sum()
     PJ = PJ_i.sum()
-    SOT = SOT.sum() 
-    PKATT = PKATT.sum() 
+    SOT = SOT.sum()
+    PKATT = PKATT.sum()
     return ((GA/PJ)*0.5 + (SOT/PJ)*0.3 + ((GA - PKATT)/SOT)*0.2) if PJ > 0 and SOT > 0 else 0
 
-def calc_mms(PJ_i, PTS_i, PG_i, SOT):
+def calc_mms(PJ_i, PTS_i, PG_i, SOT): # PEND (falta docstring)
     PTS = PJ_i.sum()
     PJ = PTS_i.sum()
     PG = PG_i.sum()
     SOT = SOT.sum()
     return (((PTS/(PJ*3))*40) + ((PG/PJ)*40) + ((SOT/PJ)*2)) if PJ > 0 else 0
 
-def calculo_metricas_0(df_desempegno, agno=None):
-  """
-  ¿QUE HACE?
-  Toma el df de desempeño (df_desempegno), que tiene el orden de juego con el nombre de los equipos y parametros de rendimiento de cada equipo que juega la fase de grupos, o en alguno de los rounds de la fase final, y le agrega 4 columnas nuevas que son "ts_GF_0", "ts_GC_0", "ts_GF_1", "ts_GC_1", que contienen los valores de tasa de goles a favor y en contra para los equipos que juegan como "home" y "away" respectivamente, calculados segun la formula: (goles a favor o en contra / partidos jugados) * 10
-  
-  ¿COMO LO HACE?
-  0-) Se crea un df vacio (df_nw_desempegno) 
-  
-  1-) Se crean 2 listas (col0_, col1_) contenedoras de los nombres de columnas del df (df_desempegno): (col0_) tomando las primeras 10 columnas mediante slicing (iloc[:,:10]) y descartando con drop las columnas "PJ_0", "GF_0", "GC_0", "D_0"; y (col1_) tomando las columnas desde la posicion 10 en adelante (iloc[:,10:]) y descartando con drop las columnas "PJ_1", "GF_1", "GC_1", "D_1"
-
-    -> quedando algo como:
-
-    col0_ = ["home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"   "score_0"]   
-
-    col1_ = ["away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"   "score_1"]   
-
-  2-) Se itera sobre las filas del df (df_desempegno) en forma de tupla
-    
-    2.0) se coloca todo el contenido de cada linea iterada de la variable (linea) en la nueva variable (lista) 
-    
-    2.1) se reemplaza esta variable a una nueva donde se eliminan los elementos innecesarios de la lista (en los indices 3, 7, 8, 9, 13, 17, 18, 19) que corresponden a "PJ_0" , "GF_0", "GC_0", "D_0" y "PJ_1", "GF_1", "GC_1", "D_1" respectivamente
-    
-      -> quedando algo como: 
-      
-      lista = ["home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"   "score_0"   "away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"   "score_1"]   (claves alusivas a los valores que tendrá la lista)
-  
-    2.2) Se calculan las tasas de goles a favor y en contra para los equipos "home" y "away" (ts_home_GF, ts_away_GF, ts_home_GC, ts_away_GC) segun la formula: (goles a favor o en contra / partidos jugados) * 10, teniendo en cuenta que si los partidos jugados son 0, se reemplaza este valor por 0.085 para evitar division por cero
-
-    2.1) Se crea un diccionario (dic_paises_fg) de relleno para un df (linea_L) con las claves-valor correspondientes a los equipos "home" y "away", los parametros de rendimiento iterados segun las variables (col0_) (col1_) y (lista), mas las nuevas columnas de tasas de goles a favor y en contra y se agrega el parametro de diferencia de goles (D_0, D_1) 
-    
-    2.2) Se crea un df (linea_L) con el diccionario (dic_paises_fg) and el indice igual al indice de la variable de iteracion (linea.Index)
-
-    2.3) Se concatena el df (linea_L) al df (df_nw_desempegno) a lo largo del eje 0
-
-  Args:
-  
-  - df_desempegno: df contenedor de los partidos jugados en la fase eliminatoria previa al mundial, o en alguna fase o round del mundial, con las predicciones de goles hechas por el modelo para cada partido
-
-    -> siendo de la forma:
-
-    df_desempegno = ["id0"   "home"   "PTS_0"   "PJ_0"   "PG_0"   "PP_0"   "PE_0"   "GF_0"   "GC_0"   "D_0"   "score_0"   "away"   "PTS_1"   "PJ_1"   "PG_1"   "PP_1"   "PE_1"   "GF_1"   "GC_1"   "D_1"   "score_1"] (claves alusivas a los valores que tendrá la lista)
-
-  Returns:
-
-  - df_nw_desempegno: df contenedor de los partidos jugados en la fase eliminatoria previa al mundial, o en alguna fase o round del mundial, con las predicciones de goles hechas por el modelo para cada partido, mas las nuevas columnas de tasas de goles a favor y en contra para los equipos "home" y "away"
-
-    -> siendo de la forma:
-
-    df_nw_desempegno = ["home"   "PTS_0"   "PG_0"   "PP_0"   "PE_0"   "ts_GF_0"   "ts_GC_0"   "D_0"   "away"   "PTS_1"   "PG_1"   "PP_1"   "PE_1"   "ts_GF_1"   "ts_GC_1"   "D_1"] (claves alusivas a los valores que tendrá la lista)
-
-  """
-  local_mapping = {}
-  visitor_mapping = {}
-  retirar = []
-
-  if(OPTIONAL_METRICS!=[]):
-    opcionales = formar_dataset_real("df_desempegno", valor=agno)
-    opcioneales = opcioneales[opcioneales['home']==df_desempegno.home.iloc[0]]
-
-
-  if('gkps_0' in OPTIONAL_METRICS):
-    local_mapping['gkps_0'] = calc_gkps(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
+def calc_rate(df, tipo, num=0): # PEND (falta docstring)
+  busqueda = tipo + "_" + str(num)
+  if(busqueda in OPTIONAL_METRICS):
+    return (df[busqueda] / df[f"PJ_{num}"].replace(0, 0.085)) * 10
   else:
-    local_mapping['gkps_0'] = np.nan
-    
-  if('gkps_1' in OPTIONAL_METRICS):
-    visitor_mapping['gkps_1'] = calc_gkps(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
+    return np.nan
+
+def obtener_diferencia(df, num=0): # PEND (falta docstring)
+  if(('GC' + '_' + f'{num}' in OPTIONAL_METRICS) and ('GF' + '_' + f'{num}' in OPTIONAL_METRICS)):
+    return df[f'GF_{num}'] - df[f'GC_{num}']
   else:
-    visitor_mapping['gkps_1'] = np.nan
+    return np.nan
 
+def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
+    global opcionales
+    columnas = []
 
-  if('mds_0' in OPTIONAL_METRICS):
-    local_mapping['mds_0'] = calc_mds(df_desempegno.PJ_0, df_desempegno.GC_0, opcionales.VI, opcionales.PKATTALLOW)
-  else:
-    local_mapping['mds_0'] = np.nan
+    if((OPTIONAL_METRICS!=[]) and opcionales is None):
+        opcionales = formar_dataset_real("proxy_desempegno", agno)
 
-  if('mds_1' in OPTIONAL_METRICS):
-    visitor_mapping['mds_1'] = calc_mds(df_desempegno.PJ_1, df_desempegno.GC_1, opcionales.VI, opcionales.PKATTALLOW)
-  else:
-    visitor_mapping['mds_1'] = np.nan
+    paises_unicos = pd.concat([df_desempegno['home'], df_desempegno['away']]).unique()
 
+    insumos_apuntados = opcionales[opcionales['pais'].isin(paises_unicos)]
 
-  if('mos_0' in OPTIONAL_METRICS):
-    local_mapping['mos_0'] = calc_mos(df_desempegno.PJ_0, df_desempegno.GF_0, opcionales.SOT, opcionales.PKATT)
-  else:
-    local_mapping['mos_0'] = np.nan
+    df1 = df_desempegno.copy()
 
-  if('mos_1' in OPTIONAL_METRICS):
-    visitor_mapping['mos_1'] = calc_mos(df_desempegno.PJ_1, df_desempegno.GF_1, opcionales.SOT, opcionales.PKATT)
-  else:
-    visitor_mapping['mos_1'] = np.nan
+    idxaway = df1.columns.tolist().index('away')
+    homes = df1.iloc[:,:idxaway-1]
+    aways = df1.iloc[:,idxaway:-1]
 
+    homes.rename(columns={'home':'pais'},inplace=True);
+    aways.rename(columns={'away':'pais'},inplace=True);
 
-  if('mms_0' in OPTIONAL_METRICS):
-    local_mapping['mms_0'] = calc_mms(df_desempegno.PJ_0, df_desempegno.PTS_0, df_desempegno.PG_0, opcionales.SOT)
-  else:
-    local_mapping['mms_0'] = np.nan
+    apuntar_a_home = homes.merge(insumos_apuntados,on="pais",how="inner");
+    apuntar_a_away = aways.merge(insumos_apuntados,on="pais",how="inner");
 
-  if('mms_1' in OPTIONAL_METRICS):
-    visitor_mapping['mms_1'] = calc_mms(df_desempegno.PJ_1, df_desempegno.PTS_1, df_desempegno.PG_1, opcionales.SOT)
-  else:
-    visitor_mapping['mms_1'] = np.nan
+    df_nuevo = pd.DataFrame()
+    equipos = {0:'home', 1:'away'}
 
+    for idx, trab in enumerate([apuntar_a_home, apuntar_a_away]):
 
-  if('rate_home_GF' in OPTIONAL_METRICS):
-    local_mapping['rate_home_GF'] = (df_desempegno.GF_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
-    retirar.append("GF_0")
-  else:
-    local_mapping['rate_home_GF'] = np.nan
+        dfEspecializado = trab.groupby('pais', as_index=False).apply(
+            lambda g: pd.Series({
+                f'gkps_{idx}': calc_gkps(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
+                f'mds_{idx}': calc_mds(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
+                f'mos_{idx}': calc_mos(g[f'PJ_{idx}'], g[f'GF_{idx}'], g['SOT'], g['PKATT']),
+                f'mms_{idx}': calc_mms(g[f'PJ_{idx}'], g[f'PTS_{idx}'], g[f'PG_{idx}'], g['SOT']),
+                f'rate_GC_{idx}': calc_rate(g[f'GC_{idx}'], 'GC', num=idx),
+                f'rate_GF_{idx}': calc_rate(g[f'GF_{idx}'], 'GF', num=idx),
+                f'D_{idx}': obtener_diferencia(g, num=idx),
+            })
+        ).reset_index(drop=True)
 
+        trab.drop(columns=['VI', 'SOT', 'PKATT', 'PKATTALLOW'], inplace=True)
 
-  if('rate_away_GF' in OPTIONAL_METRICS):
-    visitor_mapping['rate_away_GF'] = (df_desempegno.GF_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
-    retirar.append("GF_1")
-  else:
-    visitor_mapping['rate_away_GF'] = np.nan
+        df_provisional = trab.merge(dfEspecializado, on='pais', how='inner')
+        df_provisional.rename(columns={'pais':equipos[idx]},inplace=True);
 
+        nuevas_columnas = [f'gkps_{idx}', f'mds_{idx}', f'mos_{idx}', f'mms_{idx}',
+                          f'rate_GC_{idx}', f'rate_GF_{idx}', f'D_{idx}']
 
-  if('rate_home_GC' in OPTIONAL_METRICS):
-    local_mapping['rate_home_GC'] = (df_desempegno.GC_0 / df_desempegno.PJ_0.replace(0, 0.085)) * 10
-    retirar.append("GC_0")
-  else:
-    local_mapping['rate_home_GC'] = np.nan
+        df_nuevo = pd.concat([df_nuevo, df_provisional], axis=1, ignore_index=True)
+        columnas = [*columnas, *df_provisional.columns]
 
-
-  if('rate_away_GC' in OPTIONAL_METRICS):
-    visitor_mapping['rate_away_GC'] = (df_desempegno.GC_1 / df_desempegno.PJ_1.replace(0, 0.085)) * 10
-    retirar.append("GC_1")
-  else:
-    visitor_mapping['rate_away_GC'] = np.nan
-
-  if(('rate_home_GF' in OPTIONAL_METRICS) and ('rate_home_GC' in OPTIONAL_METRICS)):
-    retirar.append("D_0")
-
-  if(('rate_away_GF' in OPTIONAL_METRICS) and ('rate_away_GC' in OPTIONAL_METRICS)):
-    retirar.append("D_1")
-
-  dfBase = df_desempegno.copy().drop(retirar, axis=1)
-
-  data_metricas = {
-    "home": [df_desempegno.home],
-    **{key_0: value_0 for _, fila in dfBase.iterrows() for key_0, value_0 in fila.to_dict().items() if key_0[-1] == '0'},
-    **{key: [local_mapping[key]] for key in local_mapping.keys()},
-    "away": [df_desempegno.away],
-    **{key_1: value_1 for _, fila in dfBase.iterrows() for key_1, value_1 in fila.to_dict().items() if key_1[-1] == '1'},
-    **{key: [visitor_mapping[key]] for key in visitor_mapping.keys()},
-    }
-
-  dfBase = pd.DataFrame(data_metricas)
-
-  return dfBase
+    df_nuevo.columns = columnas
+    return df_nuevo
 
 def calculo_metricas_1(df_desempegno):
   """
@@ -1108,7 +1022,7 @@ class normali():
     else:
       return df1, df2, df3
 
-def emparejar_equipos(ObjNrml):
+def emparejar_equipos(ObjNrml): # PEND recordar optimizar esto con decoradores
   """
   ¿QUE HACE?
   Se genera un df contenedor de los 1ros n partidos de la fase final, mediante el uso de los metodos de emparejamiento de la clase "normali". Especificamente, se accede a todos los df de los grupos de un mundial, se saca a cada uno su 3er lugar y se determina cual tuvo los 4 mejores 3ros, se generan los emparejamientos variables entre 1ros y mejores 3ros lugares y finalmente se crea un df con todos los emparejamientos del 1er round de la fase final, tanto los variables (1ros vs mejores 3ros determinados por reglamento FIFA) como los estaticos (cruces fijos predefinidos por reglamento FIFA para el formato 1986-1994)
@@ -1136,7 +1050,7 @@ def emparejar_equipos(ObjNrml):
   ObjNrml.emparejamiento_partidos_dependientes(cuatro_mayores)
   return ObjNrml.octavos_1986_a_1994(ObjNrml.ref_0)
 
-def knock_out_1986_1994(df0, df1):
+def knock_out_1986_1994(df0, df1): # PEND recordar optimizar esto con decoradores
   """
   ¿QUE HACE?
   Toma la salida de "emparejar_equipos" (df0) y el contenido del df consulta del usuario en (df1) y toma como lista los valores de "home" y "away" del 1ro, mientras que toma como lista los valores "score" del 2do, alamacena los 2 primeros en variables (emp0) y (emp1), y el "score" en una variable (sc_emp). Luego retorna un df contenedor de estas variables ya en orden y con el indice apropiado para cada fila
@@ -1391,6 +1305,7 @@ class func_prediccion_orden(normali):
       else:
         X = df_fix_group_n.copy().to_numpy()
         # PEND (agegar parametro 'valor=agno'))
+        # PEND recomentar docstring
         df_fix_group_n = calculo_metricas_0(df_fix_group_n)
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
@@ -1496,7 +1411,9 @@ class func_prediccion_orden(normali):
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
-        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
+        # PEND (agegar parametro 'valor=agno')
+        # PEND recomentar docstring
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) 
         X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
@@ -1528,7 +1445,9 @@ class func_prediccion_orden(normali):
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
-        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) # PEND (agegar parametro 'valor=agno')
+        # PEND (agegar parametro 'valor=agno')
+        # PEND recomentar docstring
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) 
         X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
