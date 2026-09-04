@@ -319,7 +319,7 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0): # PEND (a
         dic_dsp[gf_1_col] += partido.score_1
         dic_dsp[gc_1_col] += partido.score_0
 
-      dic_dsp[d_1_col] = dic_dsp[gf_1_col] - dic_dsp[gc_1_col]
+      dic_dsp[d_1_col] = dic_dsp[gf_1_col] - dic_dsp[gc_1_col] # PEND cambiar por SOT o VI 
       dic_dsp[pj_1_col] += 1
       primero = pd.DataFrame(data=dic_dsp, index=[0])
 
@@ -388,11 +388,11 @@ def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
     homes = df1.iloc[:,:idxaway-1]
     aways = df1.iloc[:,idxaway:-1]
 
-    homes.rename(columns={'home':'pais'},inplace=True);
-    aways.rename(columns={'away':'pais'},inplace=True);
+    homes.rename(columns={'home':'pais'},inplace=True)
+    aways.rename(columns={'away':'pais'},inplace=True)
 
-    apuntar_a_home = homes.merge(insumos_apuntados,on="pais",how="inner");
-    apuntar_a_away = aways.merge(insumos_apuntados,on="pais",how="inner");
+    apuntar_a_home = homes.merge(insumos_apuntados,on="pais",how="inner")
+    apuntar_a_away = aways.merge(insumos_apuntados,on="pais",how="inner")
 
     df_nuevo = pd.DataFrame()
     equipos = {0:'home', 1:'away'}

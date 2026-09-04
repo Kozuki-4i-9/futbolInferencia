@@ -148,4 +148,7 @@ dame un resumen en que:
 - me definas la interpretacion oponent stats de estas variables en la tabla (intuyo que es: Argelia->sota (tiros a puerta recibidos por los rivales de argelia), pero tu aclaramelo)
 - como atenderias el caso de que, tengo un df pandas con solo esas 4 variables VI, SOT, PKATT, PKATTALLOW por equipo y, tras una serie de partidos donde cambian score_home (goles de home) y score_away (gooles de away) en otro df (donde que tambien cuento con estas metricas "PTS_0", "PJ_0", "PG_0", "PP_0", "PE_0", "GF_0", "GC_0", "D_0" para home y "PTS_1", "PJ_1", "PG_1", "PP_1", "PE_1", "GF_1", "GC_1", "D_1" para away), como puedo ajustar matematicamente y a nivel de pandas, las variables del 1er df VI, SOT, PKATT, PKATTALLOW 
 
+# 03 09 2026 0
 
+https://chat.deepseek.com/share/vthng5glruvh2jzv0z
+https://chat.deepseek.com/share/jyv6jrfjj9lxfpoi6n
