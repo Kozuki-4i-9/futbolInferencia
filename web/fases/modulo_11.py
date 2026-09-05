@@ -14,7 +14,9 @@ agnos = ["1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974",
 
 BASE_METRICS = ["PTS", "PJ", "PG", "PP", "PE", "GF", "GC", "D"]
 OPTIONAL_METRICS = [] 
+DROP_METRICS = []
 ALL_METRICS = BASE_METRICS + OPTIONAL_METRICS
+
 # PEND hacer a (opcionales) sensible al desempeño predicho por el momdelo desde la funcion (funcion_tabla_desempegno)
 opcionales = None
 
@@ -385,8 +387,8 @@ def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
     df1 = df_desempegno.copy()
 
     idxaway = df1.columns.tolist().index('away')
-    homes = df1.iloc[:,:idxaway-1]
-    aways = df1.iloc[:,idxaway:-1]
+    homes = df1.iloc[:,:idxaway-1] # PEND se trata de evitar tomar score_0 mediante este -1
+    aways = df1.iloc[:,idxaway:-1] # PEND se trata de evitar tomar score_1 mediante este -1
 
     homes.rename(columns={'home':'pais'},inplace=True)
     aways.rename(columns={'away':'pais'},inplace=True)
@@ -896,7 +898,7 @@ class normali():
 
     for i in range(len(data) - n_steps0):
       X.append(data0[i:i + n_steps0, :])
-      y.append(data[i + n_steps0 - 1, C_S_Y_INDEX])
+      y.append(data[i + n_steps0 - 1, C_S_Y_INDEX]) # PEND verificar que realmente haga falta ese -1
 
     return np.array(X), np.array(y)
 
