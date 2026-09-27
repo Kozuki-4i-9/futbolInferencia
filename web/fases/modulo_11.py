@@ -416,7 +416,7 @@ def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
         trab.drop(columns=['VI', 'SOT', 'PKATT', 'PKATTALLOW'], inplace=True)
 
         df_provisional = trab.merge(dfEspecializado, on='pais', how='inner')
-        df_provisional.rename(columns={'pais':equipos[idx]},inplace=True);
+        df_provisional.rename(columns={'pais':equipos[idx]},inplace=True)
 
         nuevas_columnas = [f'gkps_{idx}', f'mds_{idx}', f'mos_{idx}', f'mms_{idx}',
                           f'rate_GC_{idx}', f'rate_GF_{idx}', f'D_{idx}']

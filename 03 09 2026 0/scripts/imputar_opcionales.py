@@ -2,6 +2,8 @@
 
 # DF2 (partidos): columnas con estadísticas de home y away (goles, puntos, etc.). Contiene los resultados de la jornada que acaba de jugarse.
 
+DF1, DF2 = None, None
+
 for idx, row in DF2.iterrows():
     home = row['home_team']
     away = row['away_team']
