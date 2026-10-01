@@ -7,11 +7,11 @@ def calculo_metricas_0():
 def calculo_metricas_1():
     pass
 
-def fase_de_grupos(self, dic_t, df_fixture_, model):
+def fase_de_grupos(self, dic_general_de_puntajes_por_equipo, df_fixture_, model):
     # 1. Lookup table: equipo -> nombre del grupo
     grupo_por_equipo = pd.Series({
         equipo.strip(): nombre_grupo
-        for nombre_grupo, df_grupo in dic_t.items()
+        for nombre_grupo, df_grupo in dic_general_de_puntajes_por_equipo.items()
         for equipo in df_grupo["pais"]
     })
 
@@ -41,24 +41,24 @@ def fase_de_grupos(self, dic_t, df_fixture_, model):
         away = row.away.strip()
 
         # Actualización del grupo por equipo
-        dic_t.loc[dic_t["pais"] == home, "Pts"] += points_[0][1]
-        dic_t.loc[dic_t["pais"] == away, "Pts"] += points_[1][1]
+        dic_general_de_puntajes_por_equipo.loc[dic_general_de_puntajes_por_equipo["pais"] == home, "Pts"] += points_[0][1]
+        dic_general_de_puntajes_por_equipo.loc[dic_general_de_puntajes_por_equipo["pais"] == away, "Pts"] += points_[1][1]
 
         # Guardamos scores en la posición original de cada partido
         score_0.at[idx] = points_[0][0]
         score_1.at[idx] = points_[1][0]
 
     # 6. Ordenar, limpiar y redondear el grupo actualizado
-        dic_t[bombos.iloc[idx, 'home']] = (
-            dic_t
+        dic_general_de_puntajes_por_equipo[bombos.iloc[idx, 'bhome']] = (
+            dic_general_de_puntajes_por_equipo
             .sort_values("Pts", ascending=False)
             .reset_index(drop=True)
             .loc[:, ["pais", "Pts"]]
             .round(0)
         )
 
-        dic_t[bombos.iloc[idx, 'away']] = (
-            dic_t
+        dic_general_de_puntajes_por_equipo[bombos.iloc[idx, 'baway']] = (
+            dic_general_de_puntajes_por_equipo
             .sort_values("Pts", ascending=False)
             .reset_index(drop=True)
             .loc[:, ["pais", "Pts"]]
@@ -70,4 +70,4 @@ def fase_de_grupos(self, dic_t, df_fixture_, model):
     df_fixture_["score_1"] = score_1
     calculo_metricas_1(df_fixture_)
 
-    return dic_t
+    return dic_general_de_puntajes_por_equipo
