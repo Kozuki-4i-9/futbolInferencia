@@ -7,12 +7,12 @@ def calculo_metricas_0():
 def calculo_metricas_1():
     pass
 
-def fase_de_grupos(self, dic_general_de_puntajes_por_equipo, df_fixture_, model):
+def fase_de_liga(self, dic_bombo_puntaje_equipos, df_fixture_, model):
     # 1. Lookup table: equipo -> nombre del grupo
     grupo_por_equipo = pd.Series({
         equipo.strip(): nombre_grupo
-        for nombre_grupo, df_grupo in dic_general_de_puntajes_por_equipo.items()
-        for equipo in df_grupo["pais"]
+        for nombre_grupo, df_bombo in dic_bombo_puntaje_equipos.items()
+        for equipo in df_bombo["pais"]
     })
 
     # 2. Copia de trabajo con el grupo localizado para cada fila
@@ -40,25 +40,27 @@ def fase_de_grupos(self, dic_general_de_puntajes_por_equipo, df_fixture_, model)
         home = row.home.strip()
         away = row.away.strip()
 
+        _idx_bhome, _idx_baway = bombos.iloc[idx, 'bhome'], bombos.iloc[idx, 'baway']
+        
         # Actualización del grupo por equipo
-        dic_general_de_puntajes_por_equipo.loc[dic_general_de_puntajes_por_equipo["pais"] == home, "Pts"] += points_[0][1]
-        dic_general_de_puntajes_por_equipo.loc[dic_general_de_puntajes_por_equipo["pais"] == away, "Pts"] += points_[1][1]
+        dic_bombo_puntaje_equipos[_idx_bhome].loc[dic_bombo_puntaje_equipos[_idx_bhome]["pais"] == home, "Pts"] += points_[0][1]
+        dic_bombo_puntaje_equipos[_idx_baway].loc[dic_bombo_puntaje_equipos[_idx_baway]["pais"] == away, "Pts"] += points_[1][1]
 
         # Guardamos scores en la posición original de cada partido
         score_0.at[idx] = points_[0][0]
         score_1.at[idx] = points_[1][0]
 
     # 6. Ordenar, limpiar y redondear el grupo actualizado
-        dic_general_de_puntajes_por_equipo[bombos.iloc[idx, 'bhome']] = (
-            dic_general_de_puntajes_por_equipo
+        dic_bombo_puntaje_equipos[_idx_bhome] = (
+            dic_bombo_puntaje_equipos[_idx_bhome]
             .sort_values("Pts", ascending=False)
             .reset_index(drop=True)
             .loc[:, ["pais", "Pts"]]
             .round(0)
         )
 
-        dic_general_de_puntajes_por_equipo[bombos.iloc[idx, 'baway']] = (
-            dic_general_de_puntajes_por_equipo
+        dic_bombo_puntaje_equipos[_idx_baway] = (
+            dic_bombo_puntaje_equipos[_idx_baway]
             .sort_values("Pts", ascending=False)
             .reset_index(drop=True)
             .loc[:, ["pais", "Pts"]]
@@ -70,4 +72,4 @@ def fase_de_grupos(self, dic_general_de_puntajes_por_equipo, df_fixture_, model)
     df_fixture_["score_1"] = score_1
     calculo_metricas_1(df_fixture_)
 
-    return dic_general_de_puntajes_por_equipo
+    return dic_bombo_puntaje_equipos
