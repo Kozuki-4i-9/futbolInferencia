@@ -29,15 +29,15 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
     # --- preparación de insumos históricos para imputar opcionales ---
     insumos = None
     if ind0 == 1 and opcionales is None:
-        try:
+        try: # PEND: evaluar si realmente es esto necesario
             opcionales = formar_dataset_real("proxy_desempegno", agno)
-        except Exception:
-            opcionales = None
+        except Exception: # PEND: evaluar si realmente es esto necesario
+            opcionales = None # PEND: evaluar si realmente es esto necesario
 
     if ind0 == 1 and opcionales is not None and "pais" in opcionales.columns:
         insumos = opcionales.set_index("pais")
         if "PJ" not in insumos.columns and "matches_played" in insumos.columns:
-            insumos["PJ"] = insumos["matches_played"]
+            insumos["PJ"] = insumos["matches_played"] # PEND: evaluar si realmente es esto necesario
 
     for indice, partido in enumerate(df0.copy().itertuples(index=False)):
         if partido.home == pais:
