@@ -6,54 +6,9 @@ import json
 import pandas as pd
 import numpy as np
 
-from .modulo_0 import *
+from .modulo import *
 
 agnos = ["1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2026", "2022"]
-
-def formar_dataset_real(ind0, valores=None):
-    """
-    Busca en la base de datos segun la tabla indicada por "ind0" y segun el año 
-    presente en valores (no lo estará en el caso de ind0="clasificaciones").
-
-    - Args:
-            - ind0: cadena que indica a que tabla se hará la búsqueda
-            - valores: año en que se hará la búsqueda (a no ser que sea un 
-                       ind0="clasificaciones")
-
-    - Returns:
-               - df: dataframe con el contenido de la tabla que se ha consultado
-    """
-    if(ind0=="partidos"):
-        df0 = list()
-        for des in partidos.objects.all():
-            if des.agno==valores:
-                df0.append([des.home, des.score, des.away, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "year"])
-        return(df)
-    
-    elif(ind0=="fixtures"):
-        df0 = list()
-        for des in fixtures.objects.all():
-            if des.agno==valores:
-                df0.append([des.home, des.score, des.away, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "year"])
-        return(df)
-    
-    elif(ind0=="grupos"):
-        df0 = list()
-        for des in grupos.objects.all():
-            if des.agno==valores:
-                df0.append([des.pais, des.Pts, des.PJ, des.PG, des.PP, des.PE, des.GF, des.GC, des.Dif, des.Grupo, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo", "agno"])
-        return(df)
-    
-    elif(ind0=="clasificaciones"):
-        df0 = list()
-        for des in clasificaciones.objects.all():
-            df0.append([des.home, des.score_0, des.score_1, des.away, des.tournament, des.agno])
-        df = np.array(df0)
-        df = pd.DataFrame(data=df, columns=["home", "score_0", "score_1", "away", "tournament", "agno"])
-        return(df)
 
 def formar_dataset_consulta(valores):
     """
