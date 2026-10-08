@@ -155,277 +155,155 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
     return df
 
-def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0): # PEND (ajustar para actualizar (opcionales))
-  """
-  ¿QUE HACE?
-  Calcula y acumula las métricas de desempeño (PTS, PJ, PG, PP, PE, GF, GC, D) para el equipo (pais) indicado, iterando los partidos presentes en el df (df0). Puede ser usado para generar el rendimiento acumulado en la fase eliminatoria previa al mundial (ind0=0), o para ajustar dicho rendimiento en el df (df0) tras las predicciones de goles del modelo para alguna fase del mundial (ind0=1)
+def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
+    """
+    ¿QUE HACE?
+    Calcula y acumula las métricas de desempeño base (BASE_METRICS: PTS, PJ, PG, PP, PE, GF, GC, D) y las métricas opcionales (OPTIONAL_METRICS: VI, SOT, PKATT, PKATTALLOW) para el equipo (pais) indicado, iterando los partidos presentes en el df (df0). Puede ser usado para generar el rendimiento acumulado en la fase eliminatoria previa al mundial (ind0=0), o para ajustar dicho rendimiento dentro del df (df0) tras las predicciones de goles del modelo para alguna fase del mundial (ind0=1). Las métricas base se calculan con los goles "score_0" y "score_1" de cada partido, mientras que las opcionales se imputan (estiman) a partir del histórico previo del equipo y de su rival, guardado en la variable global (opcionales). El acumulado es uno solo para el (pais), sin importar si en cada partido jugó como "home" o como "away"
 
-  ¿COMO LO HACE?
-  0-) Se crea un diccionario (dic_dsp) vacio - Se agregan 2 claves "year, pais" al (dic_dsp) con valores iguales a los parametros (agno) y (pais) respectivamente - Se crea un df vacio (primero) - Se crean los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0) y (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1) y se les da el valor "None" a todos
+    ¿COMO LO HACE?
+    0-) Se declara como global la variable (opcionales)
 
-  1-) Se inicia un bucle for enumerate con la variable de iteracion (partido) de todas las filas como tupla, de una copia del parametro (df0) que contiene ya sea los valores "home", "score_0", "score_1" y "away" de los partidos de la fase eliminatoria previa al mundial, o los parametros de rendimiento de los equipos "home" y "away" de cierta fase o round del mundial
+    1-) Si la variable global (opcionales) es "None"
 
-  2-) Si el equipo registrado en "home" de la variable de iteracion (partido) es igual al parametro (pais)
+      1.0-) Se carga (opcionales) con formar_dataset_real("proxy_desempegno", agno), un df con una columna "pais" y el histórico previo de métricas ("SOT", "PKATT", "PJ", ...) de cada pais
 
-    2.0-) Si el parametro (ind0) es 0 "generandose datos de rendimiento con partidos de eliminatorias" o 1 "ajustándose datos de rendimiento segun las predicciones para "score_0" y "score_1"", y si "None" esta en alguno de los parametros de rendimiento definidos para el "home" (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0, D0)
-    
-      2.0.0-) Si el parametro (ind0) es 0
+    2-) Se define la funcion interna (valor_previo), que recibe una (metrica) y un (equipo) y retorna el valor de esa metrica para ese equipo dentro de (opcionales), o un valor por defecto de 0.1 si el equipo no aparece
 
-        2.0.0.0-) Se actualiza el valor de los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0, D0) del "home" a "PTS", "PJ", "PG", "PP", "PE", "GF", "GC", "D"
+    3-) Se crea el diccionario acumulador (dic_dsp), con una clave por cada metrica de ALL_METRICS (sin sufijo) y valor de inicializacion igual a 0
 
-      2.0.1-) Si el parametro (ind0) es 1
+    4-) Se inicia un bucle for con la variable de iteracion (partido), recorriendo como tuplas todas las filas de una copia del parametro (df0), incluyendo su indice real en "partido.Index"
 
-        2.0.1.0-) Se actualiza el valor de los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0, D0) del "home" a "PTS_0", "PJ_0", "PG_0", "PP_0", "PE_0", "GF_0", "GC_0", "D_0"
+    5-) Se determina el lado en el que juega el (pais) dentro del (partido)
 
-    2.1-) Si el df (primero) está vacio
+      5.0-) Si el equipo registrado en "home" es igual al parametro (pais): (sufijo) es "_0" - (rival) es el "away" - (gf_pais) es el "score_0" y (gf_rival) es el "score_1"
 
-        2.1.0) Se actualiza el (dic_dsp) con o en las claves iguales a los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0, D0), segun si "ind0" fue igual a 0 o 1 respectivamente, y valores de inicializacion iguales a 0
+      5.1-) Si no, si el equipo registrado en "away" es igual al parametro (pais): (sufijo) es "_1" - (rival) es el "home" - (gf_pais) es el "score_1" y (gf_rival) es el "score_0"
 
-    2.2-) Si dentro del (partido) iterado, el "score_0" del "home" es mayor al "score_1" del "away"
-    
-      2.2.0-) En (dic_dsp) a la clave (PG0) se le suma 1 - a la clave (PTS0) se le suma 3 - a la clave (GF0) se le suma el "score_0" del (partido) y a la clave (GC0) se le suma el "score_1" del (partido)
+      5.2-) Si el (pais) no juega el (partido), se pasa al siguiente
 
-    2.3-) Si dentro del (partido) iterado, el "score_0" del "home" es menor al "score_1" del "away"
+    6-) Con (valor_previo) se obtienen (pj_previo) "PJ" del (pais) y (pj_previo_rival) "PJ" del (rival)
 
-      2.3.0-) En (dic_dsp) a la clave (PP0) se le suma 1 - a la clave (GF0) se le suma el "score_0" del (partido) - a la clave (GC0) se le suma "score_1" del (partido)
-    
-    2.4-) Si dentro del (partido) iterado, el "score_0" del "home" es igual al "score_1" del "away"
+    7-) Se imputan las metricas opcionales, cada una solo si existe en (dic_dsp), es decir, si está en ALL_METRICS
 
-      2.4.0-) En (dic_dsp) a la clave (PE0) se le suma 1 - a la clave (PTS0) se le suma 1 - a la clave (GF0) se le suma "score_0" del (partido) - a la clave (GC0) se le suma "score_1" del (partido)
+      7.0-) A la clave "VI" "valla invicta" se le suma 1 si (gf_rival) es 0
 
-    2.5-) En (dic_dsp) a la clave (D0) la actualizo como la resta entre el valor de la clave (GF0) en (dic_dsp) menos el valor de la clave (GC0) en (dic_dsp) - en (dic_dsp) al valor de la clave (PJ1) se le suma 1 - al df (primero) se le actualiza con el diccionario (dic_dsp)
-      
-    2.6-) Si el (ind0) es 1 "ajuste de valores de rendimiento tras prediccion"
+      7.1-) Se calcula (avg_sot) como el "SOT" previo del (pais) entre max(1, pj_previo) - se calcula (ratio) como (gf_pais) entre max(0.5, avg_sot * 0.3) - a la clave "SOT" se le suma (avg_sot) * (0.7 + 0.3 * min(ratio, 2)) redondeado a 1 decimal
 
-      2.6.0-) El parametro df (df0) se actualiza con un ".loc" a una serie creada a partir del diccionario (dic_dsp), en la fila marcada por la variable de iteracion (indice) y las columnas marcadas por los parametros (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0, D0)
-  
-  3-) Si el equipo registrado en "away" de la variable de iteracion (partido) es igual al parametro (pais)
+      7.2-) A la clave "PKATT" se le suma el "PKATT" previo del (pais) entre max(1, pj_previo), por 0.9, redondeado a 2 decimales
 
-    3.0-) Si el parametro (ind0) es 0 "generandose datos de rendimiento con partidos de eliminatorias" o 1 "ajustándose datos de rendimiento segun las predicciones para "score_0" y "score_1"", y si "None" esta en alguno de los parametros de rendimiento definidos para el "away" (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1, D1)
-    
-      3.0.0-) Si el parametro (ind0) es 0
+      7.3-) A la clave "PKATTALLOW" se le suma el "PKATT" previo del (rival) entre max(1, pj_previo_rival), por 0.9, redondeado a 2 decimales
 
-        3.0.0.0-) Se actualiza el valor de los parametros (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1, D1) del "away" a "PTS", "PJ", "PG", "PP", "PE", "GF", "GC", "D"
+    8-) Se actualizan las metricas base segun el resultado del (partido) visto desde el (pais)
 
-      3.0.1-) Si el parametro (ind0) es 1
+      8.0-) Si (gf_pais) es mayor a (gf_rival): a la clave "PG" se le suma 1 y a la clave "PTS" se le suma 3
 
-        3.0.1.0-) Se actualiza el valor de los parametros (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1, D1) del "home" a "PTS_1", "PJ_1", "PG_1", "PP_1", "PE_1", "GF_1", "GC_1", "D_1"
+      8.1-) Si (gf_pais) es menor a (gf_rival): a la clave "PP" se le suma 1
 
-    3.1-) Si el df (primero) está vacio
+      8.2-) Si (gf_pais) es igual a (gf_rival): a la clave "PE" se le suma 1 y a la clave "PTS" se le suma 1
 
-        3.1.0) Se actualiza el (dic_dsp) con o en las claves iguales a los parametros (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1, D1), segun si "ind0" fue igual a 0 o 1 respectivamente, y valores de inicializacion iguales a 0
+      8.3-) A la clave "GF" se le suma (gf_pais) - a la clave "GC" se le suma (gf_rival) - la clave "D" se actualiza como "GF" menos "GC" - a la clave "PJ" se le suma 1
 
-    3.2-) Si dentro del (partido) iterado, el "score_1" del "away" es mayor al "score_0" del "home"
-    
-      3.2.0-) En (dic_dsp) a la clave (PG1) se le suma 1 - a la clave (PTS1) se le suma 3 - a la clave (GF1) se le suma el "score_1" del (partido) y a la clave (GC1) se le suma el "score_0" del (partido)
+    9-) Si el (ind0) es 1 "ajuste de valores de rendimiento tras prediccion"
 
-    3.3-) Si dentro del (partido) iterado, el "score_1" del "away" es menor al "score_0" del "home"
+      9.0-) El parametro df (df0) se actualiza con un ".loc" en la fila marcada por "partido.Index" y las columnas de ALL_METRICS con el (sufijo) del lado en que jugó el (pais) ("PTS_0", ... o "PTS_1", ...), asignandoles los valores acumulados en (dic_dsp), quedando en esa fila el rendimiento acumulado del (pais) hasta ese partido
 
-      3.3.0-) En (dic_dsp) a la clave (PP1) se le suma 1 - a la clave (GF1) se le suma el "score_1" del (partido) - a la clave (GC1) se le suma "score_0" del (partido)
-    
-    3.4-) Si dentro del (partido) iterado, el "score_1" del "away" es igual al "score_0" del "home"
+    10-) Si (ind0) es 0 "indicando que se forma el rendimiento acumulado en fase eliminatoria"
 
-      3.4.0-) En (dic_dsp) a la clave (PE1) se le suma 1 - a la clave (PTS1) se le suma 1 - a la clave (GF1) se le suma "score_1" del (partido) - a la clave (GC1) se le suma "score_0" del (partido)
+      10.0-) Se retorna un df de una fila con las columnas "year" y "pais" (iguales a los parametros (agno) y (pais)) seguidas de lo acumulado en (dic_dsp), y con el index igual a lo pasado por el parametro (indx)
 
-    3.5-) En (dic_dsp) a la clave (D1) la actualizo como la resta entre el valor de la clave (GF1) en (dic_dsp) menos el valor de la clave (GC1) en (dic_dsp) - en (dic_dsp) al valor de la clave (PJ1) se le suma 1 - al df (primero) se le actualiza con el diccionario (dic_dsp)
-      
-    3.6-) Si el (ind0) es 1 "ajuste de valores de rendimiento tras prediccion"
+    Args:
 
-      3.6.0-) El parametro df (df0) se actualiza con un ".loc" a una serie creada a partir del diccionario (dic_dsp), en la fila marcada por la variable de iteracion (indice) y las columnas marcadas por los parametros (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1, D1)
-  
-  4-) Si (ind0) es 0 "indicando que se forma el rendimiento acumulado en fase eliminatoria"
+      - df0: df con partidos de algun mundial o de la fase eliminatoria previa a estos, con columnas "home", "away", "score_0" y "score_1", para entresacar o ajustar el rendimiento. Si ind0=1 se escriben (o crean) en él las columnas de rendimiento con sufijo "_0" y "_1"
 
-    4.0-) Se retorna un df hecho a partir de lo acumulado en (dic_dsp) y con el index igual a lo pasado por el parametro (indx)
+      - pais: nombre del pais-equipo a definir o ajustar rendimiento
 
-  Args:
+      - indx: indica el indice que llevará el df retornado para el caso de busqueda de valores de rendimiento en fase eliminatoria
 
-    - df0: df con partidos de algun mundial o fase eliminatoria previa a estos, para ajustar el rendimiento o entresacarlo
+      - agno: el año del mundial trabajado, usado tambien para cargar (opcionales)
 
-    - pais: nombre del pais-equipo a definir o ajustar rendimiento
+      - ind0: si es 0 indica que se trabaja en el caso de generar valores de rendimiento para cada equipo en su fase eliminatoria - si es 1 indica que se ajustarán parametros de rendimiento dentro de (df0) tras prediccion de goles
 
-    - indx: indica el indice que llevará el df retornado para el caso de busqueda de valores de rendimiento en fase eliminatoria
+    Globales usadas:
 
-    - agno: el año del mundial trabajado
+      - BASE_METRICS: lista de las metricas base (PTS, PJ, PG, PP, PE, GF, GC, D)
 
-    - ind0: si es 0 indica que se trabaja con en el caso de generar valores de rendimiento para cada equipo en su fase eliminatoria - si es 1 indica que se ajustarán parametros de rendimiento tras prediccion de goles
+      - OPTIONAL_METRICS: lista de metricas opcionales a imputar (VI, SOT, PKATT, PKATTALLOW)
 
-  Return:
+      - ALL_METRICS: union de BASE_METRICS y OPTIONAL_METRICS
 
-    - df con lo acumulado en (dic_dsp) y con el index igual a (indx), para el caso de determinar el rendimiento en fase eliminatoria, indicado por un (ind0) igual a 0 - solo ajustará tras la inferencia, los valores de rendimiento (PTS0, PJ0, PG0, PP0, PE0, GF0, GC0) o (PTS1, PJ1, PG1, PP1, PE1, GF1, GC1) dentro de (df0), indicado por un (ind0) igual a 1
-  """
-  dic_dsp = {}
-  dic_dsp["year"] = agno
-  dic_dsp["pais"] = pais
+      - opcionales: df con columna "pais" y el histórico previo de metricas por pais, se carga perezosamente la primera vez que se necesita
 
-  primero = pd.DataFrame()
-  
-  suffix_0 = "_0" if ind0 == 1 else ""
-  suffix_1 = "_1" if ind0 == 1 else ""
-  
-  col_map_0 = {m: f"{m}{suffix_0}" for m in ALL_METRICS}
-  col_map_1 = {m: f"{m}{suffix_1}" for m in ALL_METRICS}
-  
-  pts_0_col, pj_0_col, pg_0_col, pp_0_col, pe_0_col, gf_0_col, gc_0_col, d_0_col = [col_map_0[m] for m in BASE_METRICS]
-  pts_1_col, pj_1_col, pg_1_col, pp_1_col, pe_1_col, gf_1_col, gc_1_col, d_1_col = [col_map_1[m] for m in BASE_METRICS]
+    Return:
 
-  for indice, partido in enumerate(df0.copy().itertuples(index=False)):
-    if partido.home == pais:
-      if primero.empty:
-        init_vals = {col_map_0[m]: 0 for m in BASE_METRICS}
-        for m in OPTIONAL_METRICS:
-          init_vals[col_map_0[m]] = 0
-        dic_dsp.update(init_vals)
+      - Si (ind0) es 0: df de una fila con "year", "pais" y lo acumulado en (dic_dsp) (metricas base y opcionales sin sufijo), con el index igual a (indx), para el caso de determinar el rendimiento en fase eliminatoria
 
-      if partido.score_0 > partido.score_1:
-        dic_dsp[pg_0_col] += 1
-        dic_dsp[pts_0_col] += 3
-        dic_dsp[gf_0_col] += partido.score_0
-        dic_dsp[gc_0_col] += partido.score_1
-      elif partido.score_0 < partido.score_1:
-        dic_dsp[pp_0_col] += 1
-        dic_dsp[gf_0_col] += partido.score_0
-        dic_dsp[gc_0_col] += partido.score_1
-      elif partido.score_0 == partido.score_1:
-        dic_dsp[pe_0_col] += 1
-        dic_dsp[pts_0_col] += 1
-        dic_dsp[gf_0_col] += partido.score_0
-        dic_dsp[gc_0_col] += partido.score_1
-            
-      dic_dsp[d_0_col] = dic_dsp[gf_0_col] - dic_dsp[gc_0_col]
-      dic_dsp[pj_0_col] += 1
-      primero = pd.DataFrame(data=dic_dsp, index=[0])
+      - Si (ind0) es 1: retorna None - solo ajusta in-place dentro de (df0), fila por fila, los valores de rendimiento con sufijo "_0" (si el pais es "home") o "_1" (si el pais es "away") para todas las metricas de ALL_METRICS
+    """
 
-      if ind0 == 1:
-        cols_to_update = [col_map_0[m] for m in ALL_METRICS]
-        df0.loc[indice, cols_to_update] = pd.Series(dic_dsp)
-        
-    elif partido.away == pais:
-      if primero.empty:
-        init_vals = {col_map_1[m]: 0 for m in BASE_METRICS}
-        for m in OPTIONAL_METRICS:
-          init_vals[col_map_1[m]] = 0
-        dic_dsp.update(init_vals)
-
-      if partido.score_1 > partido.score_0:
-        dic_dsp[pg_1_col] += 1
-        dic_dsp[pts_1_col] += 3
-        dic_dsp[gf_1_col] += partido.score_1
-        dic_dsp[gc_1_col] += partido.score_0
-      elif partido.score_1 < partido.score_0:
-        dic_dsp[pp_1_col] += 1
-        dic_dsp[gf_1_col] += partido.score_1
-        dic_dsp[gc_1_col] += partido.score_0
-      elif partido.score_1 == partido.score_0:
-        dic_dsp[pe_1_col] += 1
-        dic_dsp[pts_1_col] += 1
-        dic_dsp[gf_1_col] += partido.score_1
-        dic_dsp[gc_1_col] += partido.score_0
-
-      dic_dsp[d_1_col] = dic_dsp[gf_1_col] - dic_dsp[gc_1_col] # PEND cambiar por SOT o VI 
-      dic_dsp[pj_1_col] += 1
-      primero = pd.DataFrame(data=dic_dsp, index=[0])
-
-      if ind0 == 1:
-        cols_to_update = [col_map_1[m] for m in ALL_METRICS]
-        df0.loc[indice, cols_to_update] = pd.Series(dic_dsp)
-
-  if ind0 == 0:
-    return pd.DataFrame(dic_dsp, index=[indx])
-
-def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
-    VI = VI.sum()
-    PJ = PJ_i.sum()
-    GR = GC_i.sum()
-    PKATTALLOW = PKATTALLOW.sum()
-    return ((VI/PJ)*60) + (40 - ((GR - PKATTALLOW)/PJ)*10) if PJ > 0 else 0
-
-def calc_mds(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
-    VI = VI.sum()
-    PJ = PJ_i.sum()
-    GR = GC_i.sum()
-    PKATTALLOW = PKATTALLOW.sum()
-    return ((VI/PJ)*50) + (50 - (((GR + PKATTALLOW)/PJ)*10)) if PJ > 0 else 0
-
-def calc_mos(PJ_i, GF_i, SOT, PKATT): # PEND (falta docstring)
-    GA = GF_i.sum()
-    PJ = PJ_i.sum()
-    SOT = SOT.sum()
-    PKATT = PKATT.sum()
-    return ((GA/PJ)*0.5 + (SOT/PJ)*0.3 + ((GA - PKATT)/SOT)*0.2) if PJ > 0 and SOT > 0 else 0
-
-def calc_mms(PJ_i, PTS_i, PG_i, SOT): # PEND (falta docstring)
-    PTS = PJ_i.sum()
-    PJ = PTS_i.sum()
-    PG = PG_i.sum()
-    SOT = SOT.sum()
-    return (((PTS/(PJ*3))*40) + ((PG/PJ)*40) + ((SOT/PJ)*2)) if PJ > 0 else 0
-
-def calc_rate(df, tipo, num=0): # PEND (falta docstring)
-  busqueda = tipo + "_" + str(num)
-  if(busqueda in OPTIONAL_METRICS):
-    return (df[busqueda] / df[f"PJ_{num}"].replace(0, 0.085)) * 10
-  else:
-    return np.nan
-
-def obtener_diferencia(df, num=0): # PEND (falta docstring)
-  if(('GC' + '_' + f'{num}' in OPTIONAL_METRICS) and ('GF' + '_' + f'{num}' in OPTIONAL_METRICS)):
-    return df[f'GF_{num}'] - df[f'GC_{num}']
-  else:
-    return np.nan
-
-def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
     global opcionales
-    columnas = []
 
-    if((OPTIONAL_METRICS!=[]) and opcionales is None):
+    if opcionales is None:
         opcionales = formar_dataset_real("proxy_desempegno", agno)
 
-    paises_unicos = pd.concat([df_desempegno['home'], df_desempegno['away']]).unique()
+    def valor_previo(metrica, equipo, defecto=0.1):
+        fila = opcionales.loc[opcionales.pais == equipo, metrica]
+        return fila.iloc[0] if not fila.empty else defecto
 
-    insumos_apuntados = opcionales[opcionales['pais'].isin(paises_unicos)]
+    dic_dsp = {m: 0 for m in ALL_METRICS}
 
-    df1 = df_desempegno.copy()
+    for partido in df0.copy().itertuples():
+        if partido.home == pais:
+            sufijo, rival = "_0", partido.away
+            gf_pais, gf_rival = partido.score_0, partido.score_1
+        elif partido.away == pais:
+            sufijo, rival = "_1", partido.home
+            gf_pais, gf_rival = partido.score_1, partido.score_0
+        else:
+            continue
 
-    idxaway = df1.columns.tolist().index('away')
-    homes = df1.iloc[:,:idxaway-1] # PEND se trata de evitar tomar score_0 mediante este -1
-    aways = df1.iloc[:,idxaway:-1] # PEND se trata de evitar tomar score_1 mediante este -1
+        pj_previo = valor_previo("PJ", pais)
+        pj_previo_rival = valor_previo("PJ", rival)
 
-    homes.rename(columns={'home':'pais'},inplace=True)
-    aways.rename(columns={'away':'pais'},inplace=True)
+        if "VI" in dic_dsp:
+            dic_dsp["VI"] += 1 if gf_rival == 0 else 0
 
-    apuntar_a_home = homes.merge(insumos_apuntados,on="pais",how="inner")
-    apuntar_a_away = aways.merge(insumos_apuntados,on="pais",how="inner")
+        if "SOT" in dic_dsp:
+            avg_sot = valor_previo("SOT", pais) / max(1, pj_previo)
+            ratio = gf_pais / max(0.5, avg_sot * 0.3)
+            dic_dsp["SOT"] += round(
+                avg_sot * (0.7 + 0.3 * min(ratio, 2)), 1
+            )
 
-    df_nuevo = pd.DataFrame()
-    equipos = {0:'home', 1:'away'}
+        if "PKATT" in dic_dsp:
+            dic_dsp["PKATT"] += round(
+                valor_previo("PKATT", pais) / max(1, pj_previo) * 0.9, 2
+            )
 
-    for idx, trab in enumerate([apuntar_a_home, apuntar_a_away]):
+        if "PKATTALLOW" in dic_dsp:
+            dic_dsp["PKATTALLOW"] += round(
+                valor_previo("PKATT", rival) / max(1, pj_previo_rival) * 0.9, 2
+            )
 
-        dfEspecializado = trab.groupby('pais', as_index=False).apply(
-            lambda g: pd.Series({
-                f'gkps_{idx}': calc_gkps(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
-                f'mds_{idx}': calc_mds(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
-                f'mos_{idx}': calc_mos(g[f'PJ_{idx}'], g[f'GF_{idx}'], g['SOT'], g['PKATT']),
-                f'mms_{idx}': calc_mms(g[f'PJ_{idx}'], g[f'PTS_{idx}'], g[f'PG_{idx}'], g['SOT']),
-                f'rate_GC_{idx}': calc_rate(g[f'GC_{idx}'], 'GC', num=idx),
-                f'rate_GF_{idx}': calc_rate(g[f'GF_{idx}'], 'GF', num=idx),
-                f'D_{idx}': obtener_diferencia(g, num=idx),
-            })
-        ).reset_index(drop=True)
+        if gf_pais > gf_rival:
+            dic_dsp["PG"] += 1
+            dic_dsp["PTS"] += 3
+        elif gf_pais < gf_rival:
+            dic_dsp["PP"] += 1
+        else:
+            dic_dsp["PE"] += 1
+            dic_dsp["PTS"] += 1
 
-        trab.drop(columns=['VI', 'SOT', 'PKATT', 'PKATTALLOW'], inplace=True)
+        dic_dsp["GF"] += gf_pais
+        dic_dsp["GC"] += gf_rival
+        dic_dsp["D"] = dic_dsp["GF"] - dic_dsp["GC"]
+        dic_dsp["PJ"] += 1
 
-        df_provisional = trab.merge(dfEspecializado, on='pais', how='inner')
-        df_provisional.rename(columns={'pais':equipos[idx]},inplace=True)
+        if ind0 == 1:
+            cols_to_update = [f"{m}{sufijo}" for m in ALL_METRICS]
+            df0.loc[partido.Index, cols_to_update] = [dic_dsp[m] for m in ALL_METRICS]
 
-        nuevas_columnas = [f'gkps_{idx}', f'mds_{idx}', f'mos_{idx}', f'mms_{idx}',
-                          f'rate_GC_{idx}', f'rate_GF_{idx}', f'D_{idx}']
-
-        df_nuevo = pd.concat([df_nuevo, df_provisional], axis=1, ignore_index=True)
-        columnas = [*columnas, *df_provisional.columns]
-
-    df_nuevo.columns = columnas
-    return df_nuevo
+    if ind0 == 0:
+        return pd.DataFrame({"year": agno, "pais": pais, **dic_dsp}, index=[indx])
 
 def calculo_metricas_1(df_desempegno):
   """
