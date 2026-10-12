@@ -1,3 +1,8 @@
+import functools
+import pandas as pd
+from dataclasses import dataclass
+from types import MappingProxyType
+
 # =====================================================================
 #  EMPAREJAMIENTO POR MEJORES TERCEROS (MUNDIALES 1986, 1990 Y 1994)
 # =====================================================================
@@ -63,32 +68,6 @@ def tabla_terceros(dict_table, df_grupos=None):
 
   return terceros.sort_values(["Pts", "DG", "GF", "Grupo"], ascending=[False, False, False, True], ignore_index=True)
 
-
-
-
-
-def armar_llave(agno, grupos_terceros):
-  """Devuelve el df (home, away) del 1er round de la fase final para (agno), dados los grupos de los 4 mejores terceros"""
-  rival_de = _CRUCES_TERCEROS[frozenset(grupos_terceros)]
-  partidos = []
-  for partido in _LLAVES_1986_1994[agno]:
-    local, visita = partido.split("-")
-    if visita == "3":
-      visita += rival_de[local[1]]
-    partidos.append((_etiqueta(local), _etiqueta(visita)))
-  return pd.DataFrame(partidos, columns=["home", "away"])
-
-def alinear_knockout_1986_1994(dict_table, agno, df_grupos=None):
-  """Alinea el 1er round de la fase final a partir de las tablas de grupos ya jugadas. Deja los 4 mejores terceros en attrs["mejores_terceros"]"""
-  terceros = tabla_terceros(dict_table, df_grupos).iloc[:4]
-  llave = armar_llave(agno, terceros.Grupo)
-  llave.attrs["mejores_terceros"] = terceros
-  return llave
-
-
-
-
-
 @dataclass(frozen=True)
 class ReglamentoTerceros:
   """Reglamento de mejores terceros de un mundial: orden de la llave y tabla de cruces 1ro vs 3ro"""
@@ -101,7 +80,7 @@ def con_reglamento_terceros(func):
   ¿QUE HACE?
   Decorador que recibe el año del mundial, valida que use el formato de mejores terceros y entrega a la funcion decorada el (ReglamentoTerceros) de ese año en lugar del año. La funcion decorada solo se ocupa de alinear equipos con las tablas de grupos ya jugadas
   """
-  @wraps(func)
+  @functools.wraps(func)
   def envoltura(dict_table, agno, *args, **kwargs):
     if agno not in _LLAVES_1986_1994:
       raise ValueError(f"El mundial {agno} no usa el formato de mejores terceros (solo 1986, 1990 y 1994)")
@@ -137,3 +116,4 @@ def alinear_knockout_1986_1994(dict_table, reglamento, df_grupos=None):
   llave = pd.DataFrame(partidos, columns=["home", "away"])
   llave.attrs["mejores_terceros"] = terceros
   return llave
+
