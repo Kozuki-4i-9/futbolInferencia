@@ -1,9 +1,14 @@
+import re
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 
 from scipy.stats import poisson
 from decimal import Decimal
+from dataclasses import dataclass
+from functools import wraps
+from itertools import combinations
+from types import MappingProxyType
 from .models import partidos, fixtures, grupos, clasificaciones, proxy_desempegno
 
 from numpy.random import seed
@@ -709,10 +714,10 @@ def agregar_features(df_mundial, dic_ag, ind=None):
   return df5.iloc[::-1].reset_index(drop=True)
 
 class normali():
-  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, ind_grupos_mundiales=None, agno=None, obj0="-", evitar="-", embedding_dim=3):
+  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0="-", evitar="-", embedding_dim=3):
     """
     ¿QUE HACE?
-    Genera una serie de df y capas de embedding necesarios para dar funcionamiento a la busqueda de nombres de grupos para equipos, el orden de juego en cada mundial y correr la lógica de emparejamientos para los mundiales entre 1986 y 1994
+    Genera una serie de df y capas de embedding necesarios para dar funcionamiento a la busqueda de nombres de grupos para equipos y el orden de juego en cada mundial (los emparejamientos por mejores terceros de 1986-1994 viven fuera de la clase, en "alinear_knockout_1986_1994")
 
     ¿COMO LO HACE?
     0-) Se coloca en una variable (df0) el resultado de la funcion "formar_dataset_real" ingresandole el argumento (ind_partidos), que será un df contenedor de todos los partidos de cierto mundial 
@@ -733,20 +738,6 @@ class normali():
 
     8-) Se crea una capa embedding de keras indicando el tamaño de la entrada y salida de la misma para futura conversion de datos categoricos referentes a los nombres de los paises que juegan el mundial de interes
 
-    9-) Si el parámetro (ind_grupos_mundiales) es diferente de "None" y el parámetro (agno) es diferente de "None"
-
-      9.0-) Se define un atributo de instancia diccionario (self.dic_emp_0) con pares clave-valor con clave como el índice de la fila de un array y valor como grupos con los posibles mejores 3ros lugares tras la fase de grupos. Aplíquese la lógica: si los mejores terceros son de los grupos "clave":"valor", se tomará la "clave" para buscar en la fila de un array que sea igual a "clave" 
-
-      9.1-) Se define un atributo de instancia array de grupos (self.emp_terceros) con 3ros lugares que jugarán contra los 1ros lugares de los grupos A,B,C,D para los partidos variables, según la "clave" a la que correspondan los mejores 4 3ros lugares de la fase de grupos
-
-      9.2-) Se define un atributo de instancia lista de listas (self.partidos_10) que posee el las 4 posiciones fijas por grupo, de los equipos que jugarán en el 1er round de la fase final
-
-      9.3-) Se define un atributo de instancia lista vacia (self.partidos_11) que contendrá las 4 posiciones variables por grupo, de los equipos que jugarán en el 1er round de la fase final
-
-      9.4-) Se define un atributo de instancia diccionario (self.dic_emp_1) con pares clave-valor de clave los 3 años "1986", "1990", "1994" que estan como clave pero de tipo "int" y valor una tupla con dos tuplas internas, cada una con el momento de juego para cada partido fijo en la 1ra y variable en la 2da 
-      
-      9.5-) Se define un atributo de instancia tupla (self.ref_0) con 2 tuplas internas que almacena la combinación de valores obtenidos del atributo de instancia diccionario (self.dic_emp_1) en los que iran, según el año indicado como clave de busqueda con el argumento (agno), los partidos home y away fijos y variables, indicando el valor de cada elemento interno el orden de juego de cierto partido, fijo en caso de (self.partidos_10) y variable en caso de (self.partidos_11), en el 1er round de la fase final. E indicando el índice de dicho elemento, la ubicación dentro de las listas de almacenamiento de los partidos fijos y variables mencionadas, que tiene el partido a disputar
-
     - Args:
 
       - ind_partidos: valor de tipo str que indica a la funcion "formar_dataset_real" que tabla de la DB debe consultar
@@ -756,11 +747,7 @@ class normali():
       - df_prediccion_usuario: df consulta del usuario, básicamente un df de la fase con datos editados por usuario para hacer inferencia
       
       - clsif: df contenedor de partidos de clasificacion previa al mundial de interés a predecir
-      
-      - ind_grupos_mundiales: indica si debe o no entrarse en la lógica de emparejamiento por mejores 3ros lugares adoptada por la FIFA entre 1986 y 1994, siendo "None" en el caso de no requerirla y diferente de None (ej. "grupos") en el caso de que sí se requiera dicha lógica 
-      
-      - agno: valor int que indica el año en que se busca la ubicacion de cada partido fijo o variable, para la lógica de emparejamiento por mejores 3ros lugares de los mundiales 1986-1994, dentro del atributo de instancia diccionario (self.dic_emp_1), proveniente de un slicing a los ultimos 4 elementos del argumento (pregunta_0) de la funcion "consulta_general"
-      
+
       - obj0: puede ser un str de la forma "-", o un slicing a los ultimos 4 elementos del argumento (pregunta_0) de la funcion "consulta_general", indicando en el 1er caso que el 1er valor de retorno de la funcion que usa este argumento desde el atributo de instancia (self.obj0), será igual a todos los partidos del mundial actual, e indicando para el 2do caso, que este 1er valor de retorno se divide entre los partidos de la fase final y los partidos del df de consulta del usuario
       
       - embedding_dim: valor indicador del tamaño de los vectores embedding para cada palabra
@@ -777,148 +764,6 @@ class normali():
     self.obj0 = obj0
     self.df5 = df_prediccion_usuario
     self.embedding_layer = tf.keras.layers.Embedding(input_dim=len(self.pais_id), output_dim=embedding_dim)
-
-    if ind_grupos_mundiales and agno is not None:
-      self.dic_emp_0 = {0: ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D'],
-                        1: ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo E'],
-                        2: ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo F'],
-                        3: ['Grupo A', 'Grupo B', 'Grupo D', 'Grupo E'],
-                        4: ['Grupo A', 'Grupo B', 'Grupo D', 'Grupo F'],
-                        5: ['Grupo A', 'Grupo B', 'Grupo E', 'Grupo F'],
-                        6: ['Grupo A', 'Grupo C', 'Grupo D', 'Grupo E'],
-                        7: ['Grupo A', 'Grupo C', 'Grupo D', 'Grupo F'],
-                        8: ['Grupo A', 'Grupo C', 'Grupo E', 'Grupo F'],
-                        9: ['Grupo A', 'Grupo D', 'Grupo E', 'Grupo F'],
-                        10: ['Grupo B', 'Grupo C', 'Grupo D', 'Grupo E'],
-                        11: ['Grupo B', 'Grupo C', 'Grupo D', 'Grupo F'],
-                        12: ['Grupo B', 'Grupo C', 'Grupo E', 'Grupo F'],
-                        13: ['Grupo B', 'Grupo D', 'Grupo E', 'Grupo F'],
-                        14: ['Grupo C', 'Grupo D', 'Grupo E', 'Grupo F'],
-                        }
-
-      self.emp_terceros = np.array([["Grupo C", "Grupo D", "Grupo A", "Grupo B"],
-                                    ["Grupo C", "Grupo A", "Grupo B", "Grupo E"],
-                                    ["Grupo C", "Grupo A", "Grupo B", "Grupo F"],
-                                    ["Grupo D", "Grupo A", "Grupo B", "Grupo E"],
-                                    ["Grupo D", "Grupo A", "Grupo B", "Grupo F"],
-                                    ["Grupo E", "Grupo A", "Grupo B", "Grupo F"],
-                                    ["Grupo C", "Grupo D", "Grupo A", "Grupo E"],
-                                    ["Grupo C", "Grupo D", "Grupo A", "Grupo F"],
-                                    ["Grupo C", "Grupo A", "Grupo F", "Grupo E"],
-                                    ["Grupo D", "Grupo A", "Grupo F", "Grupo E"],
-                                    ["Grupo C", "Grupo D", "Grupo B", "Grupo E"],
-                                    ["Grupo C", "Grupo D", "Grupo B", "Grupo F"],
-                                    ["Grupo E", "Grupo C", "Grupo B", "Grupo F"],
-                                    ["Grupo E", "Grupo D", "Grupo B", "Grupo F"],
-                                    ["Grupo C", "Grupo D", "Grupo F", "Grupo E"]])
-
-      self.partidos_10 = [["Winner Grupo F", "Runners-up Grupo E"],
-                          ["Runners-up Grupo A", "Runners-up Grupo C"],
-                          ["Runners-up Grupo F", "Runners-up Grupo B"],
-                          ["Winner Grupo E", "Runners-up Grupo D"]] 
-      self.partidos_11 = [] 
-
-      self.dic_emp_1 = {1986: ((1, 2, 5, 6), (0, 3, 4, 7)),
-                        1990: ((7, 4, 2, 1), (0, 3, 5, 6)),
-                        1994: ((3, 0, 7, 5), (1, 2, 4, 6))}
-      self.ref_0 = self.dic_emp_1[agno]
-
-  def cuatro_mejores_terceros(self, dic_g):
-    """
-    ¿QUE HACE?
-    Genera y retorna una lista con valores string de los nombres de los grupos en que quedaron los equipos con 4 mejores puntajes, tras la fase de grupos. Esto se hace mediante la seleccion de todos los equipos 3ros de cada grupo segun su puntaje, el aislamiento de los puntajes de estos en una variable y la seleccion sucesiva durante 4 cicclos de los 4 mas altos puntajes de entre estos, agregando el grupo en el que se registraron a una variable (cuatro_mayores) que acabará retornandose
-
-    ¿COMO LO HACE?
-    0-) Se crean unas variables lista (ter_cd_grp, cuatro_mayores) vacias
-
-    1-) Se iteran todos los df de tabla de posicion de cada grupo que ha jugado la fase de grupos y se almacena en (ter_cd_grp), como lista, los valores de nombre, puntaje y grupo del equipo que quedara como 3er lugar del df iterado
-
-    2-) Se itera un bucle de 4 ciclos sin informacion y, se forma un df temporal (seleccion) con los 3ros lugares guardados en (ter_cd_grp) indicandose las columnas ("pais","Pts","Grupo") - se guarda en la variable (puntos_terceros) una lista con los valores de la columnas "Pts" de (seleccion) - se guarda en (mayor_vu) el Pts maximo de los registrados - se guarda en (seleccion) la fila del df (seleccion) previo, donde Pts es igual a (mayor_vu) - se añade a (cuatro_mayores) el grupo del mejor tercero registrado en (seleccion) - se quita de (ter_cd_grp) la lista con los valores de mejor tercero que se habria guardado en (seleccion)
-    
-    3-) Se retorna (cuatro_mayores) con los mejores 4 3ros que se hayan registrado en el bucle
-
-    - Args:
-
-      - dic_g: diccionario contenedor de pares clave-valor con clave como el nombre de alguno de los n grupos de equipos que disputan el mundial (Grupo_n) y valor como el df con la informacion de rendimiento particular de cada equipo, segun como apareceria en la tabla de posiciones
-
-    - Returns:
-
-      - cuatro_mayores: lista contenedora de los nombres de los 4 grupos en que se registraron los mejores 3eros lugares por puntaje tras los partidos en la fase de grupos
-    """
-    ter_cd_grp = []
-    cuatro_mayores = []
-
-    for des0 in dic_g.values():
-      ter_cd_grp.append(des0.iloc[2, :][["pais", "Pts", "Grupo"]].tolist())
-
-    for _ in range(4):
-      seleccion = pd.DataFrame(data=np.array(ter_cd_grp), columns=["pais", "Pts", "Grupo"])
-      puntos_terceros = seleccion.Pts.tolist()
-      mayor_vu = max(set(puntos_terceros))
-      seleccion = seleccion.loc[seleccion.Pts == mayor_vu]
-      cuatro_mayores.append(seleccion["Grupo"].values[0])
-      ter_cd_grp.remove(seleccion.values[0].tolist())
-
-    return cuatro_mayores
-
-  def emparejamiento_partidos_dependientes(self, cuatro_mayores):
-    """
-    ¿QUE HACE?
-    Agrega a un atributo de almacenamiento (partidos_11), cuales serán los emparejamientos a darse para partidos del 1er round de la fase final 
-
-    ¿COMO LO HACE?
-    0-) Se iteran los pares clave, valor del atributo diccionario de emparejamientos (dic_emp_0)
-
-    1-) Si hay coincidencia total, medida en un tamaño de 4 elementos coincidentes, entre el valor iterado del diccionario de emparejamientos (_[1]) y el parametro de mejores 3ros (cuatro_mayores)
-
-      1.0-) Se guarda en una variable (emp_1) la fila correspondiente a la clave en que se hayo la coincidencia de 4 entre el parametro (cuatro_mayores) y el atributo (dic_emp_0), dentro del array atributo (emp_terceros)
-    
-    2-) Se iteran en un for con zip los pares de grupos ganadores fijos ["Grupo A", "Grupo B", "Grupo C", "Grupo D"] y los grupos de 3ros lugares variables presentes en (emp_1) - Se añade al atributo (partidos_11) una lista contenedora de los emparejamientos entre 1ros lugares de los grupos del A al D y los 3ros lugares correspondientes de los demas grupos
-
-    - Args:
-
-      - cuatro_mayores: lista contenedora de los nombres de los grupos en que se registraron los 4 mejores 3ros
-
-    - Returns:
-
-      No retorna nada, solo actualiza el parametro (partidos_11) añadiendo 4 listas con los pares ganador de cierto grupo, 3er lugar de cierto grupo, para 4 de los 8 partidos a disputarse en el 1er round de la fase final "usualmente 8vos de final aunque puede variar"
-    """
-    for _ in self.dic_emp_0.items():
-      if len(set(_[1]).intersection(cuatro_mayores)) == 4:
-        emp_1 = self.emp_terceros[_[0]]
-
-    for des0, des1 in zip(["Grupo A", "Grupo B", "Grupo C", "Grupo D"], emp_1):
-      self.partidos_11.append(["Winner " + des0, "Third-p " + des1])
-
-  def octavos_1986_a_1994(self, ref_0):
-    """
-    ¿QUE HACE?
-    Genera un df desde un array contenedor de todos los pares home away que jugarán los 1ros 8 partidos de la fase final, a partir del contenido de unas tuplas internas en (ref_0) que apuntan a posiciones en los parametros (partidos_11, partidos_10), y el posicionamiento dentro de (lista_8vos)
-
-    ¿COMO LO HACE?
-    0-) Se crea una lista (lista_8vos) con 8 valores "None" default, para posicionar listas pares de equipos home y away que jugarán los primeros 8 partidos de la fase final
-    
-    1-) Se itera un par de "enumerate" de cada tupla del parametro (ref_0), en unas variables (des0) y (des1)
-
-    2-) En la lista (lista_8vos) se van almacenando partidos indicados segun el orden marcado para los atributos (partidos_11) y (partidos_10), por el orden de las variables de iteracion (des0) y (des1) de las tuplas de referencia del parametro (ref_0); el contenido de esas variables indica la posicion del partido en "lista_8vos"
-
-    3-) Se retorna un df con data igual a un array de (lista_8vos) para los equipos home y away
-    
-    - Args:
-
-      - ref_0: tupla con 2 tuplas internas con 4 valore cada una, indicando su posicion la posicion de de un par home y away dentro de las listas de partidos constantes y variables respectivamente, mientras que el contenido de cada tupla interna indica la posicion que adoptará ese partido especifico dentro de la variable de (lista_8vos) de 1er round de la fase final
-
-    - Return:
-
-      - Retorna un df con el contenido y orden de juego de los partidos del 1er round de la fase de grupos
-    """
-    lista_8vos = [None, None, None, None, None, None, None, None]
-
-    for des0, des1 in zip(enumerate(ref_0[0]), enumerate(ref_0[1])):
-      lista_8vos[des1[1]] = self.partidos_11[des1[0]]
-      lista_8vos[des0[1]] = self.partidos_10[des0[0]]
-
-    return pd.DataFrame(data=np.array(lista_8vos), columns=["home", "away"])
 
   def ajuste_score_partidos(self, x, dictionary, ind=0):
     """
@@ -1135,65 +980,221 @@ class normali():
     else:
       return df1, df2, df3
 
-def emparejar_equipos(ObjNrml): # PEND recordar optimizar esto con decoradores
+# =====================================================================
+#  EMPAREJAMIENTO POR MEJORES TERCEROS (MUNDIALES 1986, 1990 Y 1994)
+# =====================================================================
+
+_POSICIONES = {"1": "Winner", "2": "Runners-up", "3": "Third-p"}
+_GRUPOS = "ABCDEF"
+_GANADORES_CON_TERCERO = "ABCD"
+_COMBINACIONES = frozenset(frozenset(c) for c in combinations(_GRUPOS, 4))
+_CLASIFICADOS_FIJOS = frozenset(p + g for p in "12" for g in _GRUPOS)
+_PATRON_PARTIDO = re.compile(r"[12][A-F]-(?:[12][A-F]|3)")
+
+# Reglamento FIFA (el mismo en los 3 mundiales): segun que 4 grupos aporten mejor tercero,
+# de que grupo es el tercero que enfrenta a cada ganador de los grupos A, B, C y D
+_CRUCES_TERCEROS = MappingProxyType({
+  frozenset(grupos): MappingProxyType(dict(zip(_GANADORES_CON_TERCERO, rivales)))
+  for grupos, rivales in {
+    "ABCD": "CDAB", "ABCE": "CABE", "ABCF": "CABF", "ABDE": "DABE", "ABDF": "DABF",
+    "ABEF": "EABF", "ACDE": "CDAE", "ACDF": "CDAF", "ACEF": "CAFE", "ADEF": "DAFE",
+    "BCDE": "CDBE", "BCDF": "CDBF", "BCEF": "ECBF", "BDEF": "EDBF", "CDEF": "CDFE",
+  }.items()
+})
+
+# Orden de juego del 1er round de la fase final. Notacion "<posicion><grupo>": "2E" = Runners-up Grupo E.
+# "1A-3" = el ganador del grupo A enfrenta al mejor tercero que le asignen los cruces
+_LLAVES_1986_1994 = MappingProxyType({
+  1986: ("1A-3", "1F-2E", "2A-2C", "1B-3", "1C-3", "2F-2B", "1E-2D", "1D-3"),
+  1990: ("1A-3", "1E-2D", "2F-2B", "1B-3", "2A-2C", "1C-3", "1D-3", "1F-2E"),
+  1994: ("2A-2C", "1A-3", "1B-3", "1F-2E", "1C-3", "1E-2D", "1D-3", "2F-2B"),
+})
+
+def _etiqueta(codigo):
+  """Traduce un codigo de llave ("2E") a la etiqueta que entiende "camb_grp_elm_smpl" ("Runners-up Grupo E")"""
+  return f"{_POSICIONES[codigo[0]]} Grupo {codigo[1]}"
+
+class ReglamentoInvalido(ValueError):
+  """Error con la lista completa de problemas del reglamento, para mostrarlos todos de una vez en el frontend"""
+  def __init__(self, errores):
+    self.errores = list(errores)
+    super().__init__("Reglamento de mejores terceros invalido:\n- " + "\n- ".join(self.errores))
+
+@dataclass(frozen=True)
+class ReglamentoTerceros:
   """
   ¿QUE HACE?
-  Se genera un df contenedor de los 1ros n partidos de la fase final, mediante el uso de los metodos de emparejamiento de la clase "normali". Especificamente, se accede a todos los df de los grupos de un mundial, se saca a cada uno su 3er lugar y se determina cual tuvo los 4 mejores 3ros, se generan los emparejamientos variables entre 1ros y mejores 3ros lugares y finalmente se crea un df con todos los emparejamientos del 1er round de la fase final, tanto los variables (1ros vs mejores 3ros determinados por reglamento FIFA) como los estaticos (cruces fijos predefinidos por reglamento FIFA para el formato 1986-1994)
-  
+  Representa el reglamento de mejores terceros de un mundial: el orden de los 8 partidos del 1er round de la fase final (llave) y, para cada combinacion de 4 grupos con mejor tercero, el rival de 1A, 1B, 1C y 1D (cruces). Es inmutable y se valida al crearse, venga del reglamento FIFA o del frontend
+
   ¿COMO LO HACE?
-  0-) Genera un diccionario con pares clave igual a los grupos que hay en el mundial y valor igual a los df de rendimiento vacios de dichos grupos y lo guarda en una variable (dic_g), todo mediante un llamamiento al método "grupos_anio_interes" y el uso del atributo "agno" de la clase "normali" como parámetro del atributo
+  0-) "__post_init__" junta todos los errores de la llave y de los cruces, y si hay alguno lanza (ReglamentoInvalido)
 
-  1-) Se emplea el atributo "cuatro_mejores_terceros" para dejar en una variable (cuatro_mayores) una lista con los grupos en los que quedaron los 4 mejores equipos en 3er lugar segun su puntaje
+  1-) La llave es valida si tiene 8 partidos con formato "1A-2C" / "1A-3", cada 1ro y 2do de grupo aparece exactamente una vez, solo 1A, 1B, 1C y 1D enfrentan a un mejor tercero y no hay cruces entre equipos del mismo grupo
 
-  2-) Se emplea el método "emparejamiento_partidos_dependientes" de la clase "normali" para dejar en el atributo lista (partidos_11) una serie de 4 listas contenedoras de pares de equipos expresados en la forma ["Winner Grupo n", "Third-p Grupo n"] representando los 4 partidos con emparejamiento variable, cuyo rival del 3er lugar depende de cuales sean los 4 mejores 3ros (recordando que habrán 4 partidos con emparejamiento fijo predeterminado por reglamento FIFA para el formato jugado desde 1986 hasta 1994)
+  2-) Los cruces son validos si estan las 15 combinaciones, cada combinacion reparte sus 4 grupos entre 1A, 1B, 1C y 1D, y ningun ganador enfrenta al tercero de su propio grupo
 
-  3-) Mediante el método "octavos_1986_a_1994" y el contenido del atributo (ref_0) que estará influido por el año del mundial estudiado, se genera un df contendor de todos los partidos del 1er round de la fase final, segun los pares de equipos almacenados en los atributos (partidos_10) y (partidos_11) cuyo contenido se reposicionará en el df partido a partido en el orden segun el contenido y de los elementos del (ref_0)
+  Atributos:
+
+    - agno: año del mundial (1986, 1990 o 1994)
+
+    - llave: tupla de 8 partidos en notacion "<posicion><grupo>-<posicion><grupo>"
+
+    - cruces: mapeo frozenset(4 grupos) -> {"A": grupo del 3ro rival, "B": ..., "C": ..., "D": ...}
+  """
+  agno: int
+  llave: tuple
+  cruces: MappingProxyType
+
+  def __post_init__(self):
+    errores = [*self._errores_llave(), *self._errores_cruces()]
+    if self.agno not in _LLAVES_1986_1994:
+      errores.insert(0, f"el mundial {self.agno} no usa el formato de mejores terceros (solo 1986, 1990 y 1994)")
+    if errores:
+      raise ReglamentoInvalido(errores)
+
+  def _errores_llave(self):
+    if len(self.llave) != 8:
+      yield f"la llave debe tener 8 partidos y tiene {len(self.llave)}"
+    malos = [p for p in self.llave if not (isinstance(p, str) and _PATRON_PARTIDO.fullmatch(p))]
+    if malos:
+      yield f"partidos con formato invalido: {malos}"
+      return
+    cruces = [p.split("-") for p in self.llave]
+    fijos = [c for cruce in cruces for c in cruce if c != "3"]
+    if repetidos := sorted({c for c in fijos if fijos.count(c) > 1}):
+      yield f"equipos repetidos en la llave: {repetidos}"
+    if faltan := sorted(_CLASIFICADOS_FIJOS - set(fijos)):
+      yield f"equipos sin partido en la llave: {faltan}"
+    contra_tercero = {local for local, visita in cruces if visita == "3"}
+    if contra_tercero != {"1" + g for g in _GANADORES_CON_TERCERO}:
+      yield f"solo 1A, 1B, 1C y 1D enfrentan a un mejor tercero (recibido: {sorted(contra_tercero)})"
+    if mismos := [f"{l}-{v}" for l, v in cruces if v != "3" and l[1] == v[1]]:
+      yield f"cruces entre equipos del mismo grupo: {mismos}"
+
+  def _errores_cruces(self):
+    if set(self.cruces) != _COMBINACIONES:
+      yield "deben definirse los cruces para las 15 combinaciones de 4 grupos"
+      return
+    for grupos, rival_de in self.cruces.items():
+      nombre = "".join(sorted(grupos))
+      if sorted(rival_de) != list(_GANADORES_CON_TERCERO) or sorted(rival_de.values()) != sorted(grupos):
+        yield f"{nombre}: cada grupo debe aportar exactamente un rival a 1A, 1B, 1C y 1D"
+      elif mismos := [g for g, rival in rival_de.items() if g == rival]:
+        yield f"{nombre}: el ganador de {mismos} no puede enfrentar al tercero de su propio grupo"
+
+  @classmethod
+  def oficial(cls, agno):
+    """Reglamento FIFA del año (agno)"""
+    return cls(agno, _LLAVES_1986_1994.get(agno, ()), _CRUCES_TERCEROS)
+
+  @classmethod
+  def desde_json(cls, agno, datos):
+    """Construye (y valida) el reglamento enviado por el frontend: {"llave": [...8], "cruces": {"ABCD": "CDAB", ...}}"""
+    try:
+      llave = tuple(datos["llave"])
+      cruces = {frozenset(grupos): MappingProxyType(dict(zip(_GANADORES_CON_TERCERO, rivales)))
+                for grupos, rivales in datos["cruces"].items()}
+    except (KeyError, TypeError, AttributeError):
+      raise ReglamentoInvalido(['se esperaba {"llave": [8 partidos], "cruces": {"ABCD": "CDAB", ...}}']) from None
+    return cls(agno, llave, MappingProxyType(cruces))
+
+  def a_json(self):
+    """Inverso de "desde_json", para precargar el editor del frontend"""
+    return {"llave": list(self.llave),
+            "cruces": {"".join(sorted(grupos)): "".join(rival_de[g] for g in _GANADORES_CON_TERCERO)
+                       for grupos, rival_de in sorted(self.cruces.items(), key=lambda kv: sorted(kv[0]))}}
+
+def reglamentos_oficiales():
+  """Diccionario {agno: reglamento FIFA en formato JSON} para entregar al template"""
+  return {agno: ReglamentoTerceros.oficial(agno).a_json() for agno in _LLAVES_1986_1994}
+
+def tabla_terceros(dict_table, df_grupos=None):
+  """
+  ¿QUE HACE?
+  Genera un df con el 3er lugar de cada grupo ordenado segun el criterio FIFA: puntos, diferencia de gol y goles a favor. La letra del grupo se usa como ultimo desempate para que el resultado sea determinista
+
+  ¿COMO LO HACE?
+  0-) Se toma la fila de indice 2 (3er lugar) de cada tabla de (dict_table), ya ordenada por "fase_de_grupos"
+
+  1-) Si se entrega (df_grupos), se acumulan los goles a favor y en contra de cada equipo como home y away, y se agregan las columnas "DG" y "GF" a los terceros; si no, valen 0
+
+  2-) Se ordena de mejor a peor tercero
 
   Args:
 
-    - ObjNrml: objeto de la clase "normali" para acceder al sistema de emparejamientos adoptado
-               por la FIFA entre 1986 y 1994
+    - dict_table: diccionario de salida de "fase_de_grupos" con clave "Grupo X" y valor el df (pais, Pts) ordenado
+
+    - df_grupos: df de la fase de grupos ya jugada con columnas "home", "away", "score_0" y "score_1" (opcional, para desempatar)
 
   Returns:
 
-    - df con el orden de juego de equipos home y away en los partidos del 1er round de la fase final del mundial estudiado
+    - df con columnas "Grupo", "pais", "Pts", "DG", "GF" ordenado de mejor a peor tercero
   """
-  dic_g = ObjNrml.grupos_anio_interes(ObjNrml.agno)
-  cuatro_mayores = ObjNrml.cuatro_mejores_terceros(dic_g)
-  ObjNrml.emparejamiento_partidos_dependientes(cuatro_mayores)
-  return ObjNrml.octavos_1986_a_1994(ObjNrml.ref_0)
+  terceros = pd.DataFrame(
+    [(grupo[-1], tabla["pais"].iloc[2], tabla["Pts"].iloc[2]) for grupo, tabla in dict_table.items()],
+    columns=["Grupo", "pais", "Pts"]).astype({"Pts": float})
 
-def knock_out_1986_1994(df0, df1): # PEND recordar optimizar esto con decoradores
+  if df_grupos is not None:
+    columnas = ["pais", "GF", "GC"]
+    goles = pd.concat([df_grupos[["home", "score_0", "score_1"]].set_axis(columnas, axis=1),
+                       df_grupos[["away", "score_1", "score_0"]].set_axis(columnas, axis=1)])
+    goles = goles.astype({"GF": float, "GC": float}).groupby("pais").sum()
+    terceros = terceros.join(goles.assign(DG=goles.GF - goles.GC)[["DG", "GF"]], on="pais")
+  terceros = terceros.reindex(columns=["Grupo", "pais", "Pts", "DG", "GF"]).fillna({"DG": 0, "GF": 0})
+
+  return terceros.sort_values(["Pts", "DG", "GF", "Grupo"], ascending=[False, False, False, True], ignore_index=True)
+
+def con_reglamento_terceros(func):
   """
   ¿QUE HACE?
-  Toma la salida de "emparejar_equipos" (df0) y el contenido del df consulta del usuario en (df1) y toma como lista los valores de "home" y "away" del 1ro, mientras que toma como lista los valores "score" del 2do, alamacena los 2 primeros en variables (emp0) y (emp1), y el "score" en una variable (sc_emp). Luego retorna un df contenedor de estas variables ya en orden y con el indice apropiado para cada fila
-  
+  Decorador que entrega a la funcion decorada el reglamento de mejores terceros a usar: el personalizado si quien llama lo pasa en (personalizado), o el oficial FIFA de (agno) si no. La funcion decorada solo alinea equipos con las tablas de grupos ya jugadas, sin saber de donde salio el reglamento
+  """
+  @wraps(func)
+  def envoltura(dict_table, agno, *args, personalizado=None, **kwargs):
+    reglamento = personalizado if personalizado is not None else ReglamentoTerceros.oficial(agno)
+    if reglamento.agno != agno:
+      raise ValueError(f"el reglamento es del mundial {reglamento.agno} y se pidio el {agno}")
+    return func(dict_table, reglamento, *args, **kwargs)
+  return envoltura
+
+@con_reglamento_terceros
+def alinear_knockout_1986_1994(dict_table, reglamento, df_grupos=None):
+  """
+  ¿QUE HACE?
+  Genera el df (home, away) del 1er round de la fase final segun los 4 mejores terceros de las tablas de grupos ya jugadas y el (reglamento) que inyecta "con_reglamento_terceros". Quien llama pasa (dict_table, agno, df_grupos=..., personalizado=...)
+
   ¿COMO LO HACE?
+  0-) Se obtienen los 4 mejores terceros con "tabla_terceros"
 
-  0-) (emp0) y (emp1) almacenaran respectivamente la columna del "home" y "away" del df de 1er round de fase final que, de hecho, solo posee esas 2 columnas, convertido en serie y luego en lista
+  1-) Se busca en los cruces del (reglamento) el rival de 1A, 1B, 1C y 1D para esa combinacion de grupos
 
-  1-) En (sc_emp) se almacena la columna "score" del df (df1) para las 1ras 8 filas, convertido a serie y luego a lista
-
-  2-) se retorna un df con columnas "home", "score" y "away" con contenido igual a las variables (emp0), (sc_emp) y (emp1) respectivamente y con index de 0 al tamaño de (sc_emp)-1
+  2-) Se recorre la llave del (reglamento) traduciendo cada codigo a etiqueta; los "3" se reemplazan por el tercero asignado al ganador local
 
   Args:
 
-    - df0: df con el orden de juego de los equipos en sus unicas columnas "home" y "away" para 1ros 8 partidos de la fase final
+    - dict_table: salida de "fase_de_grupos"
 
-    - df1: df de consulta del usuario con columna de score posiblemente editada por este para los 1ros 8 partidos de la fase final
+    - reglamento: (ReglamentoTerceros) inyectado por el decorador; quien llama pasa el año (int) y opcionalmente (personalizado)
 
-  Return:
+    - df_grupos: df de la fase de grupos jugada, para desempatar por diferencia de gol y goles a favor
 
-    - df con columnas "home", "score" y "away" con contenido igual a las variables (emp0), (sc_emp) and (emp1) respectivamente y con index de 0 al tamaño de (sc_emp)-1
+  Returns:
+
+    - df con columnas "home" y "away" en formato "Winner Grupo A" / "Third-p Grupo C", con los 4 mejores terceros en attrs["mejores_terceros"]
   """
-  emp0 = df0[["home"]].squeeze().to_list()
-  emp1 = df0[["away"]].squeeze().to_list()
-  sc_emp = df1[["score"]].iloc[:8].squeeze().to_list()
-
-  return pd.DataFrame({"home": emp0, "score": sc_emp, "away": emp1}, index=list(range(0, len(sc_emp))))
+  terceros = tabla_terceros(dict_table, df_grupos).iloc[:4]
+  rival_de = reglamento.cruces[frozenset(terceros.Grupo)]
+  partidos = []
+  for local, visita in (partido.split("-") for partido in reglamento.llave):
+    if visita == "3":
+      visita += rival_de[local[1]]
+    partidos.append((_etiqueta(local), _etiqueta(visita)))
+  llave = pd.DataFrame(partidos, columns=["home", "away"])
+  llave.attrs["mejores_terceros"] = terceros
+  return llave
 
 class func_prediccion_orden(normali):
-  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, ind_grupos_mundiales=None, agno=None, obj0="-", evitar="-", embedding_dim=3, ind0=[None, None], n_partidos=0):
+  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0="-", evitar="-", embedding_dim=3, ind0=[None, None], n_partidos=0):
     """
     ¿QUE HACE?
     Inicializa la clase (func_prediccion_orden), que hereda de (normali), llamando al constructor del padre y definiendo los atributos adicionales necesarios para gestionar el flujo de predicciones secuenciales entre fases del mundial: la lista ordenada de fases, el diccionario de resultados por partido, el diccionario de fuerzas de equipos, el indicador de fase actual y objetivo, y el contador de partidos procesados
@@ -1221,10 +1222,6 @@ class func_prediccion_orden(normali):
 
       - clsif: df contenedor de partidos de clasificacion previa al mundial de interés
 
-      - ind_grupos_mundiales: indica si debe entrarse en la logica de emparejamiento por mejores 3ros adoptada entre 1986 y 1994, siendo None si no se requiere y un valor distinto de None (ej. "grupos") si se requiere
-
-      - agno: valor int que indica el año del mundial con formato de emparejamiento por mejores terceros, para la búsqueda en (self.dic_emp_1)
-
       - obj0: cadena que indica si el primer valor de retorno de (create_features) incluirá todos los partidos del mundial o solo la fase final separada del df de consulta del usuario
 
       - evitar: parametro reservado para uso futuro
@@ -1239,7 +1236,7 @@ class func_prediccion_orden(normali):
 
       - No retorna valor, solo inicializa los atributos de la instancia
     """
-    normali.__init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, ind_grupos_mundiales=ind_grupos_mundiales, agno=agno, obj0=obj0, evitar=evitar, embedding_dim=embedding_dim)
+    normali.__init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0=obj0, evitar=evitar, embedding_dim=embedding_dim)
 
     self.lista_fases = ["grupo", "doce", "knockout", "quarter", "semi", "third", "final", "Fase Final"]
     self.dic_matches = None
@@ -1922,18 +1919,14 @@ for des0 in agnos:
 
   dic_agnos[str(des0)] = eliminatorias
 
-def consulta_general(pregunta_0, df5):
+def consulta_general(pregunta_0, df5, reglamento_terceros=None):
   """
   ¿QUE HACE?
   Realiza la predicción de resultados para un mundial específico, creando el objeto de la clase (func_prediccion_orden) necesario segun el año al que quiere aplicarse inferencia, generando los datasets necesarios, generando parametros para calcular la fuerza aproximada de cada equipo, cargando el modelo entrenado y aplicando las funciones de predicción para obtener los resultados esperados
 
   ¿COMO LO HACE?
 
-  0-) Se tienen 2 condicionales para definir el objeto (objs) de la clase (func_prediccion_orden) segun el año del mundial a predecir:
-
-    0.0-) Si el año no está entre (1986, 1990 o 1994):
-      
-      0.0.0-) Se crea el objeto sin considerar el parametro (grupos_mundiales), colocando los parametros de clase convencionales:
+  0-) Se crea el objeto (objs) de la clase (func_prediccion_orden) con los parametros:
 
         - ind_partidos: cadena con la forma ("partidos") para indicar la busqueda correcta en DB con el ORM de django
 
@@ -1943,15 +1936,7 @@ def consulta_general(pregunta_0, df5):
       
         - clsif: df con las clasificaciones historicas de mundiales para obtener el total absoluto de equipos participantes en el mundial a predecir
     
-        - obj0: un entero con el año del mundial a predecir, para indicar si el componente de indice 0 de la salida del metodo (create_features) incluye (fase final fixture del mundial jugado, df consulta del usuario) o (contenido del mundial jugado) 
-
-    0.1-) Si el año está entre (1986, 1990 o 1994):
-      
-      0.1.0-) Se define al parametro (grupos_mundiales) como "grupos" y se crea el objeto considerando este parametro, colocando unos parametros de clase extra: 
-
-        - (ind_grupos_mundiales): (sera una cadena contenedora de la palabra "grupos" para permitir el uso del array (self.dic_emp_0)
-
-        - (agno): un entero que indica el año del mundial con formato de emparejamiento por mejores terceros, para referenciar en el atributo de instancia diccionario (self.dic_emp_1) con pares clave (1986, 1990, 1994)-valor (tupla con dos subtuplas internas, cada una con el momento de juego para cada partido fijo en la 1ra y variable en la 2da)
+        - obj0: un entero con el año del mundial a predecir, para indicar si el componente de indice 0 de la salida del metodo (create_features) incluye (fase final fixture del mundial jugado, df consulta del usuario) o (contenido del mundial jugado)
 
   1-) Se llama al metodo (create_features) del objeto (objs) usando como argumento el (dic_agnos) para generar los datasets necesarios para la predicción, almacenándolos en las variables (df1, df2, df3):
 
@@ -1989,13 +1974,18 @@ def consulta_general(pregunta_0, df5):
 
     - df_ent: df con los resultados predichos para cada fase del mundial de interes y nombres de equipos ya en formato texto, con las alteraciones que el usuario haya hecho en su consulta, concatenando los dfs de cada fase del mundial de interes (fase de grupos, 2da fase de grupos, semifinales, partido por el tercer lugar y final) cada uno con sus resultados predichos y nombres de equipos ya en formato texto
 
+    - Para 1986, 1990 y 1994 el 1er round de la fase final se arma con "alinear_knockout_1986_1994" DESPUES de jugar la fase de grupos, y (df_ent.attrs) lleva las tablas "mejores_terceros" y "llave_octavos" para mostrarlas en el template
+
+  Args:
+
+    - pregunta_0: cadena con la fase objetivo y el año del mundial (ej. "grupo1986")
+
+    - df5: df de consulta del usuario
+
+    - reglamento_terceros: (ReglamentoTerceros) personalizado desde el frontend para 1986-1994; None usa el reglamento FIFA oficial
   """
 
-  if not pregunta_0 in ("1986", "1990", "1994"):
-    objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, obj0=int(pregunta_0[-4:]))
-  else:
-    grupos_mundiales = "grupos"
-    objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, ind_grupos_mundiales=grupos_mundiales, agno=int(pregunta_0[-4:]), obj0=int(pregunta_0[-4:]))
+  objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, obj0=int(pregunta_0[-4:]))
 
   df_features = objs.create_features(dic_agnos)
   df1, df2, df3 = df_features[0], df_features[1], df_features[2]
@@ -2322,12 +2312,12 @@ def consulta_general(pregunta_0, df5):
     return df_ent
   
   elif "1986" in pregunta_0 or "1990" in pregunta_0 or "1994" in pregunta_0:
-    emparejar_equipos_val = emparejar_equipos(objs)
+    agno = int(pregunta_0[-4:])
 
     if "grupo" in pregunta_0:
       objs.ind0[1] = "grupo"
       df_fixture_group_ = agregar_features(df1[1].copy(), dic_agnos, ind=0)
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df3).copy()
+      marcadores_knockout = df3
       df_fixture_quarter = df3[["home", "score", "away"]].iloc[8:12].copy()
       df_fixture_semi = df3[["home", "score", "away"]].iloc[12:14].copy()
       df_fixture_third = df3[["home", "score", "away"]].iloc[14].copy()
@@ -2336,7 +2326,7 @@ def consulta_general(pregunta_0, df5):
     elif "knockout" in pregunta_0:
       objs.ind0[1] = "knockout"
       df_fixture_group_ = df2.copy()
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df1[1]).copy()
+      marcadores_knockout = df1[1]
       df_fixture_quarter = df3[["home", "score", "away"]].iloc[8:12].copy()
       df_fixture_semi = df3[["home", "score", "away"]].iloc[12:14].copy()
       df_fixture_third = df3[["home", "score", "away"]].iloc[14].copy()
@@ -2345,7 +2335,7 @@ def consulta_general(pregunta_0, df5):
     elif "quarter" in pregunta_0:
       objs.ind0[1] = "quarter"
       df_fixture_group_ = df2.copy()
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df1[0]).copy()
+      marcadores_knockout = df1[0]
       df_fixture_quarter = df1[1].copy()
       df_fixture_semi = df3[["home", "score", "away"]].iloc[12:14].copy()
       df_fixture_third = df3[["home", "score", "away"]].iloc[14].copy()
@@ -2354,7 +2344,7 @@ def consulta_general(pregunta_0, df5):
     elif "semi" in pregunta_0:
       objs.ind0[1] = "semi"
       df_fixture_group_ = df2.copy()
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df1[0]).copy()
+      marcadores_knockout = df1[0]
       df_fixture_quarter = df1[0][["home", "away"]].iloc[8:12].copy()
       df_fixture_semi = df1[1].copy()
       df_fixture_third = df3[["home", "score", "away"]].iloc[14].copy()
@@ -2363,7 +2353,7 @@ def consulta_general(pregunta_0, df5):
     elif "third" in pregunta_0:
       objs.ind0[1] = "third"
       df_fixture_group_ = df2.copy()
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df1[0]).copy()
+      marcadores_knockout = df1[0]
       df_fixture_quarter = df1[0][["home", "away"]].iloc[8:12].copy()
       df_fixture_semi = df1[0][["home", "away"]].iloc[12:14].copy()
       df_fixture_third = df1[1].copy()
@@ -2372,7 +2362,7 @@ def consulta_general(pregunta_0, df5):
     elif "final" in pregunta_0:
       objs.ind0[1] = "final"
       df_fixture_group_ = df2.copy()
-      df_fixture_knockout = knock_out_1986_1994(emparejar_equipos_val, df1[0]).copy()
+      marcadores_knockout = df1[0]
       df_fixture_quarter = df1[0][["home", "away"]].iloc[8:12].copy()
       df_fixture_semi = df1[0][["home", "away"]].iloc[12:14].copy()
       df_fixture_third = df1[0][["home", "away"]].iloc[14].copy()
@@ -2380,6 +2370,12 @@ def consulta_general(pregunta_0, df5):
 
     objs.ind0[0] = "grupo"
     dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo)
+
+    # la llave se arma con las tablas de grupos YA jugadas, con el reglamento FIFA o el personalizado desde el frontend
+    df_fixture_knockout = alinear_knockout_1986_1994(dict_table, agno, df_grupos=df_fixture_group_, personalizado=reglamento_terceros)
+    mejores_terceros = df_fixture_knockout.attrs["mejores_terceros"]
+    cruces_octavos = df_fixture_knockout[["home", "away"]].rename(columns={"home": "cruce_local", "away": "cruce_visita"})
+    df_fixture_knockout.insert(1, "score", marcadores_knockout["score"].iloc[:8].to_numpy())
 
     df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table)
 
@@ -2411,9 +2407,12 @@ def consulta_general(pregunta_0, df5):
 
     df_ent.home = df_ent.home.map(objs.id_pais)
     df_ent.away = df_ent.away.map(objs.id_pais)
+    df_ent.attrs["mejores_terceros"] = mejores_terceros.assign(pais=mejores_terceros.pais.map(objs.id_pais))
+    df_ent.attrs["llave_octavos"] = cruces_octavos.assign(local=df_fixture_knockout.home.map(objs.id_pais).to_numpy(),
+                                                          visita=df_fixture_knockout.away.map(objs.id_pais).to_numpy())
 
     return df_ent
-    
+
   elif "1974" in pregunta_0 or "1978" in pregunta_0:
 
     if "grupo" in pregunta_0:

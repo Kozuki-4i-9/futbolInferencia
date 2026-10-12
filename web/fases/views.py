@@ -31,6 +31,21 @@ def formar_dataset_consulta(valores):
 
 dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
 
+def leer_reglamento(agno, datos):
+    """
+    Construye el reglamento de mejores terceros enviado por el template
+
+    - Args:
+        - agno: año del mundial (str o int)
+        - datos: None (usar reglamento FIFA oficial) o {"llave": [...8], "cruces": {"ABCD": "CDAB", ...}}
+
+    - Returns:
+        - None o un ReglamentoTerceros ya validado (lanza ReglamentoInvalido antes de correr el modelo)
+    """
+    if not datos:
+        return None
+    return ReglamentoTerceros.desde_json(int(agno), datos)
+
 def procesar_recepcion_0(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -43,7 +58,7 @@ def procesar_recepcion_0(request):
             print(f"Estos son mis partidos\n{df}")
             return(JsonResponse(context))
 
-    return(render(request, "prediccion_2.html"))
+    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales()}))
 
 def procesar_recepcion_1(request):
     """Vista usada al precionar el boton "predecir" """
@@ -52,12 +67,18 @@ def procesar_recepcion_1(request):
             data = json.loads(request.body)
             recepcion = data.get('recepcion', None)
             if recepcion:
+                try:
+                    reglamento = leer_reglamento(recepcion[0], data.get('reglamento'))
+                except ReglamentoInvalido as error:
+                    return JsonResponse({'error': str(error)}, status=400)
 
                 recepc = formar_dataset_consulta(recepcion)
                 if recepcion[1]=="Fase de Grupos":
                     recepc["agno"] = int(recepcion[0])
 
-                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc).reset_index(drop=True)
+                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc, reglamento_terceros=reglamento)
+                extras = dict(respuesta.attrs)
+                respuesta = respuesta.reset_index(drop=True)
                 respuesta.score_0 = respuesta.score_0.astype('int64')
                 respuesta.score_1 = respuesta.score_1.astype('int64')
                 score = pd.DataFrame()
@@ -75,6 +96,9 @@ def procesar_recepcion_1(request):
                 json_partidos = respuesta.to_json(orient='records')
 
                 context = {"partidos": json_partidos}
+                for clave in ("mejores_terceros", "llave_octavos"):
+                    if clave in extras:
+                        context[clave] = extras[clave].to_json(orient='records')
 
                 return JsonResponse(context)
             
