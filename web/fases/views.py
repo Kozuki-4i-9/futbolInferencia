@@ -6,54 +6,9 @@ import json
 import pandas as pd
 import numpy as np
 
-from .modulo_0 import *
+from .modulo import *
 
 agnos = ["1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2026", "2022"]
-
-def formar_dataset_real(ind0, valores=None):
-    """
-    Busca en la base de datos segun la tabla indicada por "ind0" y segun el año 
-    presente en valores (no lo estará en el caso de ind0="clasificaciones").
-
-    - Args:
-            - ind0: cadena que indica a que tabla se hará la búsqueda
-            - valores: año en que se hará la búsqueda (a no ser que sea un 
-                       ind0="clasificaciones")
-
-    - Returns:
-               - df: dataframe con el contenido de la tabla que se ha consultado
-    """
-    if(ind0=="partidos"):
-        df0 = list()
-        for des in partidos.objects.all():
-            if des.agno==valores:
-                df0.append([des.home, des.score, des.away, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "year"])
-        return(df)
-    
-    elif(ind0=="fixtures"):
-        df0 = list()
-        for des in fixtures.objects.all():
-            if des.agno==valores:
-                df0.append([des.home, des.score, des.away, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "year"])
-        return(df)
-    
-    elif(ind0=="grupos"):
-        df0 = list()
-        for des in grupos.objects.all():
-            if des.agno==valores:
-                df0.append([des.pais, des.Pts, des.PJ, des.PG, des.PP, des.PE, des.GF, des.GC, des.Dif, des.Grupo, des.agno])
-        df = pd.DataFrame(data=np.array(df0), columns=["pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo", "agno"])
-        return(df)
-    
-    elif(ind0=="clasificaciones"):
-        df0 = list()
-        for des in clasificaciones.objects.all():
-            df0.append([des.home, des.score_0, des.score_1, des.away, des.tournament, des.agno])
-        df = np.array(df0)
-        df = pd.DataFrame(data=df, columns=["home", "score_0", "score_1", "away", "tournament", "agno"])
-        return(df)
 
 def formar_dataset_consulta(valores):
     """
@@ -76,6 +31,47 @@ def formar_dataset_consulta(valores):
 
 dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
 
+def leer_reglamento(agno, datos):
+    """
+    Construye el reglamento de mejores terceros enviado por el template
+
+    - Args:
+        - agno: año del mundial (str o int)
+        - datos: None (usar reglamento FIFA oficial) o {"llave": [...8], "cruces": {"ABCD": "CDAB", ...}}
+
+    - Returns:
+        - None o un ReglamentoTerceros ya validado (lanza ReglamentoInvalido antes de correr el modelo)
+    """
+    if not datos:
+        return None
+    return ReglamentoTerceros.desde_json(int(agno), datos)
+
+def leer_metricas(datos, catalogo, nombre, defecto):
+    """
+    Valida una lista de metricas enviada por el template contra su catalogo de modulo.py
+
+    - Args:
+        - datos: None (usar el valor por defecto) o lista de nombres (ej. ["GF", "GC"])
+        - catalogo: BASE_METRICS u OPTIONAL_METRICS
+        - nombre: clave del JSON, para el mensaje de error
+        - defecto: valor si el template no envio la clave (DROP_METRICS u OPTIONAL_METRICS)
+
+    - Returns:
+        - tupla con las metricas (lanza ValueError si llega algo fuera del catalogo)
+    """
+    if datos is None:
+        return tuple(defecto)
+    if not isinstance(datos, list) or not all(isinstance(m, str) for m in datos):
+        raise ValueError(f"{nombre} debe ser una lista de nombres de metricas")
+    desconocidas = set(datos) - set(catalogo)
+    if desconocidas:
+        raise ValueError(f"{nombre}: metricas no validas {sorted(desconocidas)}")
+    return tuple(datos)
+
+def catalogo_metricas():
+    """Metricas que el template muestra como casillas (fuente de verdad: modulo.py)"""
+    return {"base": BASE_METRICS, "opcionales": OPTIONAL_METRICS}
+
 def procesar_recepcion_0(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -88,7 +84,7 @@ def procesar_recepcion_0(request):
             print(f"Estos son mis partidos\n{df}")
             return(JsonResponse(context))
 
-    return(render(request, "prediccion_2.html"))
+    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
 
 def procesar_recepcion_1(request):
     """Vista usada al precionar el boton "predecir" """
@@ -97,12 +93,22 @@ def procesar_recepcion_1(request):
             data = json.loads(request.body)
             recepcion = data.get('recepcion', None)
             if recepcion:
+                try:
+                    reglamento = leer_reglamento(recepcion[0], data.get('reglamento'))
+                    drop_metricas = leer_metricas(data.get('drop_metricas'), BASE_METRICS, "drop_metricas", DROP_METRICS)
+                    metricas_opcionales = leer_metricas(data.get('metricas_opcionales'), OPTIONAL_METRICS, "metricas_opcionales", OPTIONAL_METRICS)
+                    validar_valores_neutros(drop_metricas, metricas_opcionales)
+                except (ReglamentoInvalido, ValueError) as error:
+                    return JsonResponse({'error': str(error)}, status=400)
 
                 recepc = formar_dataset_consulta(recepcion)
                 if recepcion[1]=="Fase de Grupos":
                     recepc["agno"] = int(recepcion[0])
 
-                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc).reset_index(drop=True)
+                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc, reglamento_terceros=reglamento,
+                                             drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
+                extras = dict(respuesta.attrs)
+                respuesta = respuesta.reset_index(drop=True)
                 respuesta.score_0 = respuesta.score_0.astype('int64')
                 respuesta.score_1 = respuesta.score_1.astype('int64')
                 score = pd.DataFrame()
@@ -120,6 +126,9 @@ def procesar_recepcion_1(request):
                 json_partidos = respuesta.to_json(orient='records')
 
                 context = {"partidos": json_partidos}
+                for clave in ("mejores_terceros", "llave_octavos"):
+                    if clave in extras:
+                        context[clave] = extras[clave].to_json(orient='records')
 
                 return JsonResponse(context)
             
