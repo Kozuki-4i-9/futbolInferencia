@@ -37,8 +37,9 @@ class clasificaciones(models.Model):
     score_1 = models.CharField(max_length=10)
     tournament = models.CharField(max_length=50)
 
-# gkps, mds, mos, mms, VI, SOT, PKATT, PKATTALLOW
+# pais, gkps, mds, mos, mms, VI, SOT, PKATT, PKATTALLOW
 class proxy_desempegno(models.Model):
+    pais = models.CharField(max_length=50)
     gkps = models.CharField(max_length=50)
     mds = models.CharField(max_length=50)
     mos = models.CharField(max_length=50)

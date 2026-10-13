@@ -7,6 +7,13 @@
     <div id="input-container_1"></div>
     <div id="input-container_2"></div>
     <div id="editor-reglamento" hidden></div>
+    <!-- casillas de metricas: marcadas = el modelo las usa; desmarcadas = llegan con su valor neutro -->
+    <fieldset id="metricas-base">
+        <legend>Métricas base (desmarca para descartar)</legend>
+    </fieldset>
+    <fieldset id="metricas-opcionales">
+        <legend>Métricas opcionales (desmarca para no usarlas)</legend>
+    </fieldset>
     <div id="tabla-terceros"></div>
     <div id="tabla-llave"></div>
 
@@ -19,6 +26,7 @@
 </form>
 
     {{ reglamentos_terceros|json_script:"reglamentos-terceros" }}
+    {{ catalogo_metricas|json_script:"catalogo-metricas" }}
     <script>
         /*
             ESTE PROGRAMA ES PARA EFECTUAR LA INFERENCIA A LAS PETICIONES DEL USUARIO.
@@ -508,7 +516,9 @@
             let ArrayLlis = [];
             let cuenta_2 = 0;
             let cuenta_3 = 1;
-            let entradas_0 = document.querySelectorAll('input');
+            /* se excluyen las casillas de metricas (clase "metrica"): los goles se leen por posicion
+            */
+            let entradas_0 = document.querySelectorAll('input:not(.metrica)');
 
             /* se itera el contenido de todos los select
             */
@@ -567,7 +577,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ recepcion: ArrayLlis, reglamento: leerReglamento() }) // Envía como JSON
+                body: JSON.stringify({ recepcion: ArrayLlis, reglamento: leerReglamento(), drop_metricas: leerDropMetricas(), metricas_opcionales: leerMetricasOpcionales() }) // Envía como JSON
             })
             /* se parsea la respuesta del servidor para su manejo adecuado
             */
@@ -706,6 +716,42 @@
             return {llave, cruces};
         }
 
+        /* catalogo de metricas entregado por la vista (fuente de verdad: modulo.py)
+        */
+        const CATALOGO_METRICAS = JSON.parse(document.getElementById("catalogo-metricas").textContent);
+
+        /* pinta una casilla marcada por metrica; la clase "metrica" las saca de la lectura de goles en "enviarSeleccion_1"
+        */
+        function pintarCasillasMetricas(id_contenedor, metricas, tipo)
+        {
+            const contenedor = document.getElementById(id_contenedor);
+            metricas.forEach(m =>
+            {
+                const etiqueta = document.createElement("label");
+                const casilla = document.createElement("input");
+                casilla.type = "checkbox";
+                casilla.className = `metrica ${tipo}`;
+                casilla.value = m;
+                casilla.checked = true;
+                etiqueta.append(casilla, ` ${m} `);
+                contenedor.appendChild(etiqueta);
+            });
+        }
+
+        /* metricas base desmarcadas (el servidor las neutraliza); vacio = se usan todas
+        */
+        function leerDropMetricas()
+        {
+            return [...document.querySelectorAll("input.metrica.base:not(:checked)")].map(c => c.value);
+        }
+
+        /* metricas opcionales marcadas (el servidor neutraliza las demas); vacio = ninguna
+        */
+        function leerMetricasOpcionales()
+        {
+            return [...document.querySelectorAll("input.metrica.opcional:checked")].map(c => c.value);
+        }
+
         /* pinta una tabla generica a partir de un JSON orient="records" (textContent: sin inyeccion de HTML)
         */
         function pintarTabla(id_contenedor, titulo, json_filas)
@@ -775,6 +821,9 @@
                estan todos los años con mundiales de futbol (quitando el 1930)
             */
             container_0.appendChild(select_0_mundiales);
+
+            pintarCasillasMetricas("metricas-base", CATALOGO_METRICAS.base, "base");
+            pintarCasillasMetricas("metricas-opcionales", CATALOGO_METRICAS.opcionales, "opcional");
         }
 
         /* se asocia la funcion "inicio", como desencadenante del programa, al iniciarse sesion 

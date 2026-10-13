@@ -17,16 +17,30 @@ tf.random.set_seed(2)
 
 agnos = ["1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2026", "2022"]
 
+# métricas que se acumulan fase a fase en los df de fase (funcion_tabla_desempegno); el usuario puede descartarlas
 BASE_METRICS = ["PTS", "PJ", "PG", "PP", "PE", "GF", "GC", "D"]
-OPTIONAL_METRICS = [] 
-DROP_METRICS = []
+# catálogo de métricas derivadas (calculo_metricas_0); el usuario acepta todas, algunas o ninguna
+OPTIONAL_METRICS = ["gkps", "mds", "mos", "mms", "rate_GC", "rate_GF"]
+# por defecto no se descarta ninguna base; cada petición trae las suyas como parámetro (nunca se escribe esta global)
+DROP_METRICS = ()
+# esquema fijo de entrada al modelo por equipo: no cambia con lo que elija el usuario
 ALL_METRICS = BASE_METRICS + OPTIONAL_METRICS
 
-# PEND hacer a (opcionales) sensible al desempeño predicho por el momdelo desde la funcion (funcion_tabla_desempegno)
+# insumos internos de gkps, mds, mos y mms; viven en (opcionales) y el usuario no los elige
+METRICAS_ABSTRACTAS = ["VI", "SOT", "PKATT", "PKATTALLOW"]
+
+# valor que recibe una métrica descartada o no aceptada: la media de esa columna en el set de entrenamiento
+# PEND rellenar desde el notebook de entrenamiento con X_tr (mismo orden que ALL_METRICS)
+VALOR_NEUTRO = {m: None for m in ALL_METRICS}
+
+# progreso por país (id) de METRICAS_ABSTRACTAS; lo carga (reiniciar_opcionales) y lo actualiza (calculo_metricas_1)
 opcionales = None
 
-C_S_DELETE_INDEX = 8
-C_S_Y_INDEX = 8
+EMBEDDING_DIM = 3
+COLS_FASE_POR_EQUIPO = 1 + len(BASE_METRICS) + 1    # df de fase: equipo + base + score
+COLS_MODELO_POR_EQUIPO = 1 + len(ALL_METRICS) + 1   # entrada al modelo: equipo + base + derivadas + score
+C_S_DELETE_INDEX = EMBEDDING_DIM + len(ALL_METRICS) # posición del score tras reemplazar el id por su embedding
+C_S_Y_INDEX = C_S_DELETE_INDEX
 N_STEPS = 0
 
 MATCH_HOME_IDX = 0
@@ -152,43 +166,73 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     return df
   
   elif ind0 == "proxy_desempegno":
-    df0 = list()
-    for des in proxy_desempegno.objects.all():
-      df0.append([des.pais, des.VI, des.SOT, des.PKATT, des.PKATTALLOW])
-    df = np.array(df0)
-    df = pd.DataFrame(data=df, columns=["VI", "SOT", "PKATT", "PKATTALLOW"])
-    df.VI, df.SOT, df.PKATT, df.PKATTALLOW = df.VI.astype('int64'), df.SOT.astype('int64'), df.PKATT.astype('int64'), df.PKATTALLOW.astype('int64')
+    df = pd.DataFrame(
+      list(proxy_desempegno.objects.values("pais", *METRICAS_ABSTRACTAS)),
+      columns=["pais", *METRICAS_ABSTRACTAS],
+    )
+    # los campos son CharField: se pasan a número (float, porque SOT y PKATT pueden traer decimales)
+    df[METRICAS_ABSTRACTAS] = df[METRICAS_ABSTRACTAS].apply(pd.to_numeric, errors="coerce")
     return df
+
+def reiniciar_opcionales(pais_id):
+  """
+  ¿QUE HACE?
+  Carga en la variable global (opcionales) el histórico de METRICAS_ABSTRACTAS por país, con el país traducido a id, que es como viajan los equipos en los df de fase. Se llama al inicio de cada consulta para que una predicción no arranque desde el progreso que dejó la anterior.
+
+  ¿COMO LO HACE?
+  0-) Recupera el histórico con "formar_dataset_real" ("proxy_desempegno")
+
+  1-) Traduce "pais" a id con (pais_id), descarta los países que no juegan en este contexto y conserva el primer registro si hay países duplicados
+
+  Args:
+
+    - pais_id: diccionario nombre del país -> id (atributo "pais_id" de la clase "normali")
+
+  Globales usadas:
+
+    - opcionales: se reemplaza por el histórico recién cargado
+  """
+  global opcionales
+  df = formar_dataset_real("proxy_desempegno")
+  df["pais"] = df["pais"].map(pais_id)
+  df = df.dropna(subset=["pais"]).drop_duplicates(subset="pais", keep="first")
+  df["pais"] = df["pais"].astype("int64")
+  opcionales = df.reset_index(drop=True)
 
 def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
     """
     ¿QUE HACE?
     Calcula y acumula las métricas de desempeño base (BASE_METRICS: PTS, PJ,
-    PG, PP, PE, GF, GC, D) y las métricas opcionales (OPTIONAL_METRICS: VI,
-    SOT, PKATT, PKATTALLOW) para el equipo (pais), iterando los partidos de
-    df0. Puede usarse para generar el rendimiento acumulado en la fase
-    eliminatoria previa al mundial (ind0=0), o para ajustar dicho rendimiento
-    en df0 tras las predicciones de goles del modelo (ind0=1).
+    PG, PP, PE, GF, GC, D) para el equipo (pais), iterando los partidos de
+    df0, y con ind0=1 imputa además el progreso de las métricas abstractas
+    (METRICAS_ABSTRACTAS: VI, SOT, PKATT, PKATTALLOW) que luego usa
+    calculo_metricas_0 para derivar gkps, mds, mos y mms. Puede usarse para
+    generar el rendimiento acumulado en la fase eliminatoria previa al
+    mundial (ind0=0), o para ajustar dicho rendimiento en df0 tras las
+    predicciones de goles del modelo (ind0=1).
 
     Las métricas base se calculan con los goles "score_0" y "score_1". Las
-    opcionales se imputan a partir del progreso de cada equipo: el histórico
+    abstractas se imputan a partir del progreso de cada equipo: el histórico
     previo guardado en la variable global opcionales, avanzado partido a
     partido en una copia local (cop_opcionales) que no altera la global. El
     acumulado corresponde a pais, tanto si juega como home como si juega como
     away. Con ind0=1 retorna además el progreso de pais, para que
     calculo_metricas_1 actualice opcionales tras procesar todos los países.
 
+    Esta función no recibe las métricas descartadas ni las opcionales
+    elegidas por el usuario: la simulación fase a fase siempre es completa y
+    solo lo que entra al modelo se neutraliza (calculo_metricas_0).
+
     ¿COMO LO HACE?
     0-) Declara opcionales como variable global.
 
-    1-) Si hay métricas opcionales (OPTIONAL_METRICS no vacío) y opcionales es
-        None:
-      1.0-) Carga el histórico con
-            formar_dataset_real("proxy_desempegno", agno).
+    1-) Si ind0 es 1 y opcionales es None, lanza RuntimeError: el histórico
+        debe cargarse antes con reiniciar_opcionales(pais_id), para que las
+        claves sean ids como en df0. Con ind0=0 las abstractas no se usan.
 
-    2-) Si hay métricas opcionales, crea una copia local cop_opcionales de
-        opcionales y la indexa por pais. Si hay varios registros para un país,
-        conserva el primero. Define dos funciones internas:
+    2-) Si ind0 es 1, crea una copia local cop_opcionales de opcionales y la
+        indexa por pais. Si hay varios registros para un país, conserva el
+        primero. Define dos funciones internas:
       2.0-) valor_previo: devuelve el valor de la métrica para el equipo en
             cop_opcionales, o un valor por defecto (0.1) si el equipo o la
             métrica no existen o el valor es NaN.
@@ -215,8 +259,8 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
     6-) Obtiene el PJ previo (del progreso local) de pais y del rival con
         valor_previo.
 
-    7-) Imputa las métricas opcionales con el progreso previo al partido y las
-        suma a dic_dsp si están en él:
+    7-) Si ind0 es 1, imputa las métricas abstractas con el progreso previo
+        al partido:
       7.0-) VI: 1 si el rival no marcó goles, 0 en otro caso.
       7.1-) SOT: promedio de tiros a puerta de pais, ajustado según los goles
             que marcó en el partido.
@@ -249,45 +293,44 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
     11-) Si ind0 es 1:
       11.0-) Retorna solo la fila de progreso de pais en cop_opcionales (el
              progreso local del rival se descarta, pues su propia pasada
-             calcula el suyo), o None si no hay métricas opcionales.
+             calcula el suyo), o None si pais no tiene progreso (ni
+             histórico ni partidos en df0).
 
     Args:
       df0: DataFrame con partidos y las columnas home, away, score_0 y score_1.
            Debe estar en orden cronológico. Si ind0=1, se actualiza in-place
            con las columnas de rendimiento.
-      pais: Equipo cuyo rendimiento se calcula o actualiza.
+      pais: Equipo cuyo rendimiento se calcula o actualiza (id si ind0=1).
       indx: Índice de la fila retornada cuando ind0=0.
-      agno: Año del mundial; también se usa al cargar opcionales.
+      agno: Año del mundial (columna "year" del retorno con ind0=0).
       ind0: 0 para retornar el acumulado; 1 para actualizar df0 in-place y
             retornar el progreso de pais.
 
     Globales usadas:
-      BASE_METRICS: Métricas base.
-      OPTIONAL_METRICS: Métricas opcionales.
-      ALL_METRICS: Unión de BASE_METRICS y OPTIONAL_METRICS.
-      opcionales: DataFrame con columnas pais, PJ, VI, SOT, PKATT y
+      BASE_METRICS: Métricas base (columnas de los df de fase).
+      opcionales: DataFrame con columnas pais (id), PJ, VI, SOT, PKATT y
                   PKATTALLOW con el progreso previo por país. Solo se lee;
-                  la actualiza calculo_metricas_1.
+                  la carga reiniciar_opcionales y la actualiza
+                  calculo_metricas_1.
 
     Return:
       Si ind0 es 0, retorna un DataFrame de una fila con year, pais y las
       métricas acumuladas, usando indx como índice.
       Si ind0 es 1, actualiza df0 in-place y retorna un DataFrame de una fila
-      con el progreso de pais (o None si no hay métricas opcionales).
+      con el progreso de pais (o None si pais no tiene progreso).
     """
 
     # 0-) Declara opcionales como variable global.
     global opcionales
 
-    # 1-) Comprueba si hay que cargar el histórico.
-    if OPTIONAL_METRICS and opcionales is None:
-        # 1.0-) Carga el histórico previo de métricas por país.
-        opcionales = formar_dataset_real("proxy_desempegno", agno)
+    # 1-) Con ind0=1 el histórico ya debe estar cargado con ids.
+    if ind0 == 1 and opcionales is None:
+        raise RuntimeError("Llamar a reiniciar_opcionales(pais_id) antes de actualizar el desempeño")
 
     # 2-) Copia local indexada por país: aquí avanza el progreso sin tocar la global.
     # Conserva el primer registro si hay países duplicados.
     cop_opcionales = None
-    if OPTIONAL_METRICS:
+    if ind0 == 1:
         cop_opcionales = opcionales.drop_duplicates(subset="pais", keep="first").copy()
         cop_opcionales.index = cop_opcionales["pais"]
 
@@ -324,19 +367,18 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
         # 5.3-) Primer partido de pais: arranca desde lo que trae la fila, o 0.
         if dic_dsp is None:
             dic_dsp = {}
-            for m in ALL_METRICS:
+            for m in BASE_METRICS:
                 v = getattr(partido, f"{m}{sufijo}", 0)
                 dic_dsp[m] = 0 if pd.isna(v) else v
 
-        # 6-) Obtiene los partidos previos (progreso local) de pais y del rival.
-        pj_previo = valor_previo("PJ", pais)
-        pj_previo_rival = valor_previo("PJ", rival)
+        # 6-7-) Imputa las métricas abstractas con el progreso previo al partido.
+        if cop_opcionales is not None:
+            # 6-) Obtiene los partidos previos (progreso local) de pais y del rival.
+            pj_previo = valor_previo("PJ", pais)
+            pj_previo_rival = valor_previo("PJ", rival)
 
-        # 7-) Imputa las métricas opcionales con el progreso previo al partido.
-        # 7.0-) Valla invicta si el rival no marcó.
-        vi_imp = 1 if gf_rival == 0 else 0
-        sot_imp = pkatt_imp = pkatt_rival_imp = 0
-        if OPTIONAL_METRICS:
+            # 7.0-) Valla invicta si el rival no marcó.
+            vi_imp = 1 if gf_rival == 0 else 0
             # 7.1-) Tiros a puerta de pais ajustados por sus goles.
             avg_sot = valor_previo("SOT", pais) / max(1, pj_previo)
             ratio = gf_pais / max(0.5, avg_sot * 0.3)
@@ -346,17 +388,6 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
             # 7.3-) Penales intentados por el rival = permitidos por pais.
             pkatt_rival_imp = round(valor_previo("PKATT", rival) / max(1, pj_previo_rival) * 0.9, 2)
 
-        # 7.0-7.3-) Suma lo imputado a las métricas presentes en el acumulador.
-        if "VI" in dic_dsp:
-            dic_dsp["VI"] += vi_imp
-        if "SOT" in dic_dsp:
-            dic_dsp["SOT"] += sot_imp
-        if "PKATT" in dic_dsp:
-            dic_dsp["PKATT"] += pkatt_imp
-        if "PKATTALLOW" in dic_dsp:
-            dic_dsp["PKATTALLOW"] += pkatt_rival_imp
-
-        if OPTIONAL_METRICS:
             # 7.4-) Avanza el progreso local de pais.
             avanzar("PJ", pais, 1, defecto=0)
             avanzar("VI", pais, vi_imp, defecto=0)
@@ -390,14 +421,14 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
         # 9-) Si corresponde, actualiza df0 con el acumulado hasta este partido.
         if ind0 == 1:
             # 9.0-) Escribe las métricas en las columnas del lado de pais.
-            cols_to_update = [f"{m}{sufijo}" for m in ALL_METRICS]
-            df0.loc[partido.Index, cols_to_update] = [dic_dsp[m] for m in ALL_METRICS]
+            cols_to_update = [f"{m}{sufijo}" for m in BASE_METRICS]
+            df0.loc[partido.Index, cols_to_update] = [dic_dsp[m] for m in BASE_METRICS]
 
     # 10-) Si se solicitó el acumulado para la fase eliminatoria, lo retorna.
     if ind0 == 0:
         # 10.0-) pais sin partidos: acumulado en 0.
         if dic_dsp is None:
-            dic_dsp = {m: 0 for m in ALL_METRICS}
+            dic_dsp = {m: 0 for m in BASE_METRICS}
         # 10.1-) Construye y retorna el DataFrame de una fila.
         return pd.DataFrame({"year": agno, "pais": pais, **dic_dsp}, index=[indx])
 
@@ -407,100 +438,220 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
         return cop_opcionales.loc[[pais]].reset_index(drop=True)
     return None
 
-def calc_gkps(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
-    VI = VI.sum()
-    PJ = PJ_i.sum()
-    GR = GC_i.sum()
-    PKATTALLOW = PKATTALLOW.sum()
-    return ((VI/PJ)*60) + (40 - ((GR - PKATTALLOW)/PJ)*10) if PJ > 0 else 0
+def _por_partido(valor, PJ):
+    """Divide fila a fila por PJ; NaN donde PJ es 0 (cada calc_* lo pasa luego a 0)."""
+    return valor / PJ.where(PJ > 0)
 
-def calc_mds(PJ_i, GC_i, VI, PKATTALLOW): # PEND (falta docstring)
-    VI = VI.sum()
-    PJ = PJ_i.sum()
-    GR = GC_i.sum()
-    PKATTALLOW = PKATTALLOW.sum()
-    return ((VI/PJ)*50) + (50 - (((GR + PKATTALLOW)/PJ)*10)) if PJ > 0 else 0
+def calc_gkps(PJ, GC, VI, PKATTALLOW):
+    """
+    ¿QUE HACE?
+    Calcula, partido a partido, el puntaje de portería (goalkeeping score) de un equipo: premia las vallas invictas y castiga los goles recibidos que no vinieron de penal permitido
 
-def calc_mos(PJ_i, GF_i, SOT, PKATT): # PEND (falta docstring)
-    GA = GF_i.sum()
-    PJ = PJ_i.sum()
-    SOT = SOT.sum()
-    PKATT = PKATT.sum()
-    return ((GA/PJ)*0.5 + (SOT/PJ)*0.3 + ((GA - PKATT)/SOT)*0.2) if PJ > 0 and SOT > 0 else 0
+    Args:
 
-def calc_mms(PJ_i, PTS_i, PG_i, SOT): # PEND (falta docstring)
-    PTS = PJ_i.sum()
-    PJ = PTS_i.sum()
-    PG = PG_i.sum()
-    SOT = SOT.sum()
-    return (((PTS/(PJ*3))*40) + ((PG/PJ)*40) + ((SOT/PJ)*2)) if PJ > 0 else 0
+      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra hasta cada partido
 
-def calc_rate(df, tipo, num=0): # PEND (falta docstring)
-  busqueda = tipo + "_" + str(num)
-  if(busqueda in OPTIONAL_METRICS):
-    return (df[busqueda] / df[f"PJ_{num}"].replace(0, 0.085)) * 10
-  else:
-    return np.nan
+      - VI, PKATTALLOW: Series con el progreso de vallas invictas y penales permitidos del equipo
 
-def obtener_diferencia(df, num=0): # PEND (falta docstring)
-  if(('GC' + '_' + f'{num}' in OPTIONAL_METRICS) and ('GF' + '_' + f'{num}' in OPTIONAL_METRICS)):
-    return df[f'GF_{num}'] - df[f'GC_{num}']
-  else:
-    return np.nan
+    Return:
 
-def calculo_metricas_0(df_desempegno, agno=None): # PEND (falta docstring)
-    global opcionales
-    columnas = []
+      - Serie con ((VI/PJ)*60) + (40 - ((GC - PKATTALLOW)/PJ)*10), o 0 donde PJ es 0
+    """
+    return (_por_partido(VI, PJ) * 60 + 40 - _por_partido(GC - PKATTALLOW, PJ) * 10).fillna(0)
 
-    if((OPTIONAL_METRICS!=[]) and opcionales is None):
-        opcionales = formar_dataset_real("proxy_desempegno", agno)
+def calc_mds(PJ, GC, VI, PKATTALLOW):
+    """
+    ¿QUE HACE?
+    Calcula, partido a partido, el puntaje defensivo (mean defensive score): premia las vallas invictas y castiga goles recibidos y penales permitidos
 
-    paises_unicos = pd.concat([df_desempegno['home'], df_desempegno['away']]).unique()
+    Args:
 
-    insumos_apuntados = opcionales[opcionales['pais'].isin(paises_unicos)]
+      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra hasta cada partido
 
-    df1 = df_desempegno.copy()
+      - VI, PKATTALLOW: Series con el progreso de vallas invictas y penales permitidos del equipo
 
-    idxaway = df1.columns.tolist().index('away')
-    homes = df1.iloc[:,:idxaway-1] # PEND se trata de evitar tomar score_0 mediante este -1
-    aways = df1.iloc[:,idxaway:-1] # PEND se trata de evitar tomar score_1 mediante este -1
+    Return:
 
-    homes.rename(columns={'home':'pais'},inplace=True)
-    aways.rename(columns={'away':'pais'},inplace=True)
+      - Serie con ((VI/PJ)*50) + (50 - ((GC + PKATTALLOW)/PJ)*10), o 0 donde PJ es 0
+    """
+    return (_por_partido(VI, PJ) * 50 + 50 - _por_partido(GC + PKATTALLOW, PJ) * 10).fillna(0)
 
-    apuntar_a_home = homes.merge(insumos_apuntados,on="pais",how="inner")
-    apuntar_a_away = aways.merge(insumos_apuntados,on="pais",how="inner")
+def calc_mos(PJ, GF, SOT, PKATT):
+    """
+    ¿QUE HACE?
+    Calcula, partido a partido, el puntaje ofensivo (mean offensive score): goles por partido, tiros a puerta por partido y efectividad de los tiros sin contar penales
 
-    df_nuevo = pd.DataFrame()
-    equipos = {0:'home', 1:'away'}
+    Args:
 
-    for idx, trab in enumerate([apuntar_a_home, apuntar_a_away]):
+      - PJ, GF: Series con el acumulado de partidos jugados y goles a favor hasta cada partido
 
-        dfEspecializado = trab.groupby('pais', as_index=False).apply(
-            lambda g: pd.Series({
-                f'gkps_{idx}': calc_gkps(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
-                f'mds_{idx}': calc_mds(g[f'PJ_{idx}'], g[f'GC_{idx}'], g['VI'], g['PKATTALLOW']),
-                f'mos_{idx}': calc_mos(g[f'PJ_{idx}'], g[f'GF_{idx}'], g['SOT'], g['PKATT']),
-                f'mms_{idx}': calc_mms(g[f'PJ_{idx}'], g[f'PTS_{idx}'], g[f'PG_{idx}'], g['SOT']),
-                f'rate_GC_{idx}': calc_rate(g[f'GC_{idx}'], 'GC', num=idx),
-                f'rate_GF_{idx}': calc_rate(g[f'GF_{idx}'], 'GF', num=idx),
-                f'D_{idx}': obtener_diferencia(g, num=idx),
-            })
-        ).reset_index(drop=True)
+      - SOT, PKATT: Series con el progreso de tiros a puerta y penales intentados del equipo
 
-        trab.drop(columns=['VI', 'SOT', 'PKATT', 'PKATTALLOW'], inplace=True)
+    Return:
 
-        df_provisional = trab.merge(dfEspecializado, on='pais', how='inner')
-        df_provisional.rename(columns={'pais':equipos[idx]},inplace=True)
+      - Serie con (GF/PJ)*0.5 + (SOT/PJ)*0.3 + ((GF - PKATT)/SOT)*0.2, o 0 donde PJ o SOT son 0
+    """
+    efectividad = (GF - PKATT) / SOT.where(SOT > 0)
+    return (_por_partido(GF, PJ) * 0.5 + _por_partido(SOT, PJ) * 0.3 + efectividad * 0.2).fillna(0)
 
-        nuevas_columnas = [f'gkps_{idx}', f'mds_{idx}', f'mos_{idx}', f'mms_{idx}',
-                          f'rate_GC_{idx}', f'rate_GF_{idx}', f'D_{idx}']
+def calc_mms(PJ, PTS, PG, SOT):
+    """
+    ¿QUE HACE?
+    Calcula, partido a partido, el puntaje de momento (mean momentum score): proporción de puntos obtenidos sobre los posibles, proporción de victorias y tiros a puerta por partido
 
-        df_nuevo = pd.concat([df_nuevo, df_provisional], axis=1, ignore_index=True)
-        columnas = [*columnas, *df_provisional.columns]
+    Args:
 
-    df_nuevo.columns = columnas
-    return df_nuevo
+      - PJ, PTS, PG: Series con el acumulado de partidos jugados, puntos y partidos ganados hasta cada partido
+
+      - SOT: Serie con el progreso de tiros a puerta del equipo
+
+    Return:
+
+      - Serie con (PTS/(PJ*3))*40 + (PG/PJ)*40 + (SOT/PJ)*2, o 0 donde PJ es 0
+    """
+    return (_por_partido(PTS, PJ * 3) * 40 + _por_partido(PG, PJ) * 40 + _por_partido(SOT, PJ) * 2).fillna(0)
+
+def calc_rate(valor, PJ):
+    """
+    ¿QUE HACE?
+    Calcula, partido a partido, la tasa de una métrica acumulada (GF o GC) por cada 10 partidos
+
+    Args:
+
+      - valor: Serie con el acumulado de la métrica (GF o GC) hasta cada partido
+
+      - PJ: Serie con el acumulado de partidos jugados; un PJ de 0 se reemplaza por 0.085 para no dividir por 0
+
+    Return:
+
+      - Serie con (valor/PJ)*10
+    """
+    return (valor / PJ.replace(0, 0.085)) * 10
+
+def metricas_apagadas(drop_metricas, metricas_opcionales):
+    """Métricas que el modelo recibe neutralizadas: las base descartadas más las opcionales no aceptadas."""
+    return set(drop_metricas) | (set(OPTIONAL_METRICS) - set(metricas_opcionales))
+
+def validar_valores_neutros(drop_metricas, metricas_opcionales):
+    """
+    ¿QUE HACE?
+    Verifica, antes de cargar el modelo, que toda métrica que se vaya a neutralizar tenga su valor en VALOR_NEUTRO
+
+    Args:
+
+      - drop_metricas: métricas base descartadas por el usuario
+
+      - metricas_opcionales: métricas opcionales aceptadas por el usuario
+
+    Return:
+
+      - No retorna; lanza ValueError con las métricas sin valor neutro configurado
+    """
+    faltantes = sorted(m for m in metricas_apagadas(drop_metricas, metricas_opcionales) if VALOR_NEUTRO.get(m) is None)
+    if faltantes:
+        raise ValueError(f"Aún no hay valor neutro configurado para {faltantes}; no se pueden ignorar todavía")
+
+def neutralizar(features, drop_metricas, metricas_opcionales):
+    """
+    ¿QUE HACE?
+    Reemplaza por su VALOR_NEUTRO cada métrica descartada (base) o no aceptada (opcional). Nunca quita columnas, así la entrada al modelo conserva sus dimensiones
+
+    Args:
+
+      - features: diccionario métrica -> Serie con los valores de un lado (home o away)
+
+      - drop_metricas: métricas base descartadas por el usuario
+
+      - metricas_opcionales: métricas opcionales aceptadas por el usuario
+
+    Return:
+
+      - features con las métricas apagadas reemplazadas
+    """
+    for m in metricas_apagadas(drop_metricas, metricas_opcionales):
+        features[m] = pd.Series(VALOR_NEUTRO[m], index=features[m].index, dtype=float)
+    return features
+
+def calculo_metricas_0(df_desempegno, drop_metricas=DROP_METRICS, metricas_opcionales=OPTIONAL_METRICS):
+    """
+    ¿QUE HACE?
+    Arma la entrada al modelo a partir de un df de fase: para cada partido y cada lado (home, away) toma las métricas base acumuladas, deriva las opcionales (gkps, mds, mos, mms, rate_GC, rate_GF) con el progreso de METRICAS_ABSTRACTAS en (opcionales), y neutraliza lo que el usuario descartó o no aceptó. La salida siempre tiene las mismas columnas en el mismo orden, sin importar la elección del usuario
+
+    ¿COMO LO HACE?
+    0-) Si (opcionales) es None lanza RuntimeError: debe cargarse antes con "reiniciar_opcionales"
+
+    1-) Indexa (opcionales) por id de país, con un registro por país
+
+    2-) Para cada lado (idx 0 = home, idx 1 = away):
+
+      2.0) Toma las métricas base de ese lado por su nombre con sufijo (PTS_0, PJ_0, ...)
+
+      2.1) Busca el progreso abstracto del equipo de cada fila; si el país no tiene registros usa 0.1
+
+      2.2) Calcula fila a fila las opcionales con "calc_gkps", "calc_mds", "calc_mos", "calc_mms" y "calc_rate"; cada partido solo ve su propio acumulado
+
+      2.3) Neutraliza con "neutralizar" las métricas apagadas
+
+      2.4) Arma el bloque [equipo, ALL_METRICS con sufijo, score]
+
+    3-) Une los bloques home y away por columnas y retorna el resultado
+
+    Args:
+
+      - df_desempegno: df de fase con home, away, score_0, score_1 y BASE_METRICS con sufijos _0 y _1
+
+      - drop_metricas: métricas base descartadas por el usuario
+
+      - metricas_opcionales: métricas opcionales aceptadas por el usuario
+
+    Globales usadas:
+
+      - opcionales: progreso de METRICAS_ABSTRACTAS por id de país (solo se lee)
+
+    Return:
+
+      - df con columnas [home, ALL_METRICS_0, score_0, away, ALL_METRICS_1, score_1] (COLS_MODELO_POR_EQUIPO * 2), una fila por partido y en el mismo orden que (df_desempegno)
+    """
+    # 0-) El histórico debe estar cargado con ids.
+    if opcionales is None:
+        raise RuntimeError("Llamar a reiniciar_opcionales(pais_id) antes de calcular métricas")
+
+    # 1-) Un registro por país.
+    historico = opcionales.drop_duplicates(subset="pais", keep="first").set_index("pais")[METRICAS_ABSTRACTAS]
+    bloques = []
+
+    # 2-) Cada lado por separado.
+    for idx, lado in ((0, "home"), (1, "away")):
+        # 2.0) Métricas base de este lado.
+        base = {m: df_desempegno[f"{m}_{idx}"].astype(float) for m in BASE_METRICS}
+
+        # 2.1) Progreso abstracto del equipo de cada fila.
+        abst = historico.reindex(df_desempegno[lado].to_numpy()).fillna(0.1)
+        abst.index = df_desempegno.index
+
+        # 2.2) Opcionales calculadas fila a fila.
+        features = {
+            **base,
+            "gkps": calc_gkps(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"]),
+            "mds": calc_mds(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"]),
+            "mos": calc_mos(base["PJ"], base["GF"], abst["SOT"], abst["PKATT"]),
+            "mms": calc_mms(base["PJ"], base["PTS"], base["PG"], abst["SOT"]),
+            "rate_GC": calc_rate(base["GC"], base["PJ"]),
+            "rate_GF": calc_rate(base["GF"], base["PJ"]),
+        }
+
+        # 2.3) Lo apagado recibe su valor neutro.
+        features = neutralizar(features, drop_metricas, metricas_opcionales)
+
+        # 2.4) Bloque con orden fijo.
+        bloques.append(pd.DataFrame({
+            lado: df_desempegno[lado],
+            **{f"{m}_{idx}": features[m] for m in ALL_METRICS},
+            f"score_{idx}": df_desempegno[f"score_{idx}"],
+        }))
+
+    # 3-) Siempre COLS_MODELO_POR_EQUIPO * 2 columnas.
+    return pd.concat(bloques, axis=1)
 
 def calculo_metricas_1(df_desempegno):
   """
@@ -565,6 +716,8 @@ def calculo_metricas_1(df_desempegno):
       [nuevos, opcionales[~opcionales["pais"].isin(nuevos["pais"])]],
       ignore_index=True,
     )
+    # los países agregados en local llegan como float: se mantiene el id entero
+    opcionales["pais"] = opcionales["pais"].astype("int64")
 
   # 4-) Retorna el df actualizado.
   return df_desempegno
@@ -639,8 +792,8 @@ def agregar_features(df_mundial, dic_ag, ind=None):
   """
   df5 = pd.DataFrame()
   llaves = list(dic_ag.keys())
-  c_locales = [f"{m}_0" for m in ALL_METRICS]
-  c_visitantes = [f"{m}_1" for m in ALL_METRICS]
+  c_locales = [f"{m}_0" for m in BASE_METRICS]
+  c_visitantes = [f"{m}_1" for m in BASE_METRICS]
 
   for mnd in (df_mundial[::-1].reset_index(drop=True).itertuples(index=True)):
     if not isinstance(mnd.agno, str):
@@ -1194,7 +1347,7 @@ def alinear_knockout_1986_1994(dict_table, reglamento, df_grupos=None):
   return llave
 
 class func_prediccion_orden(normali):
-  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0="-", evitar="-", embedding_dim=3, ind0=[None, None], n_partidos=0):
+  def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0="-", evitar="-", embedding_dim=3, ind0=[None, None], n_partidos=0, drop_metricas=DROP_METRICS, metricas_opcionales=OPTIONAL_METRICS):
     """
     ¿QUE HACE?
     Inicializa la clase (func_prediccion_orden), que hereda de (normali), llamando al constructor del padre y definiendo los atributos adicionales necesarios para gestionar el flujo de predicciones secuenciales entre fases del mundial: la lista ordenada de fases, el diccionario de resultados por partido, el diccionario de fuerzas de equipos, el indicador de fase actual y objetivo, y el contador de partidos procesados
@@ -1232,6 +1385,10 @@ class func_prediccion_orden(normali):
 
       - n_partidos: numero inicial de partidos ya procesados, generalmente 0 al inicio
 
+      - drop_metricas: metricas base que el usuario descarta; llegan neutralizadas al modelo (se guardan en self.drop_metricas)
+
+      - metricas_opcionales: metricas opcionales que el usuario acepta; las no aceptadas llegan neutralizadas al modelo (se guardan en self.metricas_opcionales)
+
     Return:
 
       - No retorna valor, solo inicializa los atributos de la instancia
@@ -1243,6 +1400,8 @@ class func_prediccion_orden(normali):
     self.dic_fuerza = {}
     self.ind0 = ind0
     self.n_partidos = n_partidos
+    self.drop_metricas = tuple(drop_metricas)
+    self.metricas_opcionales = tuple(metricas_opcionales)
 
   def intsc_prob_goles(self, X, model, alterno=0):
     """
@@ -1293,16 +1452,15 @@ class func_prediccion_orden(normali):
 
       - (0, 0): una tupla con 2 valores (0,0) para el caso de tener equipos que no hayan participado en mundiales y no haya datos sobre su fortaleza o debilidad.
     """
-    cols_per_team = 1 + len(ALL_METRICS) + 1
-    
     if alterno == 0:
-      X0, X1 = self.c_s(self.hacer_embedding_a_equipos(X[:, :cols_per_team])), self.c_s(self.hacer_embedding_a_equipos(X[:, cols_per_team:]))
+      # X viene de "calculo_metricas_0": se corta con el esquema fijo del modelo
+      X0, X1 = self.c_s(self.hacer_embedding_a_equipos(X[:, :COLS_MODELO_POR_EQUIPO])), self.c_s(self.hacer_embedding_a_equipos(X[:, COLS_MODELO_POR_EQUIPO:]))
       Y_0, Y_1 = model.predict(X0[0]), model.predict(X1[0])
       Y0 = np.concatenate((Y_0, Y_1), axis=1)
 
     elif alterno == 1:
       idx_y0 = 6
-      idx_y1 = cols_per_team + 6
+      idx_y1 = COLS_FASE_POR_EQUIPO + 6
       Y_0, Y_1 = X[:, idx_y0], X[:, idx_y1]
       Y_0, Y_1 = np.reshape(Y_0, (-1, 1)), np.reshape(Y_1, (-1, 1))
       Y0 = np.concatenate((Y_0, Y_1), axis=1)
@@ -1413,10 +1571,9 @@ class func_prediccion_orden(normali):
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
-        X = df_fix_group_n.copy().to_numpy()
-        # PEND (agegar parametro 'valor=agno'))
-        # PEND recomentar docstring
-        df_fix_group_n = calculo_metricas_0(df_fix_group_n)
+        # X se arma con la salida de "calculo_metricas_0" (esquema fijo del modelo y métricas neutralizadas)
+        df_modelo = calculo_metricas_0(df_fix_group_n, self.drop_metricas, self.metricas_opcionales)
+        X = df_modelo.to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
       for points_, row in zip(puntos, df_fix_group_n.itertuples()):
@@ -1523,7 +1680,7 @@ class func_prediccion_orden(normali):
       else:
         # PEND (agegar parametro 'valor=agno')
         # PEND recomentar docstring
-        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) 
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated, self.drop_metricas, self.metricas_opcionales)
         X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
@@ -1557,7 +1714,7 @@ class func_prediccion_orden(normali):
       else:
         # PEND (agegar parametro 'valor=agno')
         # PEND recomentar docstring
-        df_fixture_partidos = calculo_metricas_0(df_fixture_updated) 
+        df_fixture_partidos = calculo_metricas_0(df_fixture_updated, self.drop_metricas, self.metricas_opcionales)
         X = df_fixture_partidos.copy().to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
@@ -1630,16 +1787,14 @@ class func_prediccion_orden(normali):
     
     mas_g = max(indice_0.tolist() + indice_1.tolist())
     
-    cols_per_team = 1 + len(ALL_METRICS) + 1
-
     if mas_g in indice_0:
-      seleccion = df_fixture_.iloc[mas_g, :cols_per_team]
+      seleccion = df_fixture_.iloc[mas_g, :COLS_FASE_POR_EQUIPO]
       if ind0 == "away":
         seleccion.rename(index={"home": "away"}, inplace=True)
       return seleccion
 
     elif mas_g in indice_1:
-      seleccion = df_fixture_.iloc[mas_g, cols_per_team:]
+      seleccion = df_fixture_.iloc[mas_g, COLS_FASE_POR_EQUIPO:]
       if ind0 == "home":
         seleccion.rename(index={"away": "home"}, inplace=True)
       return seleccion
@@ -1919,7 +2074,7 @@ for des0 in agnos:
 
   dic_agnos[str(des0)] = eliminatorias
 
-def consulta_general(pregunta_0, df5, reglamento_terceros=None):
+def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DROP_METRICS, metricas_opcionales=OPTIONAL_METRICS):
   """
   ¿QUE HACE?
   Realiza la predicción de resultados para un mundial específico, creando el objeto de la clase (func_prediccion_orden) necesario segun el año al que quiere aplicarse inferencia, generando los datasets necesarios, generando parametros para calcular la fuerza aproximada de cada equipo, cargando el modelo entrenado y aplicando las funciones de predicción para obtener los resultados esperados
@@ -1937,6 +2092,10 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None):
         - clsif: df con las clasificaciones historicas de mundiales para obtener el total absoluto de equipos participantes en el mundial a predecir
     
         - obj0: un entero con el año del mundial a predecir, para indicar si el componente de indice 0 de la salida del metodo (create_features) incluye (fase final fixture del mundial jugado, df consulta del usuario) o (contenido del mundial jugado)
+
+        - drop_metricas, metricas_opcionales: la eleccion de metricas del usuario, que (calculo_metricas_0) usa para neutralizar la entrada al modelo
+
+    0.0-) Se recarga la variable global (opcionales) con "reiniciar_opcionales", traduciendo los paises a los ids de (objs)
 
   1-) Se llama al metodo (create_features) del objeto (objs) usando como argumento el (dic_agnos) para generar los datasets necesarios para la predicción, almacenándolos en las variables (df1, df2, df3):
 
@@ -1983,9 +2142,15 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None):
     - df5: df de consulta del usuario
 
     - reglamento_terceros: (ReglamentoTerceros) personalizado desde el frontend para 1986-1994; None usa el reglamento FIFA oficial
+
+    - drop_metricas: metricas base que el usuario descarta (llegan al modelo con su VALOR_NEUTRO)
+
+    - metricas_opcionales: metricas opcionales que el usuario acepta (las demas llegan al modelo con su VALOR_NEUTRO)
   """
 
-  objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, obj0=int(pregunta_0[-4:]))
+  objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, obj0=int(pregunta_0[-4:]), drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
+  # el progreso de metricas abstractas arranca desde el historico en cada consulta (no desde la anterior)
+  reiniciar_opcionales(objs.pais_id)
 
   df_features = objs.create_features(dic_agnos)
   df1, df2, df3 = df_features[0], df_features[1], df_features[2]

@@ -46,6 +46,32 @@ def leer_reglamento(agno, datos):
         return None
     return ReglamentoTerceros.desde_json(int(agno), datos)
 
+def leer_metricas(datos, catalogo, nombre, defecto):
+    """
+    Valida una lista de metricas enviada por el template contra su catalogo de modulo.py
+
+    - Args:
+        - datos: None (usar el valor por defecto) o lista de nombres (ej. ["GF", "GC"])
+        - catalogo: BASE_METRICS u OPTIONAL_METRICS
+        - nombre: clave del JSON, para el mensaje de error
+        - defecto: valor si el template no envio la clave (DROP_METRICS u OPTIONAL_METRICS)
+
+    - Returns:
+        - tupla con las metricas (lanza ValueError si llega algo fuera del catalogo)
+    """
+    if datos is None:
+        return tuple(defecto)
+    if not isinstance(datos, list) or not all(isinstance(m, str) for m in datos):
+        raise ValueError(f"{nombre} debe ser una lista de nombres de metricas")
+    desconocidas = set(datos) - set(catalogo)
+    if desconocidas:
+        raise ValueError(f"{nombre}: metricas no validas {sorted(desconocidas)}")
+    return tuple(datos)
+
+def catalogo_metricas():
+    """Metricas que el template muestra como casillas (fuente de verdad: modulo.py)"""
+    return {"base": BASE_METRICS, "opcionales": OPTIONAL_METRICS}
+
 def procesar_recepcion_0(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -58,7 +84,7 @@ def procesar_recepcion_0(request):
             print(f"Estos son mis partidos\n{df}")
             return(JsonResponse(context))
 
-    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales()}))
+    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
 
 def procesar_recepcion_1(request):
     """Vista usada al precionar el boton "predecir" """
@@ -69,14 +95,18 @@ def procesar_recepcion_1(request):
             if recepcion:
                 try:
                     reglamento = leer_reglamento(recepcion[0], data.get('reglamento'))
-                except ReglamentoInvalido as error:
+                    drop_metricas = leer_metricas(data.get('drop_metricas'), BASE_METRICS, "drop_metricas", DROP_METRICS)
+                    metricas_opcionales = leer_metricas(data.get('metricas_opcionales'), OPTIONAL_METRICS, "metricas_opcionales", OPTIONAL_METRICS)
+                    validar_valores_neutros(drop_metricas, metricas_opcionales)
+                except (ReglamentoInvalido, ValueError) as error:
                     return JsonResponse({'error': str(error)}, status=400)
 
                 recepc = formar_dataset_consulta(recepcion)
                 if recepcion[1]=="Fase de Grupos":
                     recepc["agno"] = int(recepcion[0])
 
-                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc, reglamento_terceros=reglamento)
+                respuesta = consulta_general(dic_torneos[recepcion[1]]+recepcion[0], recepc, reglamento_terceros=reglamento,
+                                             drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
                 extras = dict(respuesta.attrs)
                 respuesta = respuesta.reset_index(drop=True)
                 respuesta.score_0 = respuesta.score_0.astype('int64')
