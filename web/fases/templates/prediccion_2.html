@@ -6,7 +6,17 @@
     <div id="input-container_0"></div>
     <div id="input-container_1"></div>
     <div id="input-container_2"></div>
-    
+    <div id="editor-reglamento" hidden></div>
+    <!-- casillas de metricas: marcadas = el modelo las usa; desmarcadas = llegan con su valor neutro -->
+    <fieldset id="metricas-base">
+        <legend>Métricas base (desmarca para descartar)</legend>
+    </fieldset>
+    <fieldset id="metricas-opcionales">
+        <legend>Métricas opcionales (desmarca para no usarlas)</legend>
+    </fieldset>
+    <div id="tabla-terceros"></div>
+    <div id="tabla-llave"></div>
+
     <input type="hidden" name="recepcion" id="recepcion">
     <input type="hidden" name="ApagadoEncendido" id="onoff" value="off">
     
@@ -14,7 +24,9 @@
     <input type="hidden" id="EsteEsMiMensaje" name="mensajeOculto" value="{{ partidos_reales }}">
  
 </form>
-    
+
+    {{ reglamentos_terceros|json_script:"reglamentos-terceros" }}
+    {{ catalogo_metricas|json_script:"catalogo-metricas" }}
     <script>
         /*
             ESTE PROGRAMA ES PARA EFECTUAR LA INFERENCIA A LAS PETICIONES DEL USUARIO.
@@ -24,6 +36,8 @@
         let container_0 = document.getElementById("input-container_0");
         let container_1 = document.getElementById("input-container_1");
         let container_2 = document.getElementById("input-container_2");
+        // "editor_reglamento" almacena el editor del reglamento de mejores terceros (solo 1986, 1990 y 1994)
+        let editor_reglamento = document.getElementById("editor-reglamento");
         var entradas = [];
         let dataset = [];
 
@@ -502,11 +516,15 @@
             let ArrayLlis = [];
             let cuenta_2 = 0;
             let cuenta_3 = 1;
-            let entradas_0 = document.querySelectorAll('input');
+            /* se excluyen las casillas de metricas (clase "metrica"): los goles se leen por posicion
+            */
+            let entradas_0 = document.querySelectorAll('input:not(.metrica)');
 
             /* se itera el contenido de todos los select
             */
-            for (let select_0 of document.querySelectorAll(`select`)) 
+            /* se excluyen los select del editor de reglamento (clase "reglamento"), que no son equipos
+            */
+            for (let select_0 of document.querySelectorAll(`select:not(.reglamento)`))
             {
                 /* se ignora el contenido del año seleccionado y el torneo seleccionado por el 
                     usuario
@@ -559,7 +577,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ recepcion: ArrayLlis }) // Envía como JSON
+                body: JSON.stringify({ recepcion: ArrayLlis, reglamento: leerReglamento(), drop_metricas: leerDropMetricas(), metricas_opcionales: leerMetricasOpcionales() }) // Envía como JSON
             })
             /* se parsea la respuesta del servidor para su manejo adecuado
             */
@@ -591,8 +609,162 @@
                        funcion "acomodador"
                     */
                     acomodador([fase_selec, n_partidos], agno_selec);
+
+                    /* se pintan las tablas de mejores terceros y emparejamientos de octavos
+                       (solo llegan en los mundiales 1986, 1990 y 1994)
+                    */
+                    pintarTabla("tabla-terceros", "Mejores terceros", data.mejores_terceros);
+                    pintarTabla("tabla-llave", "Emparejamientos de octavos", data.llave_octavos);
                 }
             })
+        }
+
+        /* reglamentos FIFA de mejores terceros entregados por la vista (fuente de verdad: modulo.py)
+        */
+        const REGLAMENTOS_OFICIALES = JSON.parse(document.getElementById("reglamentos-terceros").textContent);
+        const CLASIFICADOS = ["1A","1B","1C","1D","1E","1F","2A","2B","2C","2D","2E","2F"];
+
+        /* los select del editor llevan la clase "reglamento" para que "enviarSeleccion_1" los ignore
+        */
+        function crearSelectReglamento(opciones, valor)
+        {
+            const select = document.createElement("select");
+            select.className = "reglamento";
+            opciones.forEach(([texto, valor_op]) => select.add(new Option(texto, valor_op)));
+            select.value = valor;
+            return select;
+        }
+
+        function crearTabla(titulo, encabezados)
+        {
+            const tabla = document.createElement("table");
+            tabla.createCaption().textContent = titulo;
+            const fila = tabla.createTHead().insertRow();
+            encabezados.forEach(texto => fila.appendChild(document.createElement("th")).textContent = texto);
+            return tabla;
+        }
+
+        /* arma el editor precargado con el reglamento FIFA del año; se oculta si el año no usa mejores terceros
+        */
+        function mostrarEditorReglamento(agno, modo_inicial = "oficial")
+        {
+            editor_reglamento.innerHTML = "";
+            const oficial = REGLAMENTOS_OFICIALES[agno];
+            editor_reglamento.hidden = !oficial;
+            if (!oficial) return;
+
+            const modo = crearSelectReglamento([["Reglamento FIFA oficial", "oficial"], ["Reglamento personalizado", "personalizado"]], modo_inicial);
+            modo.id = "modo-reglamento";
+            const tablas = document.createElement("div");
+            tablas.hidden = modo_inicial === "oficial";
+            modo.addEventListener("change", () => tablas.hidden = modo.value === "oficial");
+
+            /* orden de los 8 partidos: local = 1ro o 2do de grupo, visitante ademas puede ser "Mejor 3ro"
+            */
+            const tabla_llave = crearTabla(`Orden de octavos ${agno}`, ["#", "Local", "Visitante"]);
+            const opciones_local = CLASIFICADOS.map(c => [c, c]);
+            const opciones_visita = [...opciones_local, ["Mejor 3ro", "3"]];
+            oficial.llave.forEach((partido, i) =>
+            {
+                const [local, visita] = partido.split("-");
+                const fila = tabla_llave.insertRow();
+                fila.className = "partido";
+                fila.insertCell().textContent = i + 1;
+                fila.insertCell().appendChild(crearSelectReglamento(opciones_local, local));
+                fila.insertCell().appendChild(crearSelectReglamento(opciones_visita, visita));
+            });
+
+            /* 15 combinaciones: cada select solo ofrece los terceros de los grupos de esa combinacion
+            */
+            const tabla_cruces = crearTabla("Rival de 1A, 1B, 1C y 1D según los grupos de los 4 mejores terceros", ["Grupos", "1A", "1B", "1C", "1D"]);
+            Object.entries(oficial.cruces).forEach(([grupos, rivales]) =>
+            {
+                const fila = tabla_cruces.insertRow();
+                fila.className = "cruce";
+                fila.dataset.grupos = grupos;
+                fila.insertCell().textContent = grupos;
+                const opciones = [...grupos].map(g => [`3${g}`, g]);
+                [...rivales].forEach(rival => fila.insertCell().appendChild(crearSelectReglamento(opciones, rival)));
+            });
+
+            const restaurar = document.createElement("button");
+            restaurar.type = "button";
+            restaurar.textContent = "Restaurar reglamento FIFA";
+            restaurar.addEventListener("click", () => mostrarEditorReglamento(agno, "personalizado"));
+
+            tablas.append(tabla_llave, tabla_cruces, restaurar);
+            editor_reglamento.append(modo, tablas);
+        }
+
+        /* null = el servidor usa el reglamento FIFA; si no, mismo formato que ReglamentoTerceros.a_json()
+        */
+        function leerReglamento()
+        {
+            const modo = document.getElementById("modo-reglamento");
+            if (editor_reglamento.hidden || !modo || modo.value === "oficial") return null;
+
+            const llave = [...editor_reglamento.querySelectorAll("tr.partido")].map(fila =>
+            {
+                const [local, visita] = fila.querySelectorAll("select");
+                return `${local.value}-${visita.value}`;
+            });
+            const cruces = {};
+            editor_reglamento.querySelectorAll("tr.cruce").forEach(fila =>
+            {
+                cruces[fila.dataset.grupos] = [...fila.querySelectorAll("select")].map(s => s.value).join("");
+            });
+            return {llave, cruces};
+        }
+
+        /* catalogo de metricas entregado por la vista (fuente de verdad: modulo.py)
+        */
+        const CATALOGO_METRICAS = JSON.parse(document.getElementById("catalogo-metricas").textContent);
+
+        /* pinta una casilla marcada por metrica; la clase "metrica" las saca de la lectura de goles en "enviarSeleccion_1"
+        */
+        function pintarCasillasMetricas(id_contenedor, metricas, tipo)
+        {
+            const contenedor = document.getElementById(id_contenedor);
+            metricas.forEach(m =>
+            {
+                const etiqueta = document.createElement("label");
+                const casilla = document.createElement("input");
+                casilla.type = "checkbox";
+                casilla.className = `metrica ${tipo}`;
+                casilla.value = m;
+                casilla.checked = true;
+                etiqueta.append(casilla, ` ${m} `);
+                contenedor.appendChild(etiqueta);
+            });
+        }
+
+        /* metricas base desmarcadas (el servidor las neutraliza); vacio = se usan todas
+        */
+        function leerDropMetricas()
+        {
+            return [...document.querySelectorAll("input.metrica.base:not(:checked)")].map(c => c.value);
+        }
+
+        /* metricas opcionales marcadas (el servidor neutraliza las demas); vacio = ninguna
+        */
+        function leerMetricasOpcionales()
+        {
+            return [...document.querySelectorAll("input.metrica.opcional:checked")].map(c => c.value);
+        }
+
+        /* pinta una tabla generica a partir de un JSON orient="records" (textContent: sin inyeccion de HTML)
+        */
+        function pintarTabla(id_contenedor, titulo, json_filas)
+        {
+            const contenedor = document.getElementById(id_contenedor);
+            contenedor.innerHTML = "";
+            if (!json_filas) return;
+            const filas = JSON.parse(json_filas);
+            if (!filas.length) return;
+            const columnas = Object.keys(filas[0]);
+            const tabla = crearTabla(titulo, columnas);
+            filas.forEach(f => { const fila = tabla.insertRow(); columnas.forEach(c => fila.insertCell().textContent = f[c]); });
+            contenedor.appendChild(tabla);
         }
 
         /* Función para obtener el token CSRF
@@ -641,11 +813,17 @@
             */
             select_0_mundiales.addEventListener("change", busca_torneos_del_agno);
             select_0_mundiales.onchange=function(){enviarSeleccion_0()};
+            /* se muestra u oculta el editor de reglamento de mejores terceros segun el año elegido
+            */
+            select_0_mundiales.addEventListener("change", e => mostrarEditorReglamento(e.target.options[e.target.selectedIndex].text));
             /* se referencia al contenedor de inputs "container_0" que esta de antemano
                en  el "document" para agregarle el select "select_0_mundiales" donde
                estan todos los años con mundiales de futbol (quitando el 1930)
             */
             container_0.appendChild(select_0_mundiales);
+
+            pintarCasillasMetricas("metricas-base", CATALOGO_METRICAS.base, "base");
+            pintarCasillasMetricas("metricas-opcionales", CATALOGO_METRICAS.opcionales, "opcional");
         }
 
         /* se asocia la funcion "inicio", como desencadenante del programa, al iniciarse sesion 
