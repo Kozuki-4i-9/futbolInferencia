@@ -13,9 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from decouple import config, Csv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+MODEL_PATH = BASE_DIR.parent / 'data' / 'modelos'
+MODEL_FILE = config('MODEL_FILE', default='modelo-LSTM-(series_temporales)-16-12-2024-0.h5')
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
