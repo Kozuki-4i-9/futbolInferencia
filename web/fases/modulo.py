@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from functools import wraps
 from itertools import combinations
 from types import MappingProxyType
+from django.conf import settings
 from .models import partidos, fixtures, grupos, clasificaciones, proxy_desempegno
 
 from numpy.random import seed
@@ -41,7 +42,7 @@ COLS_FASE_POR_EQUIPO = 1 + len(BASE_METRICS) + 1    # df de fase: equipo + base 
 COLS_MODELO_POR_EQUIPO = 1 + len(ALL_METRICS) + 1   # entrada al modelo: equipo + base + derivadas + score
 C_S_DELETE_INDEX = EMBEDDING_DIM + len(ALL_METRICS) # posición del score tras reemplazar el id por su embedding
 C_S_Y_INDEX = C_S_DELETE_INDEX
-N_STEPS = 0
+N_STEPS = 1 # partidos por ventana; el .h5 actual se entreno con 1 (el reentrenamiento lo leera de su esquema)
 
 MATCH_HOME_IDX = 0
 MATCH_AWAY_IDX = 1 
@@ -82,7 +83,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
 
         0.1.2.0-) Se agrega a la lista (df0) una sublista con los atributos "home", "score", "away" y "agno" recuperados del objeto iterado (des)
 
-      0.1.3-) Se crea un df (df) a partir un array con la lista de sublistas basada en fixtures del año indicado en la variable (valores) con columnas "home", "score", "away" y "year"
+      0.1.3-) Se crea un df (df) a partir de la lista de sublistas (vacia si no hay filas) basada en fixtures del año indicado en la variable (valores) con columnas "home", "score", "away" y "year"
 
       0.1.4-) Se convierten los tipos de las columnas del df (df) a los tipos adecuados: "O" para cadenas y "int64" para enteros
 
@@ -96,7 +97,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
       0.2.2-) Si el atributo "agno" del objeto iterado (des) es igual al parametro (valores) (se asume que es un año):
         0.2.2.0-) Se agrega a la lista (df0) una sublista con los atributos "pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo" y "agno" recuperados del objeto iterado (des)
       
-      0.2.3-) Se crea un df (df) a partir un array con la lista de sublistas basada en grupos del año indicado en la variable (valores) con columnas "pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo" y "agno"
+      0.2.3-) Se crea un df (df) a partir de la lista de sublistas (vacia si no hay filas) basada en grupos del año indicado en la variable (valores) con columnas "pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo" y "agno"
 
       0.2.4-) Se convierten los tipos de las columnas del df (df) a los tipos adecuados: "O" para cadenas y "int64" para enteros
 
@@ -110,7 +111,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
 
       0.3.2-) Se agrega a la lista (df0) una sublista con los atributos "home", "score_0", "score_1", "away", "tournament" y "agno" recuperados del objeto iterado (des)
 
-      0.3.3-) Se crea un df (df) a partir un array con la lista de sublistas basada en clasificaciones con columnas "home", "score_0", "score_1", "away", "tournament" y "agno"  
+      0.3.3-) Se crea un df (df) a partir de la lista de sublistas (vacia si no hay filas) basada en clasificaciones con columnas "home", "score_0", "score_1", "away", "tournament" y "agno"  
 
       0.3.4-) Se convierten los tipos de las columnas del df (df) a los tipos adecuados: "O" para cadenas y "int64" para enteros
 
@@ -134,7 +135,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
         df0.append([des.home, des.score, des.away, des.agno])
       elif valores is None:
         df0.append([des.home, des.score, des.away, des.agno])
-    df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "agno"])
+    df = pd.DataFrame(df0, columns=["home", "score", "away", "agno"])
     df.home, df.score, df.away, df.agno = df.home.astype('O'), df.score.astype('O'), df.away.astype('O'), df.agno.astype('int64')
     return df
 
@@ -143,7 +144,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     for des in fixtures.objects.all():
       if des.agno == valores:
         df0.append([des.home, des.score, des.away, des.agno])
-    df = pd.DataFrame(data=np.array(df0), columns=["home", "score", "away", "year"])
+    df = pd.DataFrame(df0, columns=["home", "score", "away", "year"])
     df.home, df.score, df.away, df.year = df.home.astype('O'), df.score.astype('O'), df.away.astype('O'), df.year.astype('int64')
     return df
 
@@ -152,7 +153,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     for des in grupos.objects.all():
       if des.agno == valores:
         df0.append([des.pais, des.Pts, des.PJ, des.PG, des.PP, des.PE, des.GF, des.GC, des.Dif, des.Grupo, des.agno])
-    df = pd.DataFrame(data=np.array(df0), columns=["pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo", "agno"])
+    df = pd.DataFrame(df0, columns=["pais", "Pts", "PJ", "PG", "PP", "PE", "GF", "GC", "Dif", "Grupo", "agno"])
     df.pais, df.Pts, df.PJ, df.PG, df.PP, df.PE, df.GF, df.GC, df.Dif, df.Grupo, df.agno = df.pais.astype('O'), df.Pts.astype('int64'), df.PJ.astype('int64'), df.PG.astype('int64'), df.PP.astype('int64'), df.PE.astype('int64'), df.GF.astype('int64'), df.GC.astype('int64'), df.Dif.astype('O'), df.Grupo.astype('O'), df.agno.astype('int64')
     return df
 
@@ -160,8 +161,7 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     df0 = list()
     for des in clasificaciones.objects.all():
       df0.append([des.home, des.score_0, des.score_1, des.away, des.tournament, des.agno])
-    df = np.array(df0)
-    df = pd.DataFrame(data=df, columns=["home", "score_0", "score_1", "away", "tournament", "agno"])
+    df = pd.DataFrame(df0, columns=["home", "score_0", "score_1", "away", "tournament", "agno"])
     df.home, df.score_0, df.score_1, df.away, df.tournament, df.agno = df.home.astype('O'), df.score_0.astype('int64'), df.score_1.astype('int64'), df.away.astype('O'), df.tournament.astype('O'), df.agno.astype('int64')
     return df
   
@@ -422,6 +422,9 @@ def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
         if ind0 == 1:
             # 9.0-) Escribe las métricas en las columnas del lado de pais.
             cols_to_update = [f"{m}{sufijo}" for m in BASE_METRICS]
+            # pandas 3 no sube int64 -> float64 al asignar: los goles predichos son decimales (GF, GC, D)
+            if any(df0[c].dtype.kind != "f" for c in cols_to_update):
+                df0[cols_to_update] = df0[cols_to_update].astype("float64")
             df0.loc[partido.Index, cols_to_update] = [dic_dsp[m] for m in BASE_METRICS]
 
     # 10-) Si se solicitó el acumulado para la fase eliminatoria, lo retorna.
@@ -1005,9 +1008,9 @@ class normali():
 
     n_steps0 = N_STEPS
 
-    for i in range(len(data) - n_steps0):
+    for i in range(len(data) - n_steps0 + 1):
       X.append(data0[i:i + n_steps0, :])
-      y.append(data[i + n_steps0 - 1, C_S_Y_INDEX]) # PEND verificar que realmente haga falta ese -1
+      y.append(data[i + n_steps0 - 1, C_S_Y_INDEX]) # la ventana [i, i + n_steps0) termina en el partido cuyo score se predice
 
     return np.array(X), np.array(y)
 
@@ -1092,7 +1095,7 @@ class normali():
       dic_ag[des0].pais = dic_ag[des0].pais.map(self.pais_id)
 
     df01 = self.df2.copy()
-    year0 = self.df2.year
+    year0 = self.df2.agno
     df01.home = df01.home.map(self.pais_id)
     df01.away = df01.away.map(self.pais_id)
     data_limpia_0 = pd.Series(df01["score"]).map(lambda x: self.ajuste_score_partidos(x, {"(": r"", ")": r"", ":": r",", " ": r","})).to_list()
@@ -1109,6 +1112,7 @@ class normali():
     if df02.year.unique().tolist()[0] in (1934, 1938):
       df02.home = df02.home.map(self.pais_id)
       df02.away = df02.away.map(self.pais_id)
+      df02 = df02.rename(columns={"year": "agno"}) # "agregar_features" lee el año como "agno"
       
     elif df02.year.unique().tolist()[0] not in (1934, 1938):
       df02.home = df02.home.map(self.pais_id)
@@ -1116,7 +1120,7 @@ class normali():
       data_limpia_2 = pd.Series(df02["score"]).map(lambda x: self.ajuste_score_partidos(x, {"(": r"", ")": r"", ":": r",", " ": r","}))
       data_limpia_3 = pd.Series(df02["score"]).map(lambda x: self.ajuste_score_partidos(x, {"(": r"", ")": r"", ":": r",", " ": r","}, ind=1))
 
-      df02 = pd.DataFrame({"home": df02.home.to_list(), "score_0": data_limpia_2, "score_1": data_limpia_3, "away": df02.away.to_list(), "agno": year0.to_list()[:longitud_fase_grupos]}, index=list(range(len(df02))))
+      df02 = pd.DataFrame({"home": df02.home.to_list(), "score_0": data_limpia_2, "score_1": data_limpia_3, "away": df02.away.to_list(), "agno": df02.year.to_list()}, index=list(range(len(df02))))
 
     df02 = agregar_features(df02, dic_ag, ind=0)
     df2, df3 = df02.copy(), self.df3.iloc[longitud_fase_grupos:, :]
@@ -1396,7 +1400,7 @@ class func_prediccion_orden(normali):
     normali.__init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0=obj0, evitar=evitar, embedding_dim=embedding_dim)
 
     self.lista_fases = ["grupo", "doce", "knockout", "quarter", "semi", "third", "final", "Fase Final"]
-    self.dic_matches = None
+    self.dic_matches = {}
     self.dic_fuerza = {}
     self.ind0 = ind0
     self.n_partidos = n_partidos
@@ -1419,9 +1423,9 @@ class func_prediccion_orden(normali):
 
     2-) Se itera al mismo tiempo la entrada (X) y la inferencia o valores default (Y0). Se almacena en unas variables (home, away) los valores de desempeño de los equipos home y away. Se guarda en unas variables (y_home, y_away) los resultados default o arrojados por la inferencia del modelo.
 
-    3-) Se tienen 2 condicionales
+    3-) Se calcula la fuerza de cada equipo
 
-      3.0) Si los valores de (home, away) estan en el atributo diccionario de fuerzas dic_fuerza. Se multiplican los primedios de goles por equipo a enfrentarse para obtener el correspondiente lambda de la distribucion de Poisson y se almacena un una variable (prob_puntaje). Se almacena en unas variables (p_hm, p_aw) la probabilidad de Poisson segun (prob_puntaje) y la salida iterada de (Y0). Se multiplican ambas probabilidades y se dejan en una variable (p)
+      3.0) Se multiplican los primedios de goles por equipo a enfrentarse para obtener el correspondiente lambda de la distribucion de Poisson y se almacena un una variable (prob_puntaje). Se almacena en unas variables (p_hm, p_aw) la probabilidad de Poisson segun (prob_puntaje) y la salida iterada de (Y0). Se multiplican ambas probabilidades y se dejan en una variable (p)
 
         3.0.0) Se tienen 2 condicionales
 
@@ -1437,7 +1441,7 @@ class func_prediccion_orden(normali):
 
         3.0.1) Se entrega un iterable con el numero de goles predicho o default para home y away respectivamente, y el puntaje determinado con la distribucion de Poisson para home y away respectivamente
 
-      3.1) Se retorna una tupla (0, 0)
+      3.1) Si (home) o (away) no tienen registro en dic_fuerza (no jugaron en ese rol en la fase), se usa la media de goles de todos los equipos en ese rol, y se sigue como en 3.0)
 
     Args:
 
@@ -1449,8 +1453,6 @@ class func_prediccion_orden(normali):
 
     Return:
       - yield((y_home, points_home), (y_away, points_away)): un iterable con unas tuplas de 2 valores; el numero de goles default o predicho por el modelo para home y away respectivamente y la probabilidad de anotacion del home y away respectivamente
-
-      - (0, 0): una tupla con 2 valores (0,0) para el caso de tener equipos que no hayan participado en mundiales y no haya datos sobre su fortaleza o debilidad.
     """
     if alterno == 0:
       # X viene de "calculo_metricas_0": se corta con el esquema fijo del modelo
@@ -1474,26 +1476,24 @@ class func_prediccion_orden(normali):
 
       p_hm, p_aw = 0, 0
 
-      if home in self.dic_fuerza["home"].index and away in self.dic_fuerza["away"].index:
-        prob_puntaje = self.dic_fuerza["home"].at[home, "goles"] * self.dic_fuerza["away"].at[away, "goles"]
+      # un equipo sin registro como local (o visitante) toma la media de goles de todos los equipos en ese rol
+      fuerza_h, fuerza_a = self.dic_fuerza["home"]["goles"], self.dic_fuerza["away"]["goles"]
+      prob_puntaje = fuerza_h.get(home, fuerza_h.mean()) * fuerza_a.get(away, fuerza_a.mean())
 
-        p_h = poisson.pmf(y_home, prob_puntaje)
-        p_a = poisson.pmf(y_away, prob_puntaje)
-        p = p_h * p_a
+      p_h = poisson.pmf(y_home, prob_puntaje)
+      p_a = poisson.pmf(y_away, prob_puntaje)
+      p = p_h * p_a
 
-        if round(p) >= 0.5:
-          if p_h > p_a:
-            p_hm, p_aw = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar)
-          elif p_a > p_h:
-            p_aw, p_hm = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar
+      if round(p) >= 0.5:
+        if p_h > p_a:
+          p_hm, p_aw = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar)
+        elif p_a > p_h:
+          p_aw, p_hm = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar
 
-        if round(p) < 0.5:
-          p_hm, p_aw = 1, 1
+      if round(p) < 0.5:
+        p_hm, p_aw = 1, 1
 
-        yield ((y_home, p_hm), (y_away, p_aw))
-
-      else:
-        yield (0, 0)
+      yield ((y_home, p_hm), (y_away, p_aw))
 
   def generar_matches(self, paso):
     """
@@ -1519,7 +1519,8 @@ class func_prediccion_orden(normali):
     """
     value_in = self.n_partidos
     value_fin = value_in + paso
-    self.dic_matches = {**{f"partido {col0}": dict(ganador=None, perdedor=None) for col0 in range(value_in, value_fin)}}
+    # se acumula: el 3er lugar y la final buscan "Loser/Winner Match N" de rondas anteriores
+    self.dic_matches.update({f"Match {col0}": dict(ganador=None, perdedor=None) for col0 in range(value_in, value_fin)})
     self.n_partidos = value_fin
 
   def fase_de_grupos(self, dic_t, df_fixture_, model):
@@ -1674,7 +1675,7 @@ class func_prediccion_orden(normali):
     self.generar_matches(tamagno)
     X = np.array([]) # PEND (dar formato adecuado con "home", "away" para entrar con (alterno=1) a "intsc_prob_goles" y obtener los resultados default de los partidos previos a la fase objetivo de prediccion)
 
-    if len(X.shape) == 2:
+    if isinstance(df_fixture_updated, pd.DataFrame): # varios partidos (una fila por partido)
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
       else:
@@ -1696,7 +1697,7 @@ class func_prediccion_orden(normali):
           perdedor = home
         
         indice = (self.n_partidos - tamagno) + row.Index
-        partido = f"partido {indice}"
+        partido = f"Match {indice}"
         self.dic_matches[partido]["ganador"] = ganador
         self.dic_matches[partido]["perdedor"] = perdedor
 
@@ -1705,9 +1706,9 @@ class func_prediccion_orden(normali):
       df_fixture_updated["score_0"], df_fixture_updated["score_1"] = Y0[0::2], Y0[1::2]
       df_fixture_updated = calculo_metricas_1(df_fixture_updated)
 
-    elif len(X.shape) == 1:
+    else: # un solo partido como Series
       indice = self.n_partidos - tamagno
-      partido = f"partido {indice}"
+      partido = f"Match {indice}"
       
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
         puntos = self.intsc_prob_goles(X, model, alterno=1)
@@ -1740,7 +1741,7 @@ class func_prediccion_orden(normali):
     homes, aways, Winners, Losers = [], [], [], []
     for linea in df_fixture_updated.itertuples():
       indice = (self.n_partidos - tamagno) + linea.Index
-      partido = f"partido {indice}"
+      partido = f"Match {indice}"
 
       homes.append(self.id_pais[linea.home])
       aways.append(self.id_pais[linea.away])
@@ -2006,21 +2007,24 @@ class func_prediccion_orden(normali):
 
     """
     dffix = pd.DataFrame()
-    columnas = df_encuentro_jugado.columns.to_list()
+    # solo las columnas de los dos equipos (equipo + base + score por lado); descarta extras al final si las hubiera
+    df_jugado = df_encuentro_jugado.iloc[:, :2 * COLS_FASE_POR_EQUIPO]
+    columnas = df_jugado.columns.to_list()
     tamagno_1 = df_encuentro_siguiente.shape[-1]
+    resultado = {"Winner": "ganador", "Loser": "perdedor"}[tipo] # tipo viene en ingles (fixture); dic_matches guarda "ganador"/"perdedor"
 
     if tipo == "Winner" and not len(df_encuentro_siguiente.shape) == 1:
       for home, away in zip(df_encuentro_siguiente["home"], df_encuentro_siguiente["away"]):
         if tamagno_1 == 3:
-          equipo0 = self.dic_matches[home[len(tipo)+1:]][tipo]
-          equipo1 = self.dic_matches[away[len(tipo)+1:]][tipo]
+          equipo0 = self.dic_matches[home[len(tipo)+1:]][resultado]
+          equipo1 = self.dic_matches[away[len(tipo)+1:]][resultado]
         elif (tamagno_1 == 2 or tamagno_1 == 4):
           equipo0, equipo1 = home, away
 
-        rndTeam0 = self.seleccionar(df_encuentro_jugado.iloc[:, :-3], equipo0, "home") 
+        rndTeam0 = self.seleccionar(df_jugado, equipo0, "home") 
         rndTeam0 = pd.DataFrame(data=[rndTeam0.values], columns=rndTeam0.index).reset_index(drop=True)
         
-        rndTeam1 = self.seleccionar(df_encuentro_jugado.iloc[:, :-3], equipo1, "away")
+        rndTeam1 = self.seleccionar(df_jugado, equipo1, "away")
         rndTeam1 = pd.DataFrame(data=[rndTeam1.values], columns=rndTeam1.index).reset_index(drop=True)
         
         partido = pd.concat([rndTeam0, rndTeam1], axis=1, ignore_index=True)
@@ -2030,15 +2034,15 @@ class func_prediccion_orden(normali):
       home, away = df_encuentro_siguiente["home"], df_encuentro_siguiente["away"]
 
       if tamagno_1 == 3:
-        equipo0 = self.dic_matches[home[len(tipo) + 1:]][tipo]
-        equipo1 = self.dic_matches[away[len(tipo) + 1:]][tipo]
+        equipo0 = self.dic_matches[home[len(tipo) + 1:]][resultado]
+        equipo1 = self.dic_matches[away[len(tipo) + 1:]][resultado]
       elif (tamagno_1 == 2 or tamagno_1 == 4):
         equipo0, equipo1 = home.item(), away.item()
 
-      rndTeam0 = self.seleccionar(df_encuentro_jugado.iloc[:, :-3], equipo0, "home")
+      rndTeam0 = self.seleccionar(df_jugado, equipo0, "home")
       rndTeam0 = pd.DataFrame(data=[rndTeam0.values], columns=rndTeam0.index).reset_index(drop=True)
 
-      rndTeam1 = self.seleccionar(df_encuentro_jugado.iloc[:, :-3], equipo1, "away")
+      rndTeam1 = self.seleccionar(df_jugado, equipo1, "away")
       rndTeam1 = pd.DataFrame(data=[rndTeam1.values], columns=rndTeam1.index).reset_index(drop=True)
 
       partido = pd.concat([rndTeam0, rndTeam1], axis=1, ignore_index=True)
@@ -2049,30 +2053,57 @@ class func_prediccion_orden(normali):
 
     return dffix
 
-# Global setups
-clasificaciones = formar_dataset_real("clasificaciones")
+# Global setups: se construyen la primera vez que se piden, no al importar (asi migrate y load_data funcionan con la BD vacia)
 agnos = [1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022]
-dic_agnos = {}
+_cache_global = {}
 
-for des0 in agnos:
-  df_partidos_agnos = pd.DataFrame(columns=["home", "score_0", "score_1", "away", "agno"])
+def obtener_clasificaciones():
+  """Tabla "clasificaciones" como df (formar_dataset_real); se consulta a la BD una sola vez por proceso"""
+  if "clasificaciones" not in _cache_global:
+    _cache_global["clasificaciones"] = formar_dataset_real("clasificaciones")
+  return _cache_global["clasificaciones"]
 
-  for des1 in set(clasificaciones["agno"].tolist()):
-    if des0 > agnos[0]:
-      if (int(des1) <= des0 and int(des1) > agnos[agnos.index(des0)-1]):
-        eliminatoria = clasificaciones.loc[clasificaciones["agno"] == des1][["home", "score_0", "score_1", "away", "agno"]]
-        df_partidos_agnos = pd.concat([df_partidos_agnos, eliminatoria], axis=0)
+def obtener_dic_agnos():
+  """
+  ¿QUE HACE?
+  Devuelve el diccionario año del mundial -> df de rendimiento de cada pais en las eliminatorias previas a ese mundial. Se calcula la primera vez que se pide y luego se sirve desde (_cache_global)
 
-    elif not (des0 > agnos[0]):
-      if int(des1) <= des0:
-        eliminatoria = clasificaciones.loc[clasificaciones["agno"] == des1][["home", "score_0", "score_1", "away", "agno"]]
-        df_partidos_agnos = pd.concat([df_partidos_agnos, eliminatoria], axis=0)
+  ¿COMO LO HACE?
+  0-) Si no esta en cache: para cada año de (agnos) junta los partidos de clasificacion jugados despues del mundial anterior y hasta ese año, y arma con "funcion_tabla_desempegno" la fila de rendimiento de cada pais
 
-  eliminatorias = pd.DataFrame()
-  for idx, pais in enumerate(set(df_partidos_agnos.home.tolist() + df_partidos_agnos.away.tolist())):
-    eliminatorias = pd.concat([eliminatorias, funcion_tabla_desempegno(df_partidos_agnos, pais, idx, des0)], axis=0)
+  1-) Devuelve una copia de cada df, porque "create_features" reescribe la columna "pais" con ids y no debe alterar la cache que usara la siguiente consulta
 
-  dic_agnos[str(des0)] = eliminatorias
+  Returns:
+
+    - diccionario {"1934": df, ..., "2022": df}
+  """
+  if "dic_agnos" not in _cache_global:
+    clsf = obtener_clasificaciones()
+    dic_agnos = {}
+
+    for des0 in agnos:
+      df_partidos_agnos = pd.DataFrame(columns=["home", "score_0", "score_1", "away", "agno"])
+
+      for des1 in set(clsf["agno"].tolist()):
+        if des0 > agnos[0]:
+          if (int(des1) <= des0 and int(des1) > agnos[agnos.index(des0)-1]):
+            eliminatoria = clsf.loc[clsf["agno"] == des1][["home", "score_0", "score_1", "away", "agno"]]
+            df_partidos_agnos = pd.concat([df_partidos_agnos, eliminatoria], axis=0)
+
+        elif not (des0 > agnos[0]):
+          if int(des1) <= des0:
+            eliminatoria = clsf.loc[clsf["agno"] == des1][["home", "score_0", "score_1", "away", "agno"]]
+            df_partidos_agnos = pd.concat([df_partidos_agnos, eliminatoria], axis=0)
+
+      eliminatorias = pd.DataFrame()
+      for idx, pais in enumerate(set(df_partidos_agnos.home.tolist() + df_partidos_agnos.away.tolist())):
+        eliminatorias = pd.concat([eliminatorias, funcion_tabla_desempegno(df_partidos_agnos, pais, idx, des0)], axis=0)
+
+      dic_agnos[str(des0)] = eliminatorias
+
+    _cache_global["dic_agnos"] = dic_agnos
+
+  return {agno: df.copy() for agno, df in _cache_global["dic_agnos"].items()}
 
 def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DROP_METRICS, metricas_opcionales=OPTIONAL_METRICS):
   """
@@ -2123,7 +2154,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
   10-) Se actualiza el diccionario (dic_fuerza) del objeto (objs) con  llaves (home) y (away) respectivamente y como claves los df (agg0) y (agg1)
 
-  11-) Se define la variable (dir_modelo) con la ruta del mejor modelo entrenado disponible
+  11-) Se define la variable (dir_modelo) con la ruta del modelo en uso: carpeta (settings.MODEL_PATH) y archivo (settings.MODEL_FILE), configurable desde .env
 
   12-) Se carga el modelo entrenado mediante la función (tf.keras.models.load_model) y se almacena en la variable (modelo)
 
@@ -2148,10 +2179,12 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     - metricas_opcionales: metricas opcionales que el usuario acepta (las demas llegan al modelo con su VALOR_NEUTRO)
   """
 
-  objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, clasificaciones, obj0=int(pregunta_0[-4:]), drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
+  objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, obtener_clasificaciones(), obj0=int(pregunta_0[-4:]), drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
   # el progreso de metricas abstractas arranca desde el historico en cada consulta (no desde la anterior)
   reiniciar_opcionales(objs.pais_id)
 
+  # copia propia de esta consulta: create_features le pasa "pais" a ids y agregar_features la usa asi mas abajo
+  dic_agnos = obtener_dic_agnos()
   df_features = objs.create_features(dic_agnos)
   df1, df2, df3 = df_features[0], df_features[1], df_features[2]
 
@@ -2166,28 +2199,21 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
   print("tercero: (df3)")
   print(df3)
 
-  agg0 = pd.concat([df2.home, df1[0].home], axis=0, ignore_index=True)
-  agg0 = agg0.rename(columns={"home": "Team"})
+  # media de goles por equipo como local (agg0) y como visitante (agg1): df con indice "Team" y columna "goles"
+  agg0 = pd.DataFrame({
+    "Team": pd.concat([df2.home, df1[0].home], axis=0, ignore_index=True),
+    "goles": pd.to_numeric(pd.concat([df2.score_0, df1[0].score_0], axis=0, ignore_index=True), errors="coerce"),
+  }).groupby("Team").mean()
 
-  pts0 = pd.concat([df2[["score_0"]], df1[0][["score_0"]]], axis=0, ignore_index=True)
-  pts0 = pts0.rename({"score_0": "goles"})
-
-  agg0 = pd.concat([agg0, pts0], axis=1)
-  agg0 = agg0.groupby(["Team"]).mean()
-
-  agg1 = pd.concat([df2.away, df1[0].away], axis=0, ignore_index=True)
-  agg1 = agg1.rename(columns={"away": "Team"})
-
-  pts1 = pd.concat([df2[["score_1"]], df1[0][["score_1"]]], axis=0, ignore_index=True)
-  pts1 = pts1.rename({"score_1": "goles"})
-
-  agg1 = pd.concat([agg1, pts1], axis=1)
-  agg1 = agg1.groupby(["Team"]).mean()
+  agg1 = pd.DataFrame({
+    "Team": pd.concat([df2.away, df1[0].away], axis=0, ignore_index=True),
+    "goles": pd.to_numeric(pd.concat([df2.score_1, df1[0].score_1], axis=0, ignore_index=True), errors="coerce"),
+  }).groupby("Team").mean()
 
   objs.dic_fuerza["home"] = agg0
   objs.dic_fuerza["away"] = agg1
 
-  dir_modelo = "C:\\Users\\Usuario\\Tareas\\p_mundiales\\programacion\\entregas\\proyecto_1\\data\\modelos\\modelo-LSTM-(series_temporales)-16-12-2024-0.h5"
+  dir_modelo = settings.MODEL_PATH / settings.MODEL_FILE
   modelo = tf.keras.models.load_model(dir_modelo)
   
   dict_g = objs.grupos_anio_interes(pregunta_0[-4:])
@@ -2252,7 +2278,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     objs.ind0[0] = "grupo"
     dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo) 
 
-    objs.n_partidos = df_fixture_group_.shape[0] + df_fixture_knockout.shape[0] + 1
+    objs.n_partidos = df_fixture_group_.shape[0] + 1 # el fixture numera los octavos desde (partidos de grupos + 1)
     df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table) 
 
     objs.ind0[0] = "knockout"
@@ -2289,47 +2315,51 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     return df_ent
 
   elif "1934" in pregunta_0 or "1938" in pregunta_0:
+    # tras octavos el fixture trae cuartos (4 en 1934, 5 en 1938 por un desempate), 2 semis, 3er lugar y final
+    nq = len(df3) - 4
 
     if "knockout" in pregunta_0:
       objs.ind0[1] = "knockout"
-      df_fixture_knockout = df1[1].copy()
-      df_fixture_quarter = df3[["home", "score", "away"]].iloc[:5].copy()
-      df_fixture_semi = df3[["home", "score", "away"]].iloc[5:7].copy()
-      df_fixture_third = df3[["home", "score", "away"]].iloc[7].copy()
-      df_fixture_final = df3[["home", "score", "away"]].iloc[8].copy()
+      # 1ra fase del torneo: los partidos del usuario toman las metricas de las eliminatorias previas (como la fase de grupos en otros años)
+      df_fixture_knockout = agregar_features(df1[1].copy().assign(agno=int(pregunta_0[-4:])), dic_agnos)
+      df_fixture_quarter = df3[["home", "score", "away"]].iloc[:nq].copy()
+      df_fixture_semi = df3[["home", "score", "away"]].iloc[nq:nq + 2].copy()
+      df_fixture_third = df3[["home", "score", "away"]].iloc[nq + 2].copy()
+      df_fixture_final = df3[["home", "score", "away"]].iloc[nq + 3].copy()
 
     if "quarter" in pregunta_0:
       objs.ind0[1] = "quarter"
       df_fixture_knockout = df2.copy()
       df_fixture_quarter = df1[1].copy()
-      df_fixture_semi = df3[["home", "score", "away"]].iloc[5:7].copy()
-      df_fixture_third = df3[["home", "score", "away"]].iloc[7].copy()
-      df_fixture_final = df3[["home", "score", "away"]].iloc[8].copy()
+      df_fixture_semi = df3[["home", "score", "away"]].iloc[nq:nq + 2].copy()
+      df_fixture_third = df3[["home", "score", "away"]].iloc[nq + 2].copy()
+      df_fixture_final = df3[["home", "score", "away"]].iloc[nq + 3].copy()
 
     if "semi" in pregunta_0:
       objs.ind0[1] = "semi"
       df_fixture_knockout = df2.copy()
-      df_fixture_quarter = df1[0][["home", "away"]].iloc[:5].copy()
+      df_fixture_quarter = df1[0][["home", "away"]].iloc[:nq].copy()
       df_fixture_semi = df1[1].copy()
-      df_fixture_third = df3[["home", "score", "away"]].iloc[7].copy()
-      df_fixture_final = df3[["home", "score", "away"]].iloc[8].copy()
+      df_fixture_third = df3[["home", "score", "away"]].iloc[nq + 2].copy()
+      df_fixture_final = df3[["home", "score", "away"]].iloc[nq + 3].copy()
 
     if "third" in pregunta_0:
       objs.ind0[1] = "third"
       df_fixture_knockout = df2.copy()
-      df_fixture_quarter = df1[0][["home", "away"]].iloc[:5].copy()
-      df_fixture_semi = df1[0][["home", "away"]].iloc[5:7].copy()
+      df_fixture_quarter = df1[0][["home", "away"]].iloc[:nq].copy()
+      df_fixture_semi = df1[0][["home", "away"]].iloc[nq:nq + 2].copy()
       df_fixture_third = df1[1].copy()
-      df_fixture_final = df3[["home", "score", "away"]].iloc[8].copy()
+      df_fixture_final = df3[["home", "score", "away"]].iloc[nq + 3].copy()
 
     if "final" in pregunta_0:
       objs.ind0[1] = "final"
       df_fixture_knockout = df2.copy()
-      df_fixture_quarter = df1[0][["home", "away"]].iloc[:5].copy()
-      df_fixture_semi = df1[0][["home", "away"]].iloc[5:7].copy()
-      df_fixture_third = df1[0][["home", "away"]].iloc[7].copy()
+      df_fixture_quarter = df1[0][["home", "away"]].iloc[:nq].copy()
+      df_fixture_semi = df1[0][["home", "away"]].iloc[nq:nq + 2].copy()
+      df_fixture_third = df1[0][["home", "away"]].iloc[nq + 2].copy()
       df_fixture_final = df1[1].copy()
 
+    objs.n_partidos = 1 # sin fase de grupos: el fixture arranca en "Match 1"
     objs.ind0[0] = "knockout"
     objs.jugar(df_fixture_knockout, modelo)
 
@@ -2450,6 +2480,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
     df_fixture_quarter = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_quarter, dict_table)
 
+    objs.n_partidos = df_fixture_group_.shape[0] + 1 # cuartos: partidos de grupos + 1
     objs.ind0[0] = "quarter"
     objs.jugar(df_fixture_quarter, modelo)
 
@@ -2544,6 +2575,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
     df_fixture_knockout = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_knockout, dict_table)
 
+    objs.n_partidos = df_fixture_group_.shape[0] + 1 # octavos: partidos de grupos + 1
     objs.ind0[0] = "knockout"
     objs.jugar(df_fixture_knockout, modelo)
 
@@ -2620,9 +2652,9 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     df_fixture_doce = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_doce, dict_table, year=int(pregunta_0[-4:]))
 
     objs.ind0[0] = "doce"
-    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:, :-3], modelo)
+    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:, :2 * COLS_FASE_POR_EQUIPO], modelo)
 
-    df_fixture_third = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :-3], df_fixture_third, dict_table)
+    df_fixture_third = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :2 * COLS_FASE_POR_EQUIPO], df_fixture_third, dict_table)
 
     objs.ind0[0] = "third"
     if df_fixture_third.shape[0] > 1:
@@ -2630,7 +2662,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     elif df_fixture_third.shape[0] == 1:
       objs.jugar(df_fixture_third, modelo)
 
-    df_fixture_final = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :-3], df_fixture_final, dict_table)
+    df_fixture_final = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :2 * COLS_FASE_POR_EQUIPO], df_fixture_final, dict_table)
 
     print(f"\n\n----------\n----------\n\nFINAL - FINAL - FINAL: --- {pregunta_0} ---\n----------\n----------\n")
     objs.ind0[0] = "final"
@@ -2698,11 +2730,11 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     df_fixture_doce = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_doce, dict_table, year=int(pregunta_0[-4:]))
 
     objs.ind0[0] = "doce"
-    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:, :-3], modelo)
+    dict_table = objs.fase_de_grupos(df_fixture_doce[1], df_fixture_doce[0].iloc[:, :2 * COLS_FASE_POR_EQUIPO], modelo)
 
     objs.n_partidos = df_fixture_group_.shape[0] + df_fixture_doce[0].shape[0] + 1
     
-    df_fixture_semi = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :-3], df_fixture_semi, dict_table)
+    df_fixture_semi = objs.camb_grp_elm_smpl(df_fixture_doce[0].iloc[:, :2 * COLS_FASE_POR_EQUIPO], df_fixture_semi, dict_table)
 
     objs.ind0[0] = "semi"
     objs.jugar(df_fixture_semi, modelo)
