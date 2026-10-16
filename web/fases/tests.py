@@ -1,3 +1,116 @@
-from django.test import TestCase
+import json
+import tempfile
+from pathlib import Path
 
-# Create your tests here.
+import pandas as pd
+from django.test import SimpleTestCase
+
+from .dataset import construir_dataset, construir_secuencias, mapa_paises
+from .modulo import METRICAS_ABSTRACTAS, historico_abstractas
+from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor
+
+
+def partidos_df(filas):
+  return pd.DataFrame(filas, columns=["home", "away", "score_0", "score_1", "agno"])
+
+
+PROXY_VACIO = pd.DataFrame(columns=["pais", "agno", *METRICAS_ABSTRACTAS])
+
+
+class ConstruirDatasetTests(SimpleTestCase):
+  """Torneo inventado: eliminatorias A-B 2:0 y B-C 1:1, mundial A-C 1:0 (ids: A=0, B=1, C=2)"""
+
+  def setUp(self):
+    self.clasificaciones = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1934]])
+    self.partidos = partidos_df([["A", "C", 1, 0, 1934]])
+    self.ds = construir_dataset(self.partidos, self.clasificaciones, PROXY_VACIO, agnos=[1934])
+
+  def test_una_fila_por_partido_en_orden(self):
+    self.assertEqual(self.ds["fase"].tolist(), ["eliminatoria", "eliminatoria", "mundial"])
+    self.assertEqual(self.ds[["goles_0", "goles_1"]].values.tolist(), [[2, 0], [1, 1], [1, 0]])
+
+  def test_metricas_previas_al_partido(self):
+    # 1er partido: nadie tiene historia, ni siquiera su propio resultado
+    self.assertEqual(self.ds.loc[0, ["PJ_0", "GF_0", "PJ_1", "GF_1"]].tolist(), [0, 0, 0, 0])
+    # B llega al 2do partido con la derrota 0:2
+    self.assertEqual(self.ds.loc[1, ["PTS_0", "PJ_0", "PP_0", "GF_0", "GC_0", "D_0"]].tolist(), [0, 1, 1, 0, 2, -2])
+    # al mundial: A con la victoria 2:0 y C con el empate 1:1
+    self.assertEqual(self.ds.loc[2, ["PTS_0", "PJ_0", "PG_0", "GF_0", "GC_0", "D_0"]].tolist(), [3, 1, 1, 2, 0, 2])
+    self.assertEqual(self.ds.loc[2, ["PTS_1", "PJ_1", "PE_1", "GF_1", "GC_1", "D_1"]].tolist(), [1, 1, 1, 1, 1, 0])
+
+  def test_metricas_derivadas(self):
+    # rate_GF = GF / PJ * 10
+    self.assertAlmostEqual(self.ds.loc[2, "rate_GF_0"], 20.0)
+    self.assertAlmostEqual(self.ds.loc[2, "rate_GF_1"], 10.0)
+    # el progreso abstracto vuelve al historico al empezar el mundial (como en la app): sin datos VI = PKATTALLOW = 0.1
+    # gkps = (VI/PJ)*60 + 40 - ((GC - PKATTALLOW)/PJ)*10 = 6 + 40 + 1
+    self.assertAlmostEqual(self.ds.loc[2, "gkps_0"], 47.0)
+
+  def test_equipo_sin_eliminatorias_hereda_su_ultimo_ciclo(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1938]])
+    partidos = partidos_df([["A", "C", 1, 0, 1934], ["A", "B", 0, 0, 1938]])
+    ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934, 1938])
+    # en 1938 A no jugo eliminatorias: arranca con lo de sus eliminatorias de 1934 (victoria 2:0), no con el mundial
+    fila = ds[(ds["agno"] == 1938) & (ds["fase"] == "mundial")].iloc[0]
+    self.assertEqual([fila["PJ_0"], fila["GF_0"]], [1, 2])
+
+
+class HistoricoAbstractasTests(SimpleTestCase):
+
+  def test_solo_mundiales_anteriores(self):
+    proxy = pd.DataFrame(
+      [["A", 1930, 2, 1, 0, 0], ["A", 1938, 5, 1, 0, 0], ["B", 1934, 1, 1, 0, 0]],
+      columns=["pais", "agno", *METRICAS_ABSTRACTAS],
+    )
+    hist = historico_abstractas(proxy, {"A": 0, "B": 1}, agno=1934)
+    # A solo suma 1930; B (1934) no entra porque 1934 no es anterior a 1934
+    self.assertEqual(hist["pais"].tolist(), [0])
+    self.assertEqual(hist.loc[0, "VI"], 2)
+
+
+class ConstruirSecuenciasTests(SimpleTestCase):
+
+  def test_relleno_y_orden(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1934]])
+    partidos = partidos_df([["A", "C", 1, 0, 1934]])
+    ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934])
+    sec = construir_secuencias(ds, k=3)
+    pj = 1  # posicion de PJ dentro de ALL_METRICS
+    # A en el partido del mundial: 1 paso de relleno, luego su eliminatoria (PJ 0) y el actual (PJ 1)
+    self.assertEqual(sec["mascara_0"][2].tolist(), [0, 1, 1])
+    self.assertEqual(sec["seq_0"][2, :, pj].tolist(), [0, 0, 1])
+    self.assertEqual(sec["y"][2].tolist(), [1, 0])
+    self.assertEqual(sec["id_0"][2], mapa_paises(partidos, clasif)["A"])
+
+
+class PredictoresTests(SimpleTestCase):
+
+  def setUp(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1934]])
+    partidos = partidos_df([["A", "C", 1, 0, 1934]])
+    self.ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934])
+
+  def test_medias(self):
+    predictor = PredictorMedias.entrenar(self.ds)
+    salida = predictor.predecir(Lote(self.ds))
+    # medias de (2, 1, 1) y (0, 1, 0)
+    self.assertEqual(salida.shape, (3, 2))
+    self.assertAlmostEqual(salida[0, 0], 4 / 3)
+    self.assertAlmostEqual(salida[0, 1], 1 / 3)
+
+  def test_guardar_y_cargar(self):
+    with tempfile.TemporaryDirectory() as carpeta:
+      guardar_predictor(PredictorMedias(1.5, 1.0), carpeta, fecha="2026-10-15")
+      predictor, esquema = cargar_predictor(carpeta)
+      self.assertEqual(predictor.predecir(Lote(self.ds)).tolist()[0], [1.5, 1.0])
+      self.assertEqual(esquema["fecha"], "2026-10-15")
+
+  def test_rechaza_metricas_distintas(self):
+    with tempfile.TemporaryDirectory() as carpeta:
+      guardar_predictor(PredictorMedias(1.5, 1.0), carpeta)
+      ruta = Path(carpeta) / "esquema.json"
+      esquema = json.loads(ruta.read_text(encoding="utf-8"))
+      esquema["metricas"] = esquema["metricas"][:-1]
+      ruta.write_text(json.dumps(esquema), encoding="utf-8")
+      with self.assertRaisesRegex(ValueError, "reentrenarlo"):
+        cargar_predictor(carpeta)
