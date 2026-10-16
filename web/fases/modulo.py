@@ -167,37 +167,66 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
   
   elif ind0 == "proxy_desempegno":
     df = pd.DataFrame(
-      list(proxy_desempegno.objects.values("pais", *METRICAS_ABSTRACTAS)),
-      columns=["pais", *METRICAS_ABSTRACTAS],
+      list(proxy_desempegno.objects.values("pais", "agno", *METRICAS_ABSTRACTAS)),
+      columns=["pais", "agno", *METRICAS_ABSTRACTAS],
     )
-    # los campos son CharField: se pasan a número (float, porque SOT y PKATT pueden traer decimales)
-    df[METRICAS_ABSTRACTAS] = df[METRICAS_ABSTRACTAS].apply(pd.to_numeric, errors="coerce")
+    # los campos son CharField: se pasan a número (float, porque SOT y PKATT pueden traer decimales); agno vacio -> NaN
+    df[["agno", *METRICAS_ABSTRACTAS]] = df[["agno", *METRICAS_ABSTRACTAS]].apply(pd.to_numeric, errors="coerce")
     return df
 
-def reiniciar_opcionales(pais_id):
+def historico_abstractas(df_proxy, pais_id, agno=None):
   """
   ¿QUE HACE?
-  Carga en la variable global (opcionales) el histórico de METRICAS_ABSTRACTAS por país, con el país traducido a id, que es como viajan los equipos en los df de fase. Se llama al inicio de cada consulta para que una predicción no arranque desde el progreso que dejó la anterior.
+  Suma por pais las METRICAS_ABSTRACTAS de los mundiales anteriores a (agno), con el pais traducido a id. Es el punto de partida del progreso de las abstractas en una consulta o en el dataset de entrenamiento
 
   ¿COMO LO HACE?
-  0-) Recupera el histórico con "formar_dataset_real" ("proxy_desempegno")
+  0-) Si (agno) no es None, conserva solo las filas con agno < (agno): un mundial nunca ve datos de si mismo ni de los siguientes (sin fuga de datos)
 
-  1-) Traduce "pais" a id con (pais_id), descarta los países que no juegan en este contexto y conserva el primer registro si hay países duplicados
+  1-) Suma por pais cada metrica; un pais sin ningun dato real de una metrica queda en NaN (no 0), y "valor_previo" le aplicara su valor por defecto
+
+  2-) Traduce "pais" a id con (pais_id) y descarta los paises que no estan en el mapa
+
+  Args:
+
+    - df_proxy: df con columnas pais, agno y METRICAS_ABSTRACTAS (formar_dataset_real("proxy_desempegno"))
+
+    - pais_id: diccionario nombre del país -> id
+
+    - agno: año del mundial que se va a jugar; None suma todos los años
+
+  Returns:
+
+    - df con columnas pais (id) y METRICAS_ABSTRACTAS, una fila por pais
+  """
+  df = df_proxy if agno is None else df_proxy[df_proxy["agno"] < agno]
+  df = df.groupby("pais", as_index=False)[METRICAS_ABSTRACTAS].sum(min_count=1)
+  df["pais"] = df["pais"].map(pais_id)
+  df = df.dropna(subset=["pais"])
+  df["pais"] = df["pais"].astype("int64")
+  return df.reset_index(drop=True)
+
+def reiniciar_opcionales(pais_id, agno=None):
+  """
+  ¿QUE HACE?
+  Carga en la variable global (opcionales) el histórico de METRICAS_ABSTRACTAS por país previo al mundial (agno), con el país traducido a id, que es como viajan los equipos en los df de fase. Se llama al inicio de cada consulta para que una predicción no arranque desde el progreso que dejó la anterior.
+
+  ¿COMO LO HACE?
+  0-) Recupera las filas por pais y mundial con "formar_dataset_real" ("proxy_desempegno")
+
+  1-) Las resume con "historico_abstractas" (solo mundiales anteriores a (agno))
 
   Args:
 
     - pais_id: diccionario nombre del país -> id (atributo "pais_id" de la clase "normali")
+
+    - agno: año del mundial consultado; None usa todos los años
 
   Globales usadas:
 
     - opcionales: se reemplaza por el histórico recién cargado
   """
   global opcionales
-  df = formar_dataset_real("proxy_desempegno")
-  df["pais"] = df["pais"].map(pais_id)
-  df = df.dropna(subset=["pais"]).drop_duplicates(subset="pais", keep="first")
-  df["pais"] = df["pais"].astype("int64")
-  opcionales = df.reset_index(drop=True)
+  opcionales = historico_abstractas(formar_dataset_real("proxy_desempegno"), pais_id, agno)
 
 def funcion_tabla_desempegno(df0, pais, indx=None, agno=None, ind0=0):
     """
@@ -1495,7 +1524,7 @@ class func_prediccion_orden(normali):
 
       yield ((y_home, p_hm), (y_away, p_aw))
 
-  def generar_matches(self, paso):
+  def ganador_perdedor(self, paso):
     """
     ¿QUE HACE?
     Deja en el atributo diccionario "self.dic_matches" otros diccionarios contenedores del ganador y perdedor por partido
@@ -1672,7 +1701,7 @@ class func_prediccion_orden(normali):
     Y0 = np.array([])
     partido = ""
     tamagno = df_fixture_updated.shape[0]
-    self.generar_matches(tamagno)
+    self.ganador_perdedor(tamagno)
     X = np.array([]) # PEND (dar formato adecuado con "home", "away" para entrar con (alterno=1) a "intsc_prob_goles" y obtener los resultados default de los partidos previos a la fase objetivo de prediccion)
 
     if isinstance(df_fixture_updated, pd.DataFrame): # varios partidos (una fila por partido)
@@ -2181,7 +2210,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
   objs = func_prediccion_orden("partidos", pregunta_0[-4:], df5, obtener_clasificaciones(), obj0=int(pregunta_0[-4:]), drop_metricas=drop_metricas, metricas_opcionales=metricas_opcionales)
   # el progreso de metricas abstractas arranca desde el historico en cada consulta (no desde la anterior)
-  reiniciar_opcionales(objs.pais_id)
+  reiniciar_opcionales(objs.pais_id, agno=int(pregunta_0[-4:]))
 
   # copia propia de esta consulta: create_features le pasa "pais" a ids y agregar_features la usa asi mas abajo
   dic_agnos = obtener_dic_agnos()

@@ -65,14 +65,16 @@ def leer_csv(modelo, ruta, renombres):
 def leer_proxy():
   """
   ¿QUE HACE?
-  Arma el historico de METRICAS_ABSTRACTAS por pais para la tabla (proxy_desempegno) a partir de los csv por mundial del scraper
+  Arma las filas de la tabla (proxy_desempegno), una por pais y mundial, a partir de los csv por mundial del scraper. Se guarda el año para que cada mundial solo use los datos de mundiales anteriores (sin fuga de datos del futuro)
 
   ¿COMO LO HACE?
-  0-) Busca "metricas_abstractas_*.csv" en (PROXY_DIR); si no hay ninguno devuelve None y la tabla queda vacia
+  0-) Busca "metricas_abstractas_<año>.csv" en (PROXY_DIR); si no hay ninguno devuelve None y la tabla queda vacia
 
-  1-) Concatena todos los mundiales y suma por pais cada metrica abstracta (total historico); si un pais no tiene ningun dato real de una metrica queda "" y no 0, para que "formar_dataset_real" la lea como NaN
+  1-) A cada csv le agrega la columna "agno" tomada del nombre del archivo y los concatena
 
-  2-) gkps, mds, mos y mms quedan "" porque se derivan en "calculo_metricas_0", no se guardan
+  2-) Una celda sin dato real queda "" y no 0, para que "formar_dataset_real" la lea como NaN
+
+  3-) gkps, mds, mos y mms quedan "" porque se derivan en "calculo_metricas_0", no se guardan
 
   Returns:
 
@@ -81,9 +83,11 @@ def leer_proxy():
   rutas = sorted(PROXY_DIR.glob("metricas_abstractas_*.csv"))
   if not rutas:
     return None
-  df = pd.concat([pd.read_csv(r, encoding="utf-8") for r in rutas], ignore_index=True)
+  df = pd.concat(
+    [pd.read_csv(r, encoding="utf-8").assign(agno=r.stem.rsplit("_", 1)[-1]) for r in rutas],
+    ignore_index=True,
+  )
   df[PROXY_ABSTRACTAS] = df[PROXY_ABSTRACTAS].apply(pd.to_numeric, errors="coerce")
-  df = df.groupby("pais", as_index=False)[PROXY_ABSTRACTAS].sum(min_count=1)
   df = df.astype(object).where(df.notna(), "").astype(str)
   for campo in campos_de(proxy_desempegno):
     if campo not in df.columns:
