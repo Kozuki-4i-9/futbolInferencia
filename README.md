@@ -1,62 +1,89 @@
 # futbolInferencia
 
-Predicción de resultados de los Mundiales de fútbol (1934 – 2022) con un modelo de **series temporales (LSTM)**. Una aplicación web en Django deja al usuario elegir un mundial y una fase, modificar los partidos que quiera y simular el resto del torneo partido a partido. El modelo recibe el rendimiento acumulado de cada selección y lo actualiza tras cada predicción.
+**Simulate any FIFA World Cup (1930 – 2022) from any stage: change the results you want and a time-series model predicts the rest of the tournament, match by match.**
+
+<!-- TODO (Phase 5): 15-second GIF of the "what if…?" mode, e.g. ![demo](docs/demo.gif) -->
+
+
+> **Status (October 2026):** the data pipeline, the tournament simulation for all 21 World Cups and the training dataset are working. The prediction model is being retrained for the new 14-metric input; until then the web app opens but cannot return predictions. See [Roadmap](#roadmap).
 
 ---
 
-## Objetivos
+## What it does
 
-### Objetivo general
-Construir un sistema que **simule un Mundial completo** a partir de cualquier fase elegida por el usuario: predice los goles de cada partido con una red LSTM y propaga el rendimiento de cada selección de una fase a la siguiente.
+- Lets the user pick a World Cup and a stage, edit any match result and simulate the rest of the tournament.
+- Respects every historical format: straight knockout (1934/38), final group round (1950), second group stage (1974 – 82), best third-placed teams (1986 – 94), round of 16 (1998 – 2022).
+- Each team carries its performance (points, wins, goals, defensive/offensive scores…) from the qualifiers into the tournament and updates it after every match, so the model sees the tournament as a **sequence**, not as isolated matches.
+- Predicted goals are turned into results with a Poisson model.
 
-### Objetivos específicos
-1. **Datos:** reunir partidos, fixtures, grupos y eliminatorias de todos los mundiales en PostgreSQL (scraping en `scripts/activos/`).
-2. **Rendimiento base:** acumular por selección, partido a partido, las métricas `PTS PJ PG PP PE GF GC D` desde las eliminatorias previas hasta la fase en curso.
-3. **Rendimiento derivado:** calcular métricas opcionales (`gkps mds mos mms rate_GC rate_GF`) a partir de insumos abstractos (`VI SOT PKATT PKATTALLOW`) que también avanzan partido a partido.
-4. **Inferencia secuencial:** alimentar la LSTM con ventanas temporales de partidos (embedding del equipo + métricas) y convertir los goles predichos en resultados mediante la intersección de probabilidades de Poisson.
-5. **Formatos de torneo:** respetar cada formato histórico (eliminación directa en 1934/38, fase final de grupos en 1950, mejores terceros en 1986 – 1994, octavos desde 1998).
-6. **Control del usuario:** dejar elegir desde el frontend qué métricas base descartar y qué métricas opcionales usar, **sin cambiar las dimensiones** de la entrada al modelo.
-7. **Escalabilidad:** preparar la lógica de fases para otros torneos (Champions League, Copa Libertadores).
+**Stack:** Python 3.12 · Django 6 · PostgreSQL · TensorFlow/Keras · pandas · NumPy · SciPy · Selenium (scraping) · JavaScript (fetch).
 
 ---
 
-## Cómo funciona la IA de series temporales
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph ETL["🕸️ Scraping (etl/)"]
+        W["Wikipedia / FBref<br/>groups · matches · qualifiers"]
+    end
+    subgraph DB["🗄️ PostgreSQL"]
+        T[("partidos · fixtures · grupos<br/>clasificaciones · proxy_desempegno")]
+    end
+    subgraph FEAT["🧮 Features"]
+        F1["Base metrics accumulated match by match<br/>PTS PJ PG PP PE GF GC D"]
+        F2["Derived metrics<br/>gkps mds mos mms rate_GC rate_GF"]
+    end
+    subgraph MODEL["🧠 Model"]
+        M1["Sequences: each team's last K matches"]
+        M2["LSTM → expected goals (λ)"]
+        M3["Poisson → score and points"]
+    end
+    subgraph APP["🌐 Django app"]
+        A1["Pick World Cup and stage,<br/>edit results, simulate"]
+    end
+
+    W -->|"CSV in data/ + load_data"| T --> F1 --> F2 --> M1 --> M2 --> M3 --> A1
+    M3 -. "simulated result updates the metrics" .-> F1
+```
+
+### How the time-series model sees a tournament
 
 ```mermaid
 flowchart TD
-    subgraph DATOS["🗄️ Datos (PostgreSQL)"]
+    subgraph DATA["🗄️ Data (PostgreSQL)"]
         A1[(partidos)]
         A2[(clasificaciones)]
         A3[(fixtures / grupos)]
-        A4[(proxy_desempegno<br/>VI · SOT · PKATT · PKATTALLOW)]
+        A4[(proxy_desempegno<br/>VI · SOT · PKATT · PKATTALLOW per World Cup)]
     end
 
-    subgraph ACUM["📈 Rendimiento acumulado (fase a fase)"]
+    subgraph ACC["📈 Accumulated performance"]
         B1["funcion_tabla_desempegno<br/>BASE: PTS PJ PG PP PE GF GC D"]
-        B2["opcionales (progreso por país)<br/>insumos abstractos"]
+        B2["opcionales (progress per team)<br/>only earlier World Cups"]
     end
 
-    subgraph FEAT["🧮 Entrada al modelo — calculo_metricas_0"]
+    subgraph FEAT["🧮 Model input — calculo_metricas_0"]
         C1["Base<br/>PTS PJ PG PP PE GF GC D"]
-        C2["Derivadas<br/>gkps mds mos mms rate_GC rate_GF"]
-        C3{"🎛️ Elección del usuario<br/>drop_metricas / metricas_opcionales"}
-        C4["Esquema fijo: 14 métricas por equipo<br/>lo apagado ⇒ VALOR_NEUTRO"]
+        C2["Derived<br/>gkps mds mos mms rate_GC rate_GF"]
+        C3{"🎛️ User choice<br/>drop_metricas / metricas_opcionales"}
+        C4["Fixed schema: 14 metrics per team<br/>switched off ⇒ VALOR_NEUTRO"]
     end
 
-    subgraph MODELO["🧠 Modelo"]
-        D1["Embedding del equipo (3D)"]
-        D2["Ventanas temporales — c_s<br/>(N_STEPS partidos por muestra)"]
-        D3["LSTM 100 → Dropout 0.20<br/>LSTM 57 → Dropout 0.40<br/>LSTM 25 → Dropout 0.15<br/>Dense 32 ReLU → Dense 1"]
-        D4["Goles esperados<br/>home · away"]
+    subgraph MODEL["🧠 Model"]
+        D1["Team embedding"]
+        D2["Sequence of the team's last K matches"]
+        D3["LSTM"]
+        D4["Expected goals<br/>home · away"]
     end
 
-    subgraph RES["⚽ Resultado"]
-        E1["Intersección de Poisson<br/>probabilidad del marcador"]
-        E2["Puntos de grupo / ganador de llave"]
+    subgraph RES["⚽ Result"]
+        E1["Poisson intersection<br/>score probability"]
+        E2["Group points / knockout winner"]
     end
 
-    A2 --> B1
     A1 --> B1
+    A2 --> B1
     A3 --> B1
     A4 --> B2
     B1 --> C1
@@ -67,104 +94,182 @@ flowchart TD
     C3 --> C4
     C4 --> D1 --> D2 --> D3 --> D4
     D4 --> E1 --> E2
-    E2 -- "calculo_metricas_1:<br/>actualiza base y progreso" --> B1
-    E2 -. "siguiente fase" .-> B2
+    E2 -- "calculo_metricas_1:<br/>updates base metrics and progress" --> B1
 
-    classDef datos fill:#e8f1fb,stroke:#3b82c4,color:#0b2540
-    classDef acum fill:#eaf7ee,stroke:#2f9e57,color:#0d3320
+    classDef data fill:#e8f1fb,stroke:#3b82c4,color:#0b2540
+    classDef acc fill:#eaf7ee,stroke:#2f9e57,color:#0d3320
     classDef feat fill:#fff6e5,stroke:#d38b00,color:#3d2800
-    classDef modelo fill:#f3ecfb,stroke:#7c4dbd,color:#2a1446
+    classDef model fill:#f3ecfb,stroke:#7c4dbd,color:#2a1446
     classDef res fill:#fdecec,stroke:#c94848,color:#3f1010
-    class A1,A2,A3,A4 datos
-    class B1,B2 acum
+    class A1,A2,A3,A4 data
+    class B1,B2 acc
     class C1,C2,C3,C4 feat
-    class D1,D2,D3,D4 modelo
+    class D1,D2,D3,D4 model
     class E1,E2 res
 ```
 
-**La idea central:** cada partido simulado modifica el rendimiento de las dos selecciones, y ese rendimiento es la serie temporal que ve el modelo en el partido siguiente. Así el torneo se predice como una secuencia, no como partidos aislados.
+**No data leakage:** every training row only contains information from *before* that match, and the shots/penalty history of a World Cup only adds up earlier World Cups.
 
-### Neutralización de métricas (control del usuario)
+**User control without changing the model input:** a discarded base metric or a rejected optional metric reaches the model with its `VALOR_NEUTRO`; no column is ever added or removed, so the model always receives the same shape.
 
-```mermaid
-flowchart LR
-    U["Frontend<br/>casillas de métricas"] -->|"drop_metricas<br/>metricas_opcionales"| V["views.py<br/>valida contra el catálogo"]
-    V -->|"400 si hay nombres desconocidos<br/>o falta un valor neutro"| U
-    V --> M["consulta_general → func_prediccion_orden"]
-    M --> N["calculo_metricas_0 + neutralizar"]
-    N --> X["Entrada al modelo<br/>siempre 2 × 16 columnas"]
-```
-
-- **Base descartada** (`drop_metricas`): su columna llega al modelo con `VALOR_NEUTRO`, pero se sigue acumulando en la simulación.
-- **Opcional no aceptada** (no figura en `metricas_opcionales`): su columna llega con `VALOR_NEUTRO`.
-- Ninguna columna se quita ni se añade, así que el modelo recibe siempre las mismas dimensiones.
+**Framework-agnostic predictions:** the simulation only needs expected goals per match. Any model that implements `Predictor` (`web/fases/predictores.py`) can be plugged in: Keras, scikit-learn, a time-series foundation model… Each trained model is saved with an `esquema.json`, and the app refuses to load a model trained with different metrics.
 
 ---
 
-## Estructura del proyecto
+## Project structure
 
 ```
 futbolInferencia/
-├── data/                     # datos y modelos entrenados (fuera de git)
-├── scripts/
-│   ├── activos/              # scraping, limpieza y notebook de entrenamiento
-│   └── pruebas/              # prototipos y notas de avance (avances.py)
-└── web/                      # aplicación Django
-    ├── mundial/              # settings (lee .env con python-decouple)
-    └── fases/
-        ├── models.py         # partidos, fixtures, grupos, clasificaciones, proxy_desempegno
-        ├── modulo.py         # métricas, features, inferencia y reglamentos de mejores terceros
-        ├── views.py          # endpoints: procesar_recepcion_0 (página) y _1 (predecir)
-        └── templates/prediccion_2.html
+├── data/                       # versioned inputs (CSV + model); datasets/ is generated, not versioned
+│   ├── partidos/  grupos/      # matches, fixtures, qualifiers and group tables
+│   ├── proxy_desempegno/       # shots / clean sheets / penalties per World Cup (scraped)
+│   └── modelos/                # trained models
+├── etl/                        # scraping and data cleaning (busca_grupos.py --anio 1986, busca_metricas.py…)
+├── notebooks/                  # training notebook (2024) and metric tuning
+├── experimentos/               # prototypes and the 2026 re-download study (redescarga/)
+├── web/                        # Django project
+│   ├── mundial/                # settings (reads .env with python-decouple)
+│   └── fases/
+│       ├── models.py           # partidos, fixtures, grupos, clasificaciones, proxy_desempegno
+│       ├── modulo.py           # metrics, tournament simulation, best-third-placed rules, inference
+│       ├── dataset.py          # training dataset and per-team sequences
+│       ├── predictores.py      # Predictor interface, baseline and model loading
+│       ├── views.py            # page and /procesar_recepcion_1/ (predict)
+│       ├── management/commands # load_data, construir_dataset
+│       ├── templates/prediccion_2.html
+│       └── tests.py
+├── requirements.txt            # web app
+└── requirements-dev.txt        # + notebooks, training and scraping
 ```
-
-## Puesta en marcha
-
-1. Copiar `web/.env.example` a `web/.env` y completar `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
-2. `cd web && python manage.py migrate` (crea también la tabla `proxy_desempegno`).
-3. Cargar los datos en las tablas, incluida `proxy_desempegno` con su columna `pais`.
-4. `python manage.py runserver`.
-
-> `modulo.py` consulta la base de datos al importarse (arma `dic_agnos`), así que Django necesita la BD disponible incluso para `makemigrations`.
-
-**Stack:** Python · Django · PostgreSQL · TensorFlow/Keras · pandas · NumPy · SciPy · JavaScript (fetch).
 
 ---
 
-## Historia del proyecto
+## Installation
+
+Requirements: **Python 3.12**, **PostgreSQL 14+** and Git. Commands are shown for Windows PowerShell; on Linux/macOS use `source .venv/bin/activate` and `python3`.
+
+**1. Clone and create the virtual environment**
+
+```powershell
+git clone https://github.com/Kozuki-4i-9/futbolInferencia.git
+cd futbolInferencia
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt        # or requirements-dev.txt for notebooks and scraping
+```
+
+**2. Create the database** (in `psql` as the `postgres` user)
+
+```sql
+CREATE USER mundial WITH PASSWORD 'choose-a-password';
+CREATE DATABASE bd_mundial OWNER mundial ENCODING 'UTF8' TEMPLATE template0;
+```
+
+**3. Configure the environment**
+
+```powershell
+copy web\.env.example web\.env
+python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"
+```
+
+Edit `web/.env`: paste the generated key in `SECRET_KEY` and the password from step 2 in `DB_PASSWORD`. The other values work as they are for a local install.
+
+**4. Create the tables and load the data**
+
+```powershell
+cd web
+python manage.py migrate
+python manage.py load_data          # loads the CSV files in data/ (use --reemplazar to reload)
+```
+
+**5. Run**
+
+```powershell
+python manage.py runserver
+```
+
+Open http://127.0.0.1:8000.
+
+**Tests**
+
+```powershell
+python manage.py test fases
+```
+
+**Optional commands**
+
+| Command | What it does |
+|---|---|
+| `python manage.py construir_dataset` | Builds `data/datasets/partidos_features.csv` (≈ 8,800 matches, takes a few minutes) for training |
+| `python etl/busca_grupos.py --anio 1986` | Downloads a World Cup's group tables from Wikipedia (`--todos` for all; needs Firefox and `requirements-dev.txt`) |
+
+---
+
+## Data collection: lessons from scraping Wikipedia
+
+**How it started.** Group tables were scraped from Spanish Wikipedia with Selenium, **one script per World Cup** (`busca_grupos_1930.py` … `busca_grupos_2022.py`, still in the git history). Each page had its own quirks, so each script hard-coded them: the table's inline `style`, whether the group title was an `h3` or an `h4`, which tables to skip (`[1:]`, `[4:]`, `[:-1]`), the position of the title in a list, and machine-specific paths to `geckodriver.exe`.
+
+**What broke.** Wikipedia later changed its HTML (titles moved from `<span id>` to `<h3 id>` inside `div.mw-heading`, modern tables changed style). Several scripts silently stopped finding anything — the 1986 one among them. Twenty copies of almost the same code also meant twenty places to fix.
+
+**How it works now.** `etl/busca_grupos.py` uses **one rule for every year, based on content instead of layout**: a group table is a table whose header has a `Pts` column and that links to national teams; its name is the closest previous heading whose id starts with `Grupo_` (anything else, such as *Statistics* or the 1950 final round, is skipped). Validated against the 20 existing CSV files: all 20 identical. A full re-download (`experimentos/redescarga/`) also found that the old match scraper stored **penalty shoot-out scores as match scores** (35 knockout matches, e.g. the 2022 final as 4:2 instead of 3:3) and a 1938 match that was never played; both are pending correction before retraining.
+
+**Advice for the future**
+- Select by **meaning** (column names, heading ids, link titles), never by inline styles or positions.
+- **Validate every scraper against known data** (a previous download or a second source) before trusting it; scrapers fail silently.
+- **Keep raw values apart from derived ones**: score, extra time and penalties in separate columns.
+- **One parametrised script plus a small exceptions table** beats one script per case; let Selenium Manager find the browser driver instead of hard-coding paths.
+- Keep the raw downloads (`data/redescarga/`) so a study can be repeated without hitting the site again, and respect the site: one request per page, no parallel crawling.
+
+---
+
+## Model results
+
+<!-- Filled in by the evaluation (Phase 2): train ≤ 2010, validate 2014, test 2018 + 2022 -->
+
+| Model | Goals MAE | Correct outcome (W/D/L) | Exact score |
+|---|---|---|---|
+| Always the team with more historical points | – | – | – |
+| Poisson with average goals | – | – | – |
+| Always 1-1 | – | – | – |
+| **LSTM (14 metrics, sequences of 5 matches)** | – | – | – |
+
+---
+
+## Roadmap
+
+- [x] Secrets out of the code, reproducible database (`load_data`), all 21 World Cups simulated end to end
+- [x] Training dataset without leakage and per-team sequences
+- [ ] Evaluation notebook against baselines (fills the table above)
+- [ ] Retrain the LSTM with the 14-metric schema and connect the app to `cargar_predictor`
+- [ ] Simulate from any stage, not only from the first one
+- [ ] 2026 format (48 teams, 12 groups, 8 best third-placed teams)
+- [ ] Shots and penalties data per World Cup (`proxy_desempegno`)
+- [ ] Split `modulo.py` into smaller modules with tests
+- [ ] Docker, public demo and CI
+- [ ] Natural-language explanations of each prediction (LLM)
+
+<details>
+<summary>Project history</summary>
 
 ```mermaid
 timeline
     title futbolInferencia 2026
-    Abril : Commit inicial y app web : Módulo de inferencia (modulo_8) : Primera corrección de docstrings
-    Agosto : Reorganización y planes de optimización : calculo_metricas_0 optimizado (modulo_10 / modulo_11) : calc_gkps, calc_mds, calc_mos, calc_mms : Tabla proxy_desempegno : Partidos default antes de la fase a predecir
-    Septiembre : Ajuste de calculo_metricas_0 en notebooks : Insumos para métricas opcionales : Nueva fase_de_grupos (base para Champions League)
-    Octubre : Seguridad de arranque (.env) : Progreso partido a partido de métricas abstractas : Reglamento de mejores terceros 1986–1994 : Esquema fijo y neutralización de métricas
+    April : First commit and web app : Inference module : First docstring review
+    August : Restructuring : Optimized metrics : calc_gkps, calc_mds, calc_mos, calc_mms : proxy_desempegno table
+    September : Inputs for optional metrics : New group-stage logic (base for Champions League)
+    October : Secrets in .env and load_data : Best third-placed rules 1986 – 1994 : Fixed 14-metric schema : pandas 3 and all 21 World Cups : Training dataset and Predictor interface
 ```
 
-| Fecha | Cambio |
-|---|---|
-| 2026-04-12 | Commit inicial, primera versión y app web. |
-| 2026-04-13 / 19 | Ajustes a `modulo_8.py` y primera ronda de docstrings. |
-| 2026-08-10 / 11 | Estructura y planes de optimización; se retira data innecesaria. |
-| 2026-08-15 | `modulo_10.py`: `calculo_metricas_0` pensado para el máximo de métricas de rendimiento. |
-| 2026-08-29 | Funciones `calc_gkps`, `calc_mds`, `calc_mos` y `calc_mms`; modelo `proxy_desempegno`. |
-| 2026-08-30 | `fase_de_grupos` y `jugar` aceptan resultados default antes de la fase a predecir; `modulo_11.py`. |
-| 2026-09-02 / 05 | Notebooks para ajustar `calculo_metricas_0`; propuestas para `funcion_tabla_desempegno`. |
-| 2026-09-27 / 10-01 | Insumos para métricas opcionales; refactor para escalabilidad; nueva `fase_de_grupos`. |
-| 2026-10-07 | Rama `fix/seguridad-arranque`: settings con `.env`; se dejan de versionar datos y notebooks. |
-| 2026-10-11 | `funcion_tabla_desempegno` y `calculo_metricas_1` avanzan el progreso de las abstractas partido a partido. |
-| 2026-10-12 | Reglamento de mejores terceros 1986 – 1994 (oficial o personalizado desde el frontend). |
-| 2026-10-12 | **Esquema fijo de entrada y neutralización de métricas**: `BASE_METRICS` + `OPTIONAL_METRICS` = 14 por equipo; descarte y elección de métricas desde el frontend; histórico abstracto por id de país; métricas derivadas calculadas por partido; migración de `proxy_desempegno`. |
+</details>
 
 ---
 
-## Pendientes conocidos
+## Resumen en español
 
-- **Reentrenar el modelo** con el esquema de `ALL_METRICS` (14 métricas por equipo, mismo orden y misma `calculo_metricas_0`). El `.h5` actual (diciembre de 2024) se entrenó con 10 features por paso.
-- **`VALOR_NEUTRO`:** rellenarlo con la media de cada columna de `X_tr`. Hasta entonces el servidor rechaza (400) cualquier intento de descartar métricas o de no usar alguna opcional.
-- **PJ histórico en `proxy_desempegno`:** VI, SOT y PKATT son totales históricos, y sin su PJ los promedios se calculan como si fueran un solo partido.
-- **`N_STEPS`:** vale 0 en `modulo.py`, pero el entrenamiento usó ventanas de 5 partidos.
-- **Estado global:** `opcionales` se reinicia en cada consulta, pero dos consultas simultáneas en un servidor con varios hilos lo compartirían. Habría que moverlo dentro del objeto de predicción.
-- **Ruta del modelo** fija en `consulta_general`: llevarla a `.env`.
-- Adaptación a Champions League y Copa Libertadores.
+**futbolInferencia** simula cualquier Mundial (1930 – 2022) desde la fase que elijas: cambias los resultados que quieras y un modelo de series temporales (LSTM) predice el resto del torneo partido a partido. Cada selección arrastra su rendimiento desde las eliminatorias y lo actualiza tras cada partido; los goles predichos se convierten en resultados con un modelo de Poisson.
+
+**Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El modelo se está reentrenando con las 14 métricas nuevas; hasta entonces la web abre pero no devuelve predicciones.
+
+**Scraping:** empezó con un script de Selenium por Mundial, adaptado a cada página; cuando Wikipedia cambió su HTML varios dejaron de funcionar. Hoy un solo script (`etl/busca_grupos.py`) usa una regla basada en el contenido (columna «Pts» y título «Grupo…») y reproduce los 20 Mundiales. Detalles y lecciones en *Data collection* (arriba).
+
+**Instalación rápida:** Python 3.12 y PostgreSQL → `pip install -r requirements.txt` → crear la base y el usuario (paso 2) → copiar `web/.env.example` a `web/.env` y completarlo → `python manage.py migrate` → `python manage.py load_data` → `python manage.py runserver`.

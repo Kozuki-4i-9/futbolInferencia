@@ -9,8 +9,11 @@
 import numpy as np
 import pandas as pd
 
+from rutas import GRUPOS, PARTIDOS
+
 years = [1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022]
-dir_base = "C:\\Users\\Usuario\\Trabajo\\python\\data\\p_mundiales\\grupos\\"
+dir_base = str(GRUPOS) + "/"
+dir_partidos = str(PARTIDOS) + "/"
 dir_pg = ""
 dfcol = None
 
@@ -41,9 +44,9 @@ for des00, des01 in enumerate(["grupos_mundiales_","partidos_"]):
                 df_base = pd.concat([df_base, df1], axis=0)
 
             if des00==1 and des1==0: # obtenemos el total ordenado y desordenado de los partidos
-                dir_pg = dir_base.replace("grupos\\",f"partidos\\") + f"{des01}"+f"{year}.csv"
+                dir_pg = dir_partidos + f"{des01}"+f"{year}.csv"
                 mis_equipos_partidos = pd.read_csv(dir_pg)
-                dfcol = pd.read_csv(dir_base.replace("grupos\\",f"partidos\\") + des01 + "2014.csv")
+                dfcol = pd.read_csv(dir_partidos + des01 + "2014.csv")
                 col0 = list(dfcol.columns[1:])
                 final_1 = ".csv"
 
@@ -52,9 +55,9 @@ for des00, des01 in enumerate(["grupos_mundiales_","partidos_"]):
                 df_base = pd.concat([df_base, df1], axis=0)
 
             elif des00==1 and des1==1:
-                dir_pg = dir_base.replace("grupos\\",f"partidos\\") + f"{des01}{year}_mo.csv"
+                dir_pg = dir_partidos + f"{des01}{year}_mo.csv"
                 mis_equipos_partidos = pd.read_csv(dir_pg)
-                dfcol = pd.read_csv(dir_base.replace("grupos\\",f"partidos\\") + des01 + "2014.csv")
+                dfcol = pd.read_csv(dir_partidos + des01 + "2014.csv")
                 col0 = list(dfcol.columns[1:])
                 final_1 = "_mo.csv"
 
@@ -62,8 +65,6 @@ for des00, des01 in enumerate(["grupos_mundiales_","partidos_"]):
                                 index=mis_equipos_partidos.iloc[:,0])
                 df_base = pd.concat([df_base, df1], axis=0)
 
-        n0 = dir_pg[::-1].find("\\")
-        
-        a = dir_pg[:len(dir_pg)-(n0 + 1)] + "\\" + des01[:len(des01)-1] + final_1
+        a = (GRUPOS if des00 == 0 else PARTIDOS) / (des01[:len(des01)-1] + final_1)
         df_base.to_csv(a)
         

@@ -3,10 +3,13 @@ import pandas as pd
 import numpy as np
 
 # Rutas de archivos
-csv_path = r"c:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\international_matches.csv"
-partidos_csv = r"c:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\partidos\partidos.csv"
-partidos_1930_csv = r"c:\Users\USUARIO\Trabajo\proyectos\mundiales\futbolInferencia\data\partidos\partidos_1930.csv"
-desktop_dir = r"C:\Users\USUARIO\Desktop\metricas_rendimiento_01072026700"
+from rutas import DATA, PARTIDOS
+
+csv_path = DATA / "international_matches.csv"
+partidos_csv = PARTIDOS / "partidos.csv"
+partidos_1930_csv = PARTIDOS / "partidos_1930.csv"
+# salida (no versionada: data/ solo versiona las carpetas que usa load_data)
+desktop_dir = DATA / "metricas_rendimiento"
 
 print("Cargando el archivo de partidos internacionales...")
 df_im = pd.read_csv(csv_path)
