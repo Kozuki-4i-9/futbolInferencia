@@ -24,7 +24,7 @@
 
 ```mermaid
 flowchart LR
-    subgraph ETL["🕸️ Scraping (scripts/activos/)"]
+    subgraph ETL["🕸️ Scraping (etl/)"]
         W["Wikipedia / FBref<br/>groups · matches · qualifiers"]
     end
     subgraph DB["🗄️ PostgreSQL"]
@@ -124,9 +124,9 @@ futbolInferencia/
 │   ├── partidos/  grupos/      # matches, fixtures, qualifiers and group tables
 │   ├── proxy_desempegno/       # shots / clean sheets / penalties per World Cup (scraped)
 │   └── modelos/                # trained models
-├── scripts/
-│   ├── activos/                # scraping (Wikipedia, one script per World Cup) and training notebook
-│   └── pruebas/                # prototypes
+├── etl/                        # scraping and data cleaning (busca_grupos.py --anio 1986, busca_metricas.py…)
+├── notebooks/                  # training notebook (2024) and metric tuning
+├── experimentos/               # prototypes and the 2026 re-download study (redescarga/)
 ├── web/                        # Django project
 │   ├── mundial/                # settings (reads .env with python-decouple)
 │   └── fases/
@@ -201,6 +201,24 @@ python manage.py test fases
 | Command | What it does |
 |---|---|
 | `python manage.py construir_dataset` | Builds `data/datasets/partidos_features.csv` (≈ 8,800 matches, takes a few minutes) for training |
+| `python etl/busca_grupos.py --anio 1986` | Downloads a World Cup's group tables from Wikipedia (`--todos` for all; needs Firefox and `requirements-dev.txt`) |
+
+---
+
+## Data collection: lessons from scraping Wikipedia
+
+**How it started.** Group tables were scraped from Spanish Wikipedia with Selenium, **one script per World Cup** (`busca_grupos_1930.py` … `busca_grupos_2022.py`, still in the git history). Each page had its own quirks, so each script hard-coded them: the table's inline `style`, whether the group title was an `h3` or an `h4`, which tables to skip (`[1:]`, `[4:]`, `[:-1]`), the position of the title in a list, and machine-specific paths to `geckodriver.exe`.
+
+**What broke.** Wikipedia later changed its HTML (titles moved from `<span id>` to `<h3 id>` inside `div.mw-heading`, modern tables changed style). Several scripts silently stopped finding anything — the 1986 one among them. Twenty copies of almost the same code also meant twenty places to fix.
+
+**How it works now.** `etl/busca_grupos.py` uses **one rule for every year, based on content instead of layout**: a group table is a table whose header has a `Pts` column and that links to national teams; its name is the closest previous heading whose id starts with `Grupo_` (anything else, such as *Statistics* or the 1950 final round, is skipped). Validated against the 20 existing CSV files: all 20 identical. A full re-download (`experimentos/redescarga/`) also found that the old match scraper stored **penalty shoot-out scores as match scores** (35 knockout matches, e.g. the 2022 final as 4:2 instead of 3:3) and a 1938 match that was never played; both are pending correction before retraining.
+
+**Advice for the future**
+- Select by **meaning** (column names, heading ids, link titles), never by inline styles or positions.
+- **Validate every scraper against known data** (a previous download or a second source) before trusting it; scrapers fail silently.
+- **Keep raw values apart from derived ones**: score, extra time and penalties in separate columns.
+- **One parametrised script plus a small exceptions table** beats one script per case; let Selenium Manager find the browser driver instead of hard-coding paths.
+- Keep the raw downloads (`data/redescarga/`) so a study can be repeated without hitting the site again, and respect the site: one request per page, no parallel crawling.
 
 ---
 
@@ -251,5 +269,7 @@ timeline
 **futbolInferencia** simula cualquier Mundial (1930 – 2022) desde la fase que elijas: cambias los resultados que quieras y un modelo de series temporales (LSTM) predice el resto del torneo partido a partido. Cada selección arrastra su rendimiento desde las eliminatorias y lo actualiza tras cada partido; los goles predichos se convierten en resultados con un modelo de Poisson.
 
 **Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El modelo se está reentrenando con las 14 métricas nuevas; hasta entonces la web abre pero no devuelve predicciones.
+
+**Scraping:** empezó con un script de Selenium por Mundial, adaptado a cada página; cuando Wikipedia cambió su HTML varios dejaron de funcionar. Hoy un solo script (`etl/busca_grupos.py`) usa una regla basada en el contenido (columna «Pts» y título «Grupo…») y reproduce los 20 Mundiales. Detalles y lecciones en *Data collection* (arriba).
 
 **Instalación rápida:** Python 3.12 y PostgreSQL → `pip install -r requirements.txt` → crear la base y el usuario (paso 2) → copiar `web/.env.example` a `web/.env` y completarlo → `python manage.py migrate` → `python manage.py load_data` → `python manage.py runserver`.
