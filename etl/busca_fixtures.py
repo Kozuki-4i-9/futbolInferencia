@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 
-dir_base = "C:\\Users\\Usuario\\Trabajo\\python\\data\\p_mundiales\\grupos\\grupos_mundiales.csv"
+from rutas import GRUPOS, PARTIDOS
+
+dir_base = GRUPOS / "grupos_mundiales.csv"
 
 class busca_fixture():
     def __init__(self, desafios, df_gen, primer_desafio, anio, mod=0):
@@ -176,9 +178,9 @@ class busca_fixture():
         print("")
         print("")
 
-        self.df_count_nueva_fase.to_csv("C:\\Users\\Usuario\\Trabajo\\python\\data\\p_mundiales\\partidos\\fixture_1982.csv")
+        self.df_count_nueva_fase.to_csv(PARTIDOS / "fixture_1982.csv")
 
-dir_gen = "C:\\Users\\Usuario\\Trabajo\\python\\data\\p_mundiales\\partidos\\partidos.csv"
+dir_gen = PARTIDOS / "partidos.csv"
 dir_gen = pd.read_csv(dir_gen)
 print(dir_gen)
 dir_gen = dir_gen[dir_gen.year==str(1982)]

@@ -1,7 +1,6 @@
 from fake_useragent import UserAgent
 
 from selenium.webdriver import Firefox
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,9 +12,11 @@ import time
 import numpy as np
 import pandas as pd
 
+from rutas import PROXY_DESEMPEGNO
+
 # comp 1 = FIFA World Cup en fbref; la url sigue el patron /en/comps/1/{agno}/{seccion}/{agno}-World-Cup-Stats
 years = [1982]
-dir_gdr = "C:\\Users\\USUARIO\\Trabajo\\proyectos\\mundiales\\futbolInferencia\\data\\proxy_desempegno"
+dir_gdr = PROXY_DESEMPEGNO
 
 # fbref bloquea por encima de ~10 peticiones/minuto; se espera entre paginas
 ESPERA_ENTRE_PAGINAS = 7
@@ -46,9 +47,7 @@ def crear_driver():
     options = Options()
     # 'general.useragent.override' es la preferencia que realmente cambia el user agent en Firefox
     options.set_preference("general.useragent.override", useragent.random)
-    options.binary_location = r"C:\\Program Files\\Mozilla Firefox\\firefox.exe"
-    service = Service(r"C:\\Users\\USUARIO\\Trabajo\\python\\data\\controladores\\geckodriver.exe")
-    driver = Firefox(service=service, options=options)
+    driver = Firefox(options=options)
     driver.implicitly_wait(7)
     driver.maximize_window()
     return driver
@@ -146,7 +145,8 @@ def get_metricas_abstractas(year):
 
     df_metricas = df_metricas.reindex(columns=["pais", "VI", "SOT", "PKATT", "PKATTALLOW"])
     df_metricas["year"] = year
-    df_metricas.to_csv(dir_gdr + f"\\metricas_abstractas_{year}.csv", index=False, encoding="utf-8")
+    dir_gdr.mkdir(parents=True, exist_ok=True)
+    df_metricas.to_csv(dir_gdr / f"metricas_abstractas_{year}.csv", index=False, encoding="utf-8")
 
     return df_metricas
 

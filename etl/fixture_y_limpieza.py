@@ -1,7 +1,9 @@
 import pandas as pd
 import os
 
-os.chdir("C:\\Users\\Usuario\\Trabajo\\python\\data\\p_mundiales\\partidos\\")
+from rutas import PARTIDOS
+
+os.chdir(PARTIDOS)
 
 # es cuestionable la edicion sobre las columnas "Unnamed: 0" pero debemos crear en este archivo la logica
 # del fixture.
