@@ -17,7 +17,7 @@ TABLAS = {
   clasificaciones: ("partidos/clasificaciones.csv", {}),
 }
 
-# salida de obtener_opcionales_insumos.py: un csv por mundial con pais, VI, SOT, PKATT, PKATTALLOW
+# salida de etl/busca_metricas.py (fbref): un csv por mundial con pais, VI, SOT, PKATT, PKATTALLOW
 PROXY_DIR = DATA_DIR / "proxy_desempegno"
 # copia de METRICAS_ABSTRACTAS: importar modulo.py arrastra tensorflow y aqui no hace falta
 PROXY_ABSTRACTAS = ["VI", "SOT", "PKATT", "PKATTALLOW"]
