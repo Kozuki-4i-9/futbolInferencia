@@ -173,15 +173,15 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
   return pd.DataFrame(filas)
 
 
-def construir_secuencias(dataset, k=5):
+def construir_secuencias(dataset, k=5, con_rival=True):
   """
   ¿QUE HACE?
-  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos (sus ALL_METRICS previas a cada uno), terminando en el partido a predecir
+  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta
 
   ¿COMO LO HACE?
-  0-) Recorre la tabla en orden y guarda, por equipo, la lista de sus vectores de metricas (los de su lado: _0 si jugo de local, _1 si de visitante)
+  0-) Recorre la tabla en orden y guarda, por equipo, la lista de sus pasos: sus metricas (las de su lado: _0 si jugo de local, _1 si de visitante) seguidas de las del otro lado
 
-  1-) Para cada partido, toma de cada equipo sus ultimos (k) vectores incluido el actual (que solo contiene informacion previa al partido); si tiene menos de (k) rellena al principio con ceros y lo marca en la mascara
+  1-) Para cada partido, toma de cada equipo sus ultimos (k) pasos incluido el actual (que solo contiene informacion previa al partido); si tiene menos de (k) rellena al principio con ceros y lo marca en la mascara
 
   Args:
 
@@ -189,11 +189,13 @@ def construir_secuencias(dataset, k=5):
 
     - k: largo de la secuencia (N_STEPS del modelo)
 
+    - con_rival: True agrega a cada paso las ALL_METRICS del rival (2 * len(ALL_METRICS) por paso)
+
   Returns:
 
-    - diccionario con arrays: "id_0", "id_1" (n,), "seq_0", "seq_1" (n, k, len(ALL_METRICS)), "mascara_0", "mascara_1" (n, k) con 1 en pasos reales, "y" (n, 2) goles de home y away
+    - diccionario con arrays: "id_0", "id_1" (n,), "seq_0", "seq_1" (n, k, len(ALL_METRICS) o el doble con rival), "mascara_0", "mascara_1" (n, k) con 1 en pasos reales, "y" (n, 2) goles de home y away
   """
-  n, f = len(dataset), len(ALL_METRICS)
+  n, f = len(dataset), len(ALL_METRICS) * (2 if con_rival else 1)
   salida = {
     "id_0": dataset["home_id"].to_numpy(), "id_1": dataset["away_id"].to_numpy(),
     "seq_0": np.zeros((n, k, f)), "seq_1": np.zeros((n, k, f)),
@@ -207,7 +209,10 @@ def construir_secuencias(dataset, k=5):
   for fila, (id_0, id_1) in enumerate(zip(salida["id_0"], salida["id_1"])):
     for lado, equipo in ((0, id_0), (1, id_1)):
       pasos = historia.setdefault(equipo, [])
-      pasos.append(matriz[lado][fila])
+      paso = matriz[lado][fila]
+      if con_rival:
+        paso = np.concatenate([paso, matriz[1 - lado][fila]])
+      pasos.append(paso)
       ultimos = pasos[-k:]
       salida[f"seq_{lado}"][fila, k - len(ultimos):] = ultimos
       salida[f"mascara_{lado}"][fila, k - len(ultimos):] = 1
