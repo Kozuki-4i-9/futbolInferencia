@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from fases.models import partidos, fixtures, grupos, clasificaciones, proxy_desempegno
+from fases.models import partidos, fixtures, grupos, clasificaciones, internacionales, proxy_desempegno
 
 DATA_DIR = Path(settings.BASE_DIR).parent / "data"
 
@@ -15,6 +15,7 @@ TABLAS = {
   fixtures: ("partidos/fixtures.csv", {}),
   grupos: ("grupos/grupos_mundiales.csv", {}),
   clasificaciones: ("partidos/clasificaciones.csv", {}),
+  internacionales: ("partidos/internacionales.csv", {}),
 }
 
 # salida de etl/busca_metricas.py (fbref): un csv por mundial con pais, VI, SOT, PKATT, PKATTALLOW

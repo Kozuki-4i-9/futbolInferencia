@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from django.test import SimpleTestCase
 
-from .dataset import construir_dataset, construir_secuencias, mapa_paises
+from .dataset import CATEGORIAS, CICLO_INTERNACIONALES, construir_dataset, construir_secuencias, mapa_paises
 from .modulo import ALL_METRICS, COLS_MODELO_POR_EQUIPO, METRICAS_ABSTRACTAS, historico_abstractas
 from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
 
@@ -87,14 +87,30 @@ class ConstruirSecuenciasTests(SimpleTestCase):
     partidos = partidos_df([["A", "C", 1, 0, 1934]])
     ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934])
     f = len(ALL_METRICS)
-    sec = construir_secuencias(ds, k=2)
+    sec = construir_secuencias(ds, k=2, con_contexto=False)
     self.assertEqual(sec["seq_0"].shape, (3, 2, 2 * f))
     # en el partido del mundial, el ultimo paso de A trae sus metricas y despues las de C (su rival ese dia)
     self.assertEqual(sec["seq_0"][2, -1, :f].tolist(), ds.loc[2, [f"{m}_0" for m in ALL_METRICS]].tolist())
     self.assertEqual(sec["seq_0"][2, -1, f:].tolist(), ds.loc[2, [f"{m}_1" for m in ALL_METRICS]].tolist())
     # y el de C, al reves
     self.assertEqual(sec["seq_1"][2, -1, f:].tolist(), ds.loc[2, [f"{m}_0" for m in ALL_METRICS]].tolist())
-    self.assertEqual(construir_secuencias(ds, k=2, con_rival=False)["seq_0"].shape, (3, 2, f))
+    self.assertEqual(construir_secuencias(ds, k=2, con_rival=False, con_contexto=False)["seq_0"].shape, (3, 2, f))
+
+  def test_contexto(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934]])
+    partidos = partidos_df([["A", "B", 1, 0, 1934]])
+    ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934])
+    sec = construir_secuencias(ds, k=1)
+    contexto = sec["seq_0"][:, -1, 2 * len(ALL_METRICS):]
+    mundial = [0.0] * len(CATEGORIAS)
+    mundial[CATEGORIAS.index("mundial")] = 1.0
+    eliminatoria = [0.0] * len(CATEGORIAS)
+    eliminatoria[CATEGORIAS.index("eliminatoria_mundial")] = 1.0
+    # eliminatoria en casa: es_local 1, neutral 0; mundial sin dato de sede: neutral 1, nadie es local
+    self.assertEqual(contexto[0].tolist(), [1.0, 0.0, *eliminatoria])
+    self.assertEqual(contexto[1].tolist(), [0.0, 1.0, *mundial])
+    # el visitante nunca es local
+    self.assertEqual(sec["seq_1"][0, -1, 2 * len(ALL_METRICS)], 0.0)
 
 
 class PredictoresTests(SimpleTestCase):
@@ -141,3 +157,24 @@ class PredictoresTests(SimpleTestCase):
     self.assertNotIn("score_0", tabla.columns)
     # la app la puede pasar tal cual a un predictor
     self.assertEqual(PredictorMedias(1.5, 1.0).predecir(lote_desde_entrada(X)).shape, (2, 2))
+
+
+class CicloInternacionalesTests(SimpleTestCase):
+
+  def test_ciclo_por_fechas(self):
+    internacionales = pd.DataFrame([
+      ["1930-07-13", 1930, "A", "B", 1, 0, "mundial", 1],    # mundial 1930: marca el inicio del ciclo de 1934
+      ["1931-05-01", 1931, "A", "C", 3, 0, "amistoso", 0],
+      ["1933-06-01", 1933, "B", "C", 2, 2, "eliminatoria_mundial", 0],
+      ["1934-05-27", 1934, "A", "B", 2, 1, "mundial", 0],    # anfitrion: no neutral
+      ["1934-08-01", 1934, "A", "C", 9, 0, "amistoso", 0],   # despues del mundial: no entra en su ciclo
+    ], columns=["fecha", "agno", "home", "away", "score_0", "score_1", "categoria", "neutral"])
+    partidos = partidos_df([["A", "B", 2, 1, 1934]])
+    ds = construir_dataset(partidos, partidos_df([]), PROXY_VACIO, agnos=[1930, 1934],
+                           internacionales=internacionales, ciclo=CICLO_INTERNACIONALES)
+    ciclo_1934 = ds[(ds["agno"] == 1934) & (ds["fase"] == "eliminatoria")]
+    self.assertEqual(ciclo_1934["categoria"].tolist(), ["amistoso", "eliminatoria_mundial"])
+    mundial_1934 = ds[(ds["agno"] == 1934) & (ds["fase"] == "mundial")].iloc[0]
+    self.assertEqual(mundial_1934["neutral"], 0)
+    # A llega al mundial con su amistoso ganado 3-0
+    self.assertEqual(mundial_1934["GF_0"], 3)

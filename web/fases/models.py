@@ -49,3 +49,15 @@ class proxy_desempegno(models.Model):
     SOT = models.CharField(max_length=50)
     PKATT = models.CharField(max_length=50)
     PKATTALLOW = models.CharField(max_length=50)
+
+# fecha, agno, home, away, score_0, score_1, tournament, categoria, neutral (etl/busca_internacionales.py)
+class internacionales(models.Model):
+    fecha = models.CharField(max_length=10)
+    agno = models.CharField(max_length=4)
+    home = models.CharField(max_length=50)
+    away = models.CharField(max_length=50)
+    score_0 = models.CharField(max_length=3)
+    score_1 = models.CharField(max_length=3)
+    tournament = models.CharField(max_length=80)
+    categoria = models.CharField(max_length=30)
+    neutral = models.CharField(max_length=1)

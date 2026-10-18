@@ -10,7 +10,7 @@ from functools import wraps
 from itertools import combinations
 from types import MappingProxyType
 from django.conf import settings
-from .models import partidos, fixtures, grupos, clasificaciones, proxy_desempegno
+from .models import partidos, fixtures, grupos, clasificaciones, internacionales, proxy_desempegno
 
 from numpy.random import seed
 seed(1)
@@ -183,6 +183,13 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     df.home, df.score_0, df.score_1, df.away, df.tournament, df.agno = df.home.astype('O'), df.score_0.astype('int64'), df.score_1.astype('int64'), df.away.astype('O'), df.tournament.astype('O'), df.agno.astype('int64')
     return df
   
+  elif ind0 == "internacionales":
+    # todos los partidos de selecciones en orden de fecha (etl/busca_internacionales.py)
+    columnas = ["fecha", "agno", "home", "away", "score_0", "score_1", "tournament", "categoria", "neutral"]
+    df = pd.DataFrame(list(internacionales.objects.order_by("fecha", "id").values(*columnas)), columns=columnas)
+    df[["agno", "score_0", "score_1", "neutral"]] = df[["agno", "score_0", "score_1", "neutral"]].astype("int64")
+    return df
+
   elif ind0 == "proxy_desempegno":
     df = pd.DataFrame(
       list(proxy_desempegno.objects.values("pais", "agno", *METRICAS_ABSTRACTAS)),
