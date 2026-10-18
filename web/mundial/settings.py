@@ -15,7 +15,8 @@ from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR.parent / 'data' / 'modelos'
-MODEL_FILE = config('MODEL_FILE', default='modelo-LSTM-(series_temporales)-16-12-2024-0.h5')
+# carpeta del predictor en uso dentro de MODEL_PATH (con su esquema.json, ver fases/predictores.py)
+MODEL_DIR = config('MODEL_DIR', default='medias')
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
