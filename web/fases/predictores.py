@@ -35,6 +35,26 @@ class Lote:
   secuencias: Optional[dict] = None
 
 
+# orden de columnas de la salida de "calculo_metricas_0" (COLS_MODELO_POR_EQUIPO por lado)
+COLUMNAS_ENTRADA = [
+  "home_id", *[f"{m}_0" for m in ALL_METRICS], "score_0",
+  "away_id", *[f"{m}_1" for m in ALL_METRICS], "score_1",
+]
+
+
+def lote_desde_entrada(X):
+  """
+  ¿QUE HACE?
+  Convierte el array (X) que arma la simulacion con "calculo_metricas_0" (una fila por partido) en el (Lote) que recibe cualquier predictor: los ids de los equipos y sus ALL_METRICS por nombre, sin los scores
+
+  Returns:
+
+    - Lote sin secuencias
+  """
+  tabla = pd.DataFrame(np.atleast_2d(X), columns=COLUMNAS_ENTRADA).drop(columns=["score_0", "score_1"])
+  return Lote(tabla.astype(float).astype({"home_id": "int64", "away_id": "int64"}))
+
+
 class Predictor(Protocol):
   nombre: str
 

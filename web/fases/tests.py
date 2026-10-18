@@ -6,8 +6,8 @@ import pandas as pd
 from django.test import SimpleTestCase
 
 from .dataset import construir_dataset, construir_secuencias, mapa_paises
-from .modulo import METRICAS_ABSTRACTAS, historico_abstractas
-from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor
+from .modulo import ALL_METRICS, COLS_MODELO_POR_EQUIPO, METRICAS_ABSTRACTAS, historico_abstractas
+from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
 
 
 def partidos_df(filas):
@@ -114,3 +114,16 @@ class PredictoresTests(SimpleTestCase):
       ruta.write_text(json.dumps(esquema), encoding="utf-8")
       with self.assertRaisesRegex(ValueError, "reentrenarlo"):
         cargar_predictor(carpeta)
+
+  def test_lote_desde_entrada(self):
+    # dos partidos con la forma de "calculo_metricas_0": [home, ALL_METRICS_0, score_0, away, ALL_METRICS_1, score_1]
+    lado = lambda equipo, base: [equipo, *[base + j for j in range(len(ALL_METRICS))], 9]
+    X = [lado(3, 0) + lado(7, 100), lado(4, 0) + lado(8, 100)]
+    self.assertEqual(len(X[0]), 2 * COLS_MODELO_POR_EQUIPO)
+    tabla = lote_desde_entrada(X).tabla
+    self.assertEqual(tabla["home_id"].tolist(), [3, 4])
+    self.assertEqual(tabla["away_id"].tolist(), [7, 8])
+    self.assertEqual(tabla[f"{ALL_METRICS[1]}_1"].tolist(), [101, 101])
+    self.assertNotIn("score_0", tabla.columns)
+    # la app la puede pasar tal cual a un predictor
+    self.assertEqual(PredictorMedias(1.5, 1.0).predecir(lote_desde_entrada(X)).shape, (2, 2))

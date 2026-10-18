@@ -1,0 +1,27 @@
+{
+  "backend": "medias",
+  "media_0": 1.8019028202514442,
+  "media_1": 1.1022765885151207,
+  "metricas": [
+    "PTS",
+    "PJ",
+    "PG",
+    "PP",
+    "PE",
+    "GF",
+    "GC",
+    "D",
+    "gkps",
+    "mds",
+    "mos",
+    "mms",
+    "rate_GC",
+    "rate_GF"
+  ],
+  "fecha": "2026-10-17",
+  "agnos": [
+    1934,
+    2022
+  ],
+  "partidos": 8829
+}

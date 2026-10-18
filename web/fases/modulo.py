@@ -1442,11 +1442,11 @@ class func_prediccion_orden(normali):
     Realiza la inferencia hacia la entrada array (X) con el modelo (model). Obtiene la probabilidad de que un resultado del modelo sea factible mediante el "metodo de interseccion de Poisson". Usa las probabilidades  de Poisson arrojadas para sacar el puntaje por el metodo convencional dado para la fase de grupos (3 puntos partido ganado, 0 puntos partido perdido, 1 punto partido empatado para cada equipo). Tambien puede entregar los resultados default de (X) segun si (alterno) es 0 o 1 respectivamente
 
     ¿COMO LO HACE?
-    0-) Se definen unas variables (X0, X1) contenedoras de la traduccion y formateo de la entrada array (X), a una entrada compatible con el modelo, donde la columna de id de cada pais es traducida mediante un metodo embedding "hacer_embedding_a_equipos" y toda la entrada cambia su forma para ser de 3 dimensiones con el metodo "c_s" segun el ----tamaño de paso---- que se quiera para una inferencia
+    0-) Si (alterno) es 0, la entrada array (X) se convierte con "lote_desde_entrada" en el (Lote) que recibe cualquier predictor (ver predictores.py); el predictor decide como usarla (medias, secuencias para una LSTM, etc.)
 
     1-) hay 2 condicionales
 
-      1.0) si (alterno) es igual a 0. El modelo ejecuta la prediccion sobre los valores de rendimiento para cada equipo y las almacena en unas variables (Y_0, Y_1). Se concatena como columna la salida de esa inferencia por el modelo en una variable (Y0)
+      1.0) si (alterno) es igual a 0. El predictor (model) devuelve con "predecir" un array (n, 2) con los goles esperados de home y away, que se guarda en (Y0)
 
       1.1) si (alterno) es igual a 1. Se guarda en unas variables (Y_0, Y_1) los resultados default que carga la entrada array (X) en las columnas correspondientes. Se actualizan esas variables para hacerlahs un vector 2-dimensional de n filas, 1 columna. Se concatenan ambos resultados como columna a la variable (Y0)
 
@@ -1476,7 +1476,7 @@ class func_prediccion_orden(normali):
 
       - X: array con las entradas (home, away) referentes a cada partido de la fase del mundial estudiada
 
-      - model: modelo entrenado listo para hacer inferencia
+      - model: predictor (interfaz "Predictor" de predictores.py) listo para hacer inferencia
 
       - alterno: pametro predefinid a 0 para decidir si el metodo realiza inferencia con el modelo o arroja los valores default (esto se aplica cuando no se ha llegado a la fase objetivo marcada por el usuario para iniciar la inferencia)
 
@@ -1484,10 +1484,9 @@ class func_prediccion_orden(normali):
       - yield((y_home, points_home), (y_away, points_away)): un iterable con unas tuplas de 2 valores; el numero de goles default o predicho por el modelo para home y away respectivamente y la probabilidad de anotacion del home y away respectivamente
     """
     if alterno == 0:
-      # X viene de "calculo_metricas_0": se corta con el esquema fijo del modelo
-      X0, X1 = self.c_s(self.hacer_embedding_a_equipos(X[:, :COLS_MODELO_POR_EQUIPO])), self.c_s(self.hacer_embedding_a_equipos(X[:, COLS_MODELO_POR_EQUIPO:]))
-      Y_0, Y_1 = model.predict(X0[0]), model.predict(X1[0])
-      Y0 = np.concatenate((Y_0, Y_1), axis=1)
+      # X viene de "calculo_metricas_0" (esquema fijo); el predictor devuelve (n, 2) goles esperados de home y away
+      from .predictores import lote_desde_entrada
+      Y0 = model.predecir(lote_desde_entrada(X))
 
     elif alterno == 1:
       idx_y0 = 6
@@ -2183,9 +2182,9 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
   10-) Se actualiza el diccionario (dic_fuerza) del objeto (objs) con  llaves (home) y (away) respectivamente y como claves los df (agg0) y (agg1)
 
-  11-) Se define la variable (dir_modelo) con la ruta del modelo en uso: carpeta (settings.MODEL_PATH) y archivo (settings.MODEL_FILE), configurable desde .env
+  11-) Se define la variable (dir_modelo) con la carpeta del predictor en uso: (settings.MODEL_PATH) / (settings.MODEL_DIR), configurable desde .env
 
-  12-) Se carga el modelo entrenado mediante la función (tf.keras.models.load_model) y se almacena en la variable (modelo)
+  12-) Se carga el predictor con "cargar_predictor", que rechaza un modelo entrenado con otras metricas, y se almacena en la variable (modelo)
 
   13-) Se crea una variable (dict_g) llamando al medtodo (grupos_anio_interes) del objeto (objs) con parametro igual al año del mundial de interes y se obtiene un diccionario con claves de cada grupo que jugó ese mundial ("Grupo A", "Grupo B", pj) y valor un df contenedor de los equipos del grupo, parametros de rendimiento seteados a 0, el grupo mismo y el año de juego
 
@@ -2242,8 +2241,9 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
   objs.dic_fuerza["home"] = agg0
   objs.dic_fuerza["away"] = agg1
 
-  dir_modelo = settings.MODEL_PATH / settings.MODEL_FILE
-  modelo = tf.keras.models.load_model(dir_modelo)
+  from .predictores import cargar_predictor
+  dir_modelo = settings.MODEL_PATH / settings.MODEL_DIR
+  modelo, _ = cargar_predictor(dir_modelo)
   
   dict_g = objs.grupos_anio_interes(pregunta_0[-4:])
 

@@ -5,7 +5,7 @@
 <!-- TODO (Phase 5): 15-second GIF of the "what if…?" mode, e.g. ![demo](docs/demo.gif) -->
 
 
-> **Status (October 2026):** the data pipeline, the tournament simulation for all 21 World Cups and the training dataset are working. The prediction model is being retrained for the new 14-metric input; until then the web app opens but cannot return predictions. See [Roadmap](#roadmap).
+> **Status (October 2026):** the data pipeline, the tournament simulation for all 21 World Cups and the training dataset are working. The LSTM is being retrained for the new 14-metric input; until then the app predicts with a baseline (average goals of home and away teams, so every simulated match ends 1:1) and only from the group stage. See [Roadmap](#roadmap).
 
 ---
 
@@ -201,6 +201,7 @@ python manage.py test fases
 | Command | What it does |
 |---|---|
 | `python manage.py construir_dataset` | Builds `data/datasets/partidos_features.csv` (≈ 8,800 matches, takes a few minutes) for training |
+| `python manage.py entrenar_predictor` | Retrains the baseline predictor from that file into `data/modelos/medias/` (`--hasta 2010` to leave later World Cups out) |
 | `python etl/busca_grupos.py --anio 1986` | Downloads a World Cup's group tables from Wikipedia (`--todos` for all; needs Firefox and `requirements-dev.txt`) |
 
 ---
@@ -240,7 +241,8 @@ python manage.py test fases
 - [x] Secrets out of the code, reproducible database (`load_data`), all 21 World Cups simulated end to end
 - [x] Training dataset without leakage and per-team sequences
 - [ ] Evaluation notebook against baselines (fills the table above)
-- [ ] Retrain the LSTM with the 14-metric schema and connect the app to `cargar_predictor`
+- [x] Connect the app to `cargar_predictor` (baseline `PredictorMedias` in `data/modelos/medias/`)
+- [ ] Retrain the LSTM with the 14-metric schema
 - [ ] Simulate from any stage, not only from the first one
 - [ ] 2026 format (48 teams, 12 groups, 8 best third-placed teams)
 - [ ] Shots and penalties data per World Cup (`proxy_desempegno`)
