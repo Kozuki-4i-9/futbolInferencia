@@ -214,11 +214,12 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
 
   elif ind0 == "proxy_desempegno":
     df = pd.DataFrame(
-      list(proxy_desempegno.objects.values("pais", "agno", *METRICAS_ABSTRACTAS)),
-      columns=["pais", "agno", *METRICAS_ABSTRACTAS],
+      list(proxy_desempegno.objects.values("pais", "agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real")),
+      columns=["pais", "agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"],
     )
     # los campos son CharField: se pasan a número (float, porque SOT y PKATT pueden traer decimales); agno vacio -> NaN
-    df[["agno", *METRICAS_ABSTRACTAS]] = df[["agno", *METRICAS_ABSTRACTAS]].apply(pd.to_numeric, errors="coerce")
+    numericas = ["agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"]
+    df[numericas] = df[numericas].apply(pd.to_numeric, errors="coerce")
     return df
 
 def historico_abstractas(df_proxy, pais_id, agno=None):

@@ -18,7 +18,7 @@ TABLAS = {
   internacionales: ("partidos/internacionales.csv", {}),
 }
 
-# salida de etl/busca_metricas.py (fbref): un csv por mundial con pais, VI, SOT, PKATT, PKATTALLOW
+# salida de etl/construye_proxy.py: un csv por mundial con pais, VI, SOT, PKATT, PKATTALLOW, pk_real, sot_real
 PROXY_DIR = DATA_DIR / "proxy_desempegno"
 # copia de METRICAS_ABSTRACTAS: importar modulo.py arrastra tensorflow y aqui no hace falta
 PROXY_ABSTRACTAS = ["VI", "SOT", "PKATT", "PKATTALLOW"]

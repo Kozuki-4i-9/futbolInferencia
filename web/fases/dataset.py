@@ -24,6 +24,8 @@ CICLO_INTERNACIONALES = "internacionales"
 
 # tipo de partido; mismo orden que etl/busca_internacionales.py (el modelo la recibe como one-hot)
 CATEGORIAS = ["mundial", "eliminatoria_mundial", "continental", "eliminatoria_continental", "liga_naciones", "amistoso", "regional"]
+# contexto por paso en "construir_secuencias": es_local, neutral, one-hot de categoria, pk_real, sot_real
+N_CONTEXTO = 2 + len(CATEGORIAS) + 2
 
 
 def mapa_paises(*dfs):
@@ -144,7 +146,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 
   Returns:
 
-    - df con columnas agno, fase, orden, home, away, home_id, away_id, categoria, neutral, ALL_METRICS_0, ALL_METRICS_1, goles_0, goles_1
+    - df con columnas agno, fase, orden, home, away, home_id, away_id, categoria, neutral, pk_real_0/1 y sot_real_0/1 (1 si el historico de metricas abstractas del equipo incluye datos reales de fbref), ALL_METRICS_0, ALL_METRICS_1, goles_0, goles_1
   """
   hay_internacionales = internacionales is not None and len(internacionales) > 0
   if ciclo == CICLO_INTERNACIONALES and not hay_internacionales:
@@ -163,6 +165,14 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
   else:
     inicio_mundial, neutral_mundial = {}, {}
 
+  # mundiales anteriores con penales / tiros a puerta reales de cada pais (columnas pk_real y sot_real de proxy)
+  reales = {marca: proxy.loc[proxy[marca] == 1].groupby("pais")["agno"].apply(list).to_dict() if marca in proxy else {}
+            for marca in ("pk_real", "sot_real")}
+
+  def con_dato_real(marca, pais, agno):
+    """1 si el historico de (pais) que usa el mundial (agno) incluye algun mundial anterior con (marca) real"""
+    return int(any(a < agno for a in reales[marca].get(pais, [])))
+
   def neutral_de(agno, home, away):
     return neutral_mundial.get((agno, home, away), neutral_mundial.get((agno, away, home), 1))
 
@@ -173,6 +183,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
       filas.append({
         "agno": agno, "fase": fase, "orden": orden, "home": p.home, "away": p.away, "home_id": home, "away_id": away,
         "categoria": p.categoria, "neutral": int(p.neutral),
+        **{f"{marca}_{i}": con_dato_real(marca, nombre, agno) for marca in ("pk_real", "sot_real") for i, nombre in ((0, p.home), (1, p.away))},
         **entrada.to_dict(), "goles_0": int(p.score_0), "goles_1": int(p.score_1),
       })
 
@@ -216,7 +227,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
   """
   ¿QUE HACE?
-  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta. Si (con_contexto), cada paso suma el contexto del partido: si el equipo jugo de local en su cancha (local y no neutral), si fue en campo neutral y su categoria en one-hot (CATEGORIAS)
+  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta. Si (con_contexto), cada paso suma el contexto del partido: si el equipo jugo de local en su cancha (local y no neutral), si fue en campo neutral, su categoria en one-hot (CATEGORIAS) y si los penales y tiros a puerta de su historico son reales (pk_real, sot_real) o imputados
 
   ¿COMO LO HACE?
   0-) Recorre la tabla en orden y guarda, por equipo, la lista de sus pasos: sus metricas (las de su lado: _0 si jugo de local, _1 si de visitante) seguidas de las del otro lado
@@ -231,13 +242,13 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
 
     - con_rival: True agrega a cada paso las ALL_METRICS del rival (2 * len(ALL_METRICS) por paso)
 
-    - con_contexto: True agrega a cada paso 2 + len(CATEGORIAS) valores de contexto (es_local, neutral, one-hot de categoria)
+    - con_contexto: True agrega a cada paso N_CONTEXTO valores (es_local, neutral, one-hot de categoria, pk_real, sot_real)
 
   Returns:
 
-    - diccionario con arrays: "id_0", "id_1" (n,), "seq_0", "seq_1" (n, k, len(ALL_METRICS), el doble con rival, mas 2 + len(CATEGORIAS) con contexto), "mascara_0", "mascara_1" (n, k) con 1 en pasos reales, "y" (n, 2) goles de home y away
+    - diccionario con arrays: "id_0", "id_1" (n,), "seq_0", "seq_1" (n, k, len(ALL_METRICS), el doble con rival, mas N_CONTEXTO con contexto), "mascara_0", "mascara_1" (n, k) con 1 en pasos reales, "y" (n, 2) goles de home y away
   """
-  n, f = len(dataset), len(ALL_METRICS) * (2 if con_rival else 1) + (2 + len(CATEGORIAS) if con_contexto else 0)
+  n, f = len(dataset), len(ALL_METRICS) * (2 if con_rival else 1) + (N_CONTEXTO if con_contexto else 0)
   salida = {
     "id_0": dataset["home_id"].to_numpy(), "id_1": dataset["away_id"].to_numpy(),
     "seq_0": np.zeros((n, k, f)), "seq_1": np.zeros((n, k, f)),
@@ -250,6 +261,7 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
   if con_contexto:
     neutral = dataset["neutral"].to_numpy(dtype=float)
     categoria = np.array([[c == cat for cat in CATEGORIAS] for c in dataset["categoria"]], dtype=float)
+    marcas = {i: dataset[[f"pk_real_{i}", f"sot_real_{i}"]].to_numpy(dtype=float) for i in (0, 1)}
 
   for fila, (id_0, id_1) in enumerate(zip(salida["id_0"], salida["id_1"])):
     for lado, equipo in ((0, id_0), (1, id_1)):
@@ -259,7 +271,7 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
         paso = np.concatenate([paso, matriz[1 - lado][fila]])
       if con_contexto:
         es_local = float(lado == 0 and neutral[fila] == 0)
-        paso = np.concatenate([paso, [es_local, neutral[fila]], categoria[fila]])
+        paso = np.concatenate([paso, [es_local, neutral[fila]], categoria[fila], marcas[lado][fila]])
       pasos.append(paso)
       ultimos = pasos[-k:]
       salida[f"seq_{lado}"][fila, k - len(ultimos):] = ultimos
