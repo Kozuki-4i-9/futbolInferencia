@@ -65,6 +65,27 @@ def marcador_real(resultados, home, away):
     return g1, g0
   raise ValueError(f"El partido {home} - {away} no figura entre los resultados reales del mundial")
 
+def desempates_reales(df_partidos):
+  """
+  Diccionario (home, away) -> "home" o "away" con quien paso en los empates reales de (df_partidos) (columnas home, away, penales y jugado): el ganador de la tanda ("4:2") o, en un partido no jugado (jugado = 0), el local, que es como se guarda el que paso sin jugar
+  """
+  salida = {}
+  for h, a, tanda, jugado in zip(df_partidos["home"], df_partidos["away"], df_partidos["penales"], df_partidos["jugado"]):
+    if tanda:
+      p0, p1 = (int(x) for x in tanda.split(":"))
+      salida[(h, a)] = "home" if p0 > p1 else "away"
+    elif int(jugado) == 0:
+      salida[(h, a)] = "home"
+  return salida
+
+def gana_local_desempate(desempates, home, away):
+  """True si en el empate real de (home) contra (away) paso (home), segun "desempates_reales" (tambien con los equipos invertidos)"""
+  if (home, away) in desempates:
+    return desempates[(home, away)] == "home"
+  if (away, home) in desempates:
+    return desempates[(away, home)] == "away"
+  return False
+
 def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
   """
   ¿QUE HACE?
@@ -150,11 +171,12 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
     df0 = list()
     for des in partidos.objects.all():
       if des.agno == valores and valores is not None:
-        df0.append([des.home, des.score, des.away, des.agno])
+        df0.append([des.home, des.score, des.away, des.agno, des.penales, des.jugado])
       elif valores is None:
-        df0.append([des.home, des.score, des.away, des.agno])
-    df = pd.DataFrame(df0, columns=["home", "score", "away", "agno"])
+        df0.append([des.home, des.score, des.away, des.agno, des.penales, des.jugado])
+    df = pd.DataFrame(df0, columns=["home", "score", "away", "agno", "penales", "jugado"])
     df.home, df.score, df.away, df.agno = df.home.astype('O'), df.score.astype('O'), df.away.astype('O'), df.agno.astype('int64')
+    df.jugado = df.jugado.astype('int64')
     return df
 
   elif ind0 == "fixtures":
@@ -1738,6 +1760,10 @@ class func_prediccion_orden(normali):
     partido = ""
     tamagno = df_fixture_updated.shape[0]
     self.ganador_perdedor(tamagno)
+    # fase anterior a la objetivo: se juega con los resultados reales (alterno=1)
+    rejugada = self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1])
+    if not hasattr(self, "desempates"):
+      self.desempates = {}
 
     if isinstance(df_fixture_updated, pd.DataFrame): # varios partidos (una fila por partido)
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
@@ -1752,8 +1778,10 @@ class func_prediccion_orden(normali):
       for points_, row in zip(puntos, df_fixture_updated.itertuples()):
         home, away = row.home, row.away
         point_h, point_a = points_[0][0], points_[1][0]
-        
-        if point_h > point_a:
+        # en una fase anterior a la objetivo (resultados reales) el empate lo decide la tanda real
+        desempate_local = rejugada and point_h == point_a and gana_local_desempate(self.desempates, home, away)
+
+        if point_h > point_a or desempate_local:
           ganador = home
           perdedor = away
         else:
@@ -1786,8 +1814,9 @@ class func_prediccion_orden(normali):
       for points_ in puntos:
         home, away = df_fixture_updated["home"], df_fixture_updated["away"]
         point_h, point_a = points_[0][0], points_[1][0]
+        desempate_local = rejugada and point_h == point_a and gana_local_desempate(self.desempates, home, away)
 
-        if point_h > point_a:
+        if point_h > point_a or desempate_local:
           ganador = home
           perdedor = away
         else:
@@ -2287,8 +2316,12 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     "score_1": reales["score"].map(lambda x: objs.ajuste_score_partidos(x, limpieza, ind=1)).to_list(),
     "away": reales["away"].map(objs.pais_id).to_list(),
     "score": reales["score"].to_list(), # la rama 1986-1994 lee el marcador original ("marcadores_knockout")
+    "penales": reales["penales"].to_list(),
+    "jugado": reales["jugado"].to_list(),
   })
   objs.resultados_reales = resultados_reales(partidos_agno)
+  # quien paso en los empates reales (tanda de penales o partido no jugado), para rejugar las fases previas
+  objs.desempates = desempates_reales(partidos_agno)
   df1 = (partidos_agno.iloc[len(df2):].reset_index(drop=True), df1[1])
 
   from .predictores import cargar_predictor

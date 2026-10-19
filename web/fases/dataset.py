@@ -54,7 +54,9 @@ def cargar_fuentes():
 
     - (partidos, clasificaciones, proxy, internacionales): df con home, away, score_0, score_1, agno (los dos primeros), df de "formar_dataset_real('proxy_desempegno')" y df de "formar_dataset_real('internacionales')" (vacio si no se cargo)
   """
-  partidos = separar_score(modulo.formar_dataset_real("partidos"))
+  partidos = modulo.formar_dataset_real("partidos")
+  # el marcador es el de los 90 o 120 minutos (la tanda queda aparte); los partidos no jugados (jugado = 0) no entran
+  partidos = separar_score(partidos[partidos["jugado"] == 1].drop(columns=["penales", "jugado"]))
   clasificaciones = modulo.formar_dataset_real("clasificaciones")
   proxy = modulo.formar_dataset_real("proxy_desempegno")
   internacionales = modulo.formar_dataset_real("internacionales")
