@@ -84,7 +84,7 @@ def procesar_recepcion_0(request):
             print(f"Estos son mis partidos\n{df}")
             return(JsonResponse(context))
 
-    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
+    return(render(request, "prediccion.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
 
 def procesar_recepcion_1(request):
     """Vista usada al precionar el boton "predecir" """

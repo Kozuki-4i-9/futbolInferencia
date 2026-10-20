@@ -125,6 +125,10 @@
             */
             const newValue = event.target;
             select_0_fases.class = "torneos";
+            /* ".class" es una propiedad propia de JS (la usan "enviarSeleccion_1" e "inversion_de_equipos"); el id
+               es lo que permite encontrar el select desde la respuesta de "Predecir"
+            */
+            select_0_fases.id = "torneos";
 
             /* iteracion sobre todos los nodos hijos del select de años con mundial
             */
@@ -600,14 +604,17 @@
                     /* se obtiene la fase seleccionada en el desplegable de torneos o fases por 
                        mundial
                     */
-                    fase_selec = document.getElementsByClassName("torneos").text;
+                    select_fases = document.getElementById("torneos");
+                    fase_selec = select_fases.options[select_fases.selectedIndex].text;
                     /* se obtiene el numero de partidos para la fase selecionada del mundial
                     */
                     n_partidos = dic_torneos[agno_selec][fase_selec];
 
-                    /* ya con la fase, el numero de partidos y el año, se ejecuta de nuevo la 
-                       funcion "acomodador"
+                    /* ya con la fase, el numero de partidos y el año, se ejecuta de nuevo la
+                       funcion "acomodador", vaciando antes los partidos pintados (como hace el select de fases)
                     */
+                    container_2.innerHTML = '';
+                    entradas.length = 0;
                     acomodador([fase_selec, n_partidos], agno_selec);
 
                     /* se pintan las tablas de mejores terceros y emparejamientos de octavos

@@ -136,7 +136,7 @@ futbolInferencia/
 │       ├── predictores.py      # Predictor interface, baseline and model loading
 │       ├── views.py            # page and /procesar_recepcion_1/ (predict)
 │       ├── management/commands # load_data, construir_dataset
-│       ├── templates/prediccion_2.html
+│       ├── templates/prediccion.html
 │       └── tests.py
 ├── requirements.txt            # web app
 └── requirements-dev.txt        # + notebooks, training and scraping
