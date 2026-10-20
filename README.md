@@ -5,7 +5,7 @@
 <!-- TODO (Phase 5): 15-second GIF of the "what if…?" mode, e.g. ![demo](docs/demo.gif) -->
 
 
-> **Status (October 2026):** the data pipeline, the tournament simulation for all 21 World Cups and the training dataset are working. The retrained LSTM beats the baselines on the 2018 and 2022 World Cups (see [Model results](#model-results)); the app still predicts with the average-goals baseline (every simulated match ends 1:1) until it builds the match sequences the LSTM needs. See [Roadmap](#roadmap).
+> **Status (October 2026):** the data pipeline, the tournament simulation for all 21 World Cups and the training dataset are working. The retrained LSTM beats the baselines on the 2018 and 2022 World Cups (see [Model results](#model-results)) and is the model the app uses. See [Roadmap](#roadmap).
 
 ---
 
@@ -253,7 +253,7 @@ Temporal split, nothing from the future: the configuration is chosen training on
 - [x] Evaluation against baselines (`evaluar_modelos`, `notebooks/evaluacion.ipynb`)
 - [x] Connect the app to `cargar_predictor` (baseline `PredictorMedias` in `data/modelos/medias/`)
 - [x] Retrain the LSTM with the 14-metric schema (`data/modelos/lstm-2026-10-19/`)
-- [ ] Let the app build each team's match sequence so it can use the LSTM (it still predicts with the average-goals baseline)
+- [x] The app predicts with the LSTM (`MODEL_DIR=lstm-2026-10-19`; `MODEL_DIR=medias` goes back to the baseline)
 - [x] Simulate from any stage, not only from the first one (except 1934 and 1938, whose replays break the match numbering)
 - [ ] 2026 format (48 teams, 12 groups, 8 best third-placed teams)
 - [x] Clean sheets per World Cup from the scores; shots and penalties imputed until the FBref data is downloaded (`proxy_desempegno`)
@@ -282,7 +282,7 @@ timeline
 
 **futbolInferencia** simula cualquier Mundial (1930 – 2022) desde la fase que elijas: cambias los resultados que quieras y un modelo de series temporales (LSTM) predice el resto del torneo partido a partido. Cada selección arrastra su rendimiento desde las eliminatorias y lo actualiza tras cada partido; los goles predichos se convierten en resultados con un modelo de Poisson.
 
-**Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El LSTM reentrenado acierta el resultado en el 53,4 % de los partidos de los Mundiales 2018 y 2022, frente al 46,1 % de la mejor línea base (ver *Model results*). La web todavía predice con la línea base de medias (todo 1:1) hasta que arme las secuencias por equipo que necesita el LSTM.
+**Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El LSTM reentrenado acierta el resultado en el 53,4 % de los partidos de los Mundiales 2018 y 2022, frente al 46,1 % de la mejor línea base (ver *Model results*). La web ya predice con ese modelo.
 
 **Scraping:** empezó con un script de Selenium por Mundial, adaptado a cada página; cuando Wikipedia cambió su HTML varios dejaron de funcionar. Hoy un solo script (`etl/busca_grupos.py`) usa una regla basada en el contenido (columna «Pts» y título «Grupo…») y reproduce los 20 Mundiales. Detalles y lecciones en *Data collection* (arriba).
 
