@@ -1,11 +1,13 @@
 from django.db import models
 
-# home,score,away,agno
+# home,score,away,agno,penales,jugado (score a los 90 o 120 minutos; la tanda va aparte en penales, "4:2" o "")
 class partidos(models.Model):
     home = models.CharField(max_length=50)
     score = models.CharField(max_length=6)
     away = models.CharField(max_length=50)
     agno = models.CharField(max_length=4)
+    penales = models.CharField(max_length=6, blank=True, default="")
+    jugado = models.CharField(max_length=1, default="1")
 
 # home,score,away,year
 class fixtures(models.Model):
