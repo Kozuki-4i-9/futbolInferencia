@@ -82,6 +82,20 @@ class ConstruirSecuenciasTests(SimpleTestCase):
     self.assertEqual(sec["y"][2].tolist(), [1, 0])
     self.assertEqual(sec["id_0"][2], mapa_paises(partidos, clasif)["A"])
 
+  def test_metricas_del_rival(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1934]])
+    partidos = partidos_df([["A", "C", 1, 0, 1934]])
+    ds = construir_dataset(partidos, clasif, PROXY_VACIO, agnos=[1934])
+    f = len(ALL_METRICS)
+    sec = construir_secuencias(ds, k=2)
+    self.assertEqual(sec["seq_0"].shape, (3, 2, 2 * f))
+    # en el partido del mundial, el ultimo paso de A trae sus metricas y despues las de C (su rival ese dia)
+    self.assertEqual(sec["seq_0"][2, -1, :f].tolist(), ds.loc[2, [f"{m}_0" for m in ALL_METRICS]].tolist())
+    self.assertEqual(sec["seq_0"][2, -1, f:].tolist(), ds.loc[2, [f"{m}_1" for m in ALL_METRICS]].tolist())
+    # y el de C, al reves
+    self.assertEqual(sec["seq_1"][2, -1, f:].tolist(), ds.loc[2, [f"{m}_0" for m in ALL_METRICS]].tolist())
+    self.assertEqual(construir_secuencias(ds, k=2, con_rival=False)["seq_0"].shape, (3, 2, f))
+
 
 class PredictoresTests(SimpleTestCase):
 
