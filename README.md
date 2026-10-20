@@ -229,7 +229,7 @@ python manage.py test fases
 
 ## Model results
 
-**The LSTM predicts the outcome (win / draw / loss) of 53.6 % of the 2018 and 2022 World Cup matches, against 46.1 % for the best baseline.**
+**The LSTM predicts the outcome (win / draw / loss) of 53.4 % of the 2018 and 2022 World Cup matches, against 46.1 % for the best baseline.**
 
 Temporal split, nothing from the future: the configuration is chosen training on every cycle up to 2010 and validating on the full 2014 cycle (868 matches); the chosen model is retrained up to 2014 and tested **once** on the 128 matches of the 2018 and 2022 World Cups. LSTM figures are the mean of 3 seeds. Reproduce with `python manage.py evaluar_modelos`; details in [`notebooks/evaluacion.ipynb`](notebooks/evaluacion.ipynb) and [`experimentos/resultados_baseline.json`](experimentos/resultados_baseline.json).
 
@@ -238,7 +238,7 @@ Temporal split, nothing from the future: the configuration is chosen training on
 | (a) The team with more points per match in its cycle wins 1-0 | 46.1 % | 8.6 % | 1.094 | – |
 | (b) Poisson with average goals | 43.0 % | 9.4 % | 0.984 | 0.957 |
 | (c) Always 1-1 | 21.9 % | 9.4 % | **0.902** | 1.000 |
-| **LSTM (14 metrics + match context, last match per team)** | **53.6 %** | 9.4 % | 0.926 | **0.930** |
+| **LSTM (14 metrics + match context, last match per team)** | **53.4 %** | **10.2 %** | 0.931 | **0.935** |
 
 - 128 test matches give a ±9-point margin (95 % interval): on the larger validation set the gap is clearer (~60 % against ~49–51 %).
 - Match context (home / neutral venue, type of match) is what helps most; longer sequences (K = 3 to 12) and the rival's metrics in the same step did not improve validation.
@@ -282,7 +282,7 @@ timeline
 
 **futbolInferencia** simula cualquier Mundial (1930 – 2022) desde la fase que elijas: cambias los resultados que quieras y un modelo de series temporales (LSTM) predice el resto del torneo partido a partido. Cada selección arrastra su rendimiento desde las eliminatorias y lo actualiza tras cada partido; los goles predichos se convierten en resultados con un modelo de Poisson.
 
-**Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El LSTM reentrenado acierta el resultado en el 53,6 % de los partidos de los Mundiales 2018 y 2022, frente al 46,1 % de la mejor línea base (ver *Model results*). La web todavía predice con la línea base de medias (todo 1:1) hasta que arme las secuencias por equipo que necesita el LSTM.
+**Estado:** los datos, la simulación de los 21 Mundiales y el dataset de entrenamiento funcionan. El LSTM reentrenado acierta el resultado en el 53,4 % de los partidos de los Mundiales 2018 y 2022, frente al 46,1 % de la mejor línea base (ver *Model results*). La web todavía predice con la línea base de medias (todo 1:1) hasta que arme las secuencias por equipo que necesita el LSTM.
 
 **Scraping:** empezó con un script de Selenium por Mundial, adaptado a cada página; cuando Wikipedia cambió su HTML varios dejaron de funcionar. Hoy un solo script (`etl/busca_grupos.py`) usa una regla basada en el contenido (columna «Pts» y título «Grupo…») y reproduce los 20 Mundiales. Detalles y lecciones en *Data collection* (arriba).
 

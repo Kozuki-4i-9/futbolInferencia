@@ -232,3 +232,14 @@ class PredictorKerasTests(SimpleTestCase):
       cargado, esquema = cargar_predictor(carpeta)
       self.assertEqual(esquema["config"]["k"], 2)
       np.testing.assert_allclose(cargado.predecir(Lote(ds, sec)), salida, rtol=1e-5)
+
+  def test_anfitrion_listado_de_visitante(self):
+    internacionales = pd.DataFrame([["1934-05-27", 1934, "B", "A", 2, 1, "mundial", 0]],
+                                   columns=["fecha", "agno", "home", "away", "score_0", "score_1", "categoria", "neutral"])
+    ds = construir_dataset(partidos_df([["A", "B", 1, 2, 1934]]), partidos_df([]), PROXY_VACIO, agnos=[1934], internacionales=internacionales)
+    fila = ds.iloc[0]
+    # B es el anfitrion aunque la tabla de mundiales lo liste de visitante
+    self.assertEqual((fila["neutral"], fila["local_0"], fila["local_1"]), (0, 0, 1))
+    sec = construir_secuencias(ds, k=1, con_rival=False)
+    self.assertEqual(sec["seq_1"][0, -1, len(ALL_METRICS)], 1.0)
+    self.assertEqual(sec["seq_0"][0, -1, len(ALL_METRICS)], 0.0)
