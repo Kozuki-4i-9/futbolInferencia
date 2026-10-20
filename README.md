@@ -203,6 +203,8 @@ python manage.py test fases
 | `python manage.py construir_dataset` | Builds `data/datasets/partidos_features.csv` (≈ 8,800 matches, takes a few minutes) for training; `--ciclo internacionales` uses every national-team match between World Cups instead of only the qualifiers |
 | `python manage.py entrenar_predictor` | Retrains the baseline predictor from that file into `data/modelos/medias/` (`--hasta 2010` to leave later World Cups out) |
 | `python etl/busca_internacionales.py` | Rebuilds `data/partidos/internacionales.csv` (≈ 50,000 national-team matches since 1872, with competition type and neutral venue) from martj42/international_results, translating team names to the Spanish ones used in the database |
+| `python etl/construye_proxy.py` | Rebuilds `data/proxy_desempegno/` (clean sheets, shots on target and penalties per team and World Cup): clean sheets from the scores, shots and penalties from FBref where it has them (penalties since 1998, shots since 2018) and imputed elsewhere, flagged with `pk_real` / `sot_real` |
+| `python etl/busca_metricas.py --todos` | Downloads the FBref goalkeeping tables used by `construye_proxy.py` (needs Firefox; FBref blocks non-browser downloads) |
 | `python etl/busca_grupos.py --anio 1986` | Downloads a World Cup's group tables from Wikipedia (`--todos` for all; needs Firefox and `requirements-dev.txt`) |
 
 ---
@@ -246,7 +248,8 @@ python manage.py test fases
 - [ ] Retrain the LSTM with the 14-metric schema
 - [ ] Simulate from any stage, not only from the first one
 - [ ] 2026 format (48 teams, 12 groups, 8 best third-placed teams)
-- [ ] Shots and penalties data per World Cup (`proxy_desempegno`)
+- [x] Clean sheets per World Cup from the scores; shots and penalties imputed until the FBref data is downloaded (`proxy_desempegno`)
+- [ ] Run `etl/busca_metricas.py --todos` to replace the imputed penalties (1998+) and shots on target (2018+) with real data
 - [ ] Split `modulo.py` into smaller modules with tests
 - [ ] Docker, public demo and CI
 - [ ] Natural-language explanations of each prediction (LLM)

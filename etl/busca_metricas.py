@@ -1,3 +1,25 @@
+"""
+Descarga de fbref, por cada mundial, las metricas de porteros por seleccion que alimentan proxy_desempegno.
+
+Todo sale de la pagina de porteros (/keepers/), que existe para todos los mundiales; la de tiros (/shooting/) solo
+desde 2018. Esa pagina tiene dos tablas:
+
+  - Squad Stats (stats_squads_keeper_for): lo que recibio cada seleccion -> CS = VI, PKatt = PKATTALLOW
+  - Opponent Stats (stats_squads_keeper_against, filas "vs X"): lo que hicieron los rivales de los porteros de X, es
+    decir lo que hizo X -> PKatt = PKATT, SoTA = SOT
+
+Lo que fbref tiene (revisado a mano): CS todos los años; penales desde 1998; tiros a puerta desde 2018. Las celdas
+vacias quedan NaN y "construye_proxy.py" las imputa.
+
+Guarda data/proxy_desempegno/fbref/fbref_<año>.csv con los nombres de fbref (en ingles): la traduccion a los nombres
+de la BD la hace "construye_proxy.py", que la valida contra los equipos de cada mundial.
+
+Uso (abre Firefox; fbref bloquea las descargas sin navegador):
+    python etl/busca_metricas.py --anio 1998
+    python etl/busca_metricas.py --todos
+"""
+import argparse
+
 from fake_useragent import UserAgent
 
 from selenium.webdriver import Firefox
@@ -14,31 +36,18 @@ import pandas as pd
 
 from rutas import PROXY_DESEMPEGNO
 
-# comp 1 = FIFA World Cup en fbref; la url sigue el patron /en/comps/1/{agno}/{seccion}/{agno}-World-Cup-Stats
-years = [1982]
-dir_gdr = PROXY_DESEMPEGNO
+# comp 1 = FIFA World Cup en fbref; la url sigue el patron /en/comps/1/{agno}/keepers/{agno}-World-Cup-Stats
+MUNDIALES = [1930, 1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002,
+             2006, 2010, 2014, 2018, 2022]
+SALIDA = PROXY_DESEMPEGNO / "fbref"
 
 # fbref bloquea por encima de ~10 peticiones/minuto; se espera entre paginas
 ESPERA_ENTRE_PAGINAS = 7
 
-# seccion de fbref -> (id de la tabla de equipos, {data-stat: metrica})
-FUENTES = {
-    "keepers": ("stats_squads_keeper_for", {"gk_clean_sheets": "VI", "gk_pens_att": "PKATTALLOW"}),
-    "shooting": ("stats_squads_shooting_for", {"shots_on_target": "SOT", "pens_att": "PKATT"}),
-}
-
-# nombres de fbref -> nombres en español usados en la DB (partidos, grupos, proxy_desempegno)
-en_to_es = {
-    "West Germany": "Alemania", "Germany": "Alemania", "Spain": "España", "Italy": "Italia",
-    "Brazil": "Brasil", "France": "Francia", "Netherlands": "Países Bajos", "England": "Inglaterra",
-    "Belgium": "Bélgica", "Poland": "Polonia", "Soviet Union": "Unión Soviética",
-    "Czechoslovakia": "Checoslovaquia", "Yugoslavia": "Yugoslavia", "Hungary": "Hungría",
-    "Austria": "Austria", "Scotland": "Escocia", "Northern Ireland": "Irlanda del Norte",
-    "Peru": "Perú", "Chile": "Chile", "Argentina": "Argentina", "Honduras": "Honduras",
-    "El Salvador": "El Salvador", "Algeria": "Argelia", "Cameroon": "Camerún", "Kuwait": "Kuwait",
-    "New Zealand": "Nueva Zelanda", "Mexico": "México", "Korea Republic": "Corea del Sur",
-    "IR Iran": "Irán", "United States": "Estados Unidos", "Republic of Ireland": "Irlanda",
-    "Morocco": "Marruecos", "Tunisia": "Túnez", "Saudi Arabia": "Arabia Saudita", "Japan": "Japón",
+# id de la tabla en la pagina de porteros -> {data-stat: metrica}
+TABLAS = {
+    "stats_squads_keeper_for": {"gk_clean_sheets": "VI", "gk_pens_att": "PKATTALLOW"},
+    "stats_squads_keeper_against": {"gk_pens_att": "PKATT", "gk_shots_on_target_against": "SOT"},
 }
 
 
@@ -111,46 +120,48 @@ def leer_tabla_equipos(driver, id_tabla, columnas):
     return pd.DataFrame(registros)
 
 
-def get_metricas_abstractas(year):
+def get_metricas_abstractas(year, driver):
     """
     ¿QUE HACE?
-    Obtiene VI, SOT, PKATT y PKATTALLOW por seleccion para el mundial (year) desde fbref
-    y las guarda en un csv con la forma de la tabla proxy_desempegno.
+    Obtiene VI, PKATTALLOW, PKATT y SOT por seleccion para el mundial (year) desde la pagina de porteros de fbref y
+    los guarda en SALIDA / fbref_<year>.csv, con los nombres de fbref
 
     ¿COMO LO HACE?
-    0-) Abre una pagina por cada seccion de FUENTES (keepers y shooting) y lee su tabla de equipos.
-    1-) Une los df por "pais" (outer, para no perder selecciones que falten en una de las paginas).
-    2-) Traduce los nombres al español con en_to_es y avisa de los que no tienen traduccion.
-    3-) Agrega la columna "year" y guarda el csv.
+    0-) Abre la pagina de porteros y lee sus dos tablas de equipos (TABLAS)
+
+    1-) En la tabla de rivales los equipos vienen como "vs Argentina": se quita el "vs " para unir por equipo
+
+    2-) Une las dos tablas por "equipo" (outer, para no perder selecciones) y guarda el csv
     """
-    driver = crear_driver()
+    driver.get(f"https://fbref.com/en/comps/1/{year}/keepers/{year}-World-Cup-Stats")
     df_metricas = None
+    for id_tabla, columnas in TABLAS.items():
+        df_tabla = leer_tabla_equipos(driver, id_tabla, columnas).rename(columns={"pais": "equipo"})
+        df_tabla["equipo"] = df_tabla["equipo"].str.replace(r"^vs\s+", "", regex=True)
+        print(f"{year} {id_tabla}: {len(df_tabla)} selecciones")
+        df_metricas = df_tabla if df_metricas is None else df_metricas.merge(df_tabla, on="equipo", how="outer")
 
+    df_metricas = df_metricas.reindex(columns=["equipo", "VI", "SOT", "PKATT", "PKATTALLOW"])
+    SALIDA.mkdir(parents=True, exist_ok=True)
+    df_metricas.to_csv(SALIDA / f"fbref_{year}.csv", index=False, encoding="utf-8")
+    return df_metricas
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    grupo = parser.add_mutually_exclusive_group(required=True)
+    grupo.add_argument("--anio", type=int, choices=MUNDIALES)
+    grupo.add_argument("--todos", action="store_true")
+    args = parser.parse_args()
+
+    driver = crear_driver()
     try:
-        for des0, (des1, des2) in FUENTES.items():
-            web = f"https://fbref.com/en/comps/1/{year}/{des0}/{year}-World-Cup-Stats"
-            driver.get(web)
-            df_seccion = leer_tabla_equipos(driver, des1, des2)
-            print(f"{year} {des0}: {len(df_seccion)} selecciones")
-
-            df_metricas = df_seccion if df_metricas is None else df_metricas.merge(df_seccion, on="pais", how="outer")
+        for year in (MUNDIALES if args.todos else [args.anio]):
+            print(get_metricas_abstractas(year, driver))
             time.sleep(ESPERA_ENTRE_PAGINAS)
     finally:
         driver.quit()
 
-    no_mapeados = sorted(set(df_metricas["pais"]) - set(en_to_es))
-    if no_mapeados:
-        print(f"¡Atención! Selecciones sin traducción en {year}: {no_mapeados}")
-    df_metricas["pais"] = df_metricas["pais"].map(lambda x: en_to_es.get(x, x))
 
-    df_metricas = df_metricas.reindex(columns=["pais", "VI", "SOT", "PKATT", "PKATTALLOW"])
-    df_metricas["year"] = year
-    dir_gdr.mkdir(parents=True, exist_ok=True)
-    df_metricas.to_csv(dir_gdr / f"metricas_abstractas_{year}.csv", index=False, encoding="utf-8")
-
-    return df_metricas
-
-
-for year in years:
-    df_metricas_abstractas = get_metricas_abstractas(year)
-    print(df_metricas_abstractas)
+if __name__ == "__main__":
+    main()

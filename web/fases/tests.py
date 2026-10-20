@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from django.test import SimpleTestCase
 
-from .dataset import CATEGORIAS, CICLO_INTERNACIONALES, construir_dataset, construir_secuencias, mapa_paises
+from .dataset import CATEGORIAS, CICLO_INTERNACIONALES, N_CONTEXTO, construir_dataset, construir_secuencias, mapa_paises
 from .modulo import ALL_METRICS, COLS_MODELO_POR_EQUIPO, METRICAS_ABSTRACTAS, historico_abstractas
 from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
 
@@ -107,8 +107,9 @@ class ConstruirSecuenciasTests(SimpleTestCase):
     eliminatoria = [0.0] * len(CATEGORIAS)
     eliminatoria[CATEGORIAS.index("eliminatoria_mundial")] = 1.0
     # eliminatoria en casa: es_local 1, neutral 0; mundial sin dato de sede: neutral 1, nadie es local
-    self.assertEqual(contexto[0].tolist(), [1.0, 0.0, *eliminatoria])
-    self.assertEqual(contexto[1].tolist(), [0.0, 1.0, *mundial])
+    self.assertEqual(contexto.shape[1], N_CONTEXTO)
+    self.assertEqual(contexto[0].tolist(), [1.0, 0.0, *eliminatoria, 0.0, 0.0])
+    self.assertEqual(contexto[1].tolist(), [0.0, 1.0, *mundial, 0.0, 0.0])
     # el visitante nunca es local
     self.assertEqual(sec["seq_1"][0, -1, 2 * len(ALL_METRICS)], 0.0)
 
@@ -178,3 +179,11 @@ class CicloInternacionalesTests(SimpleTestCase):
     self.assertEqual(mundial_1934["neutral"], 0)
     # A llega al mundial con su amistoso ganado 3-0
     self.assertEqual(mundial_1934["GF_0"], 3)
+
+  def test_marca_de_datos_reales(self):
+    # A tiene penales reales en 1930: en 1934 su historico es real; B solo tiene datos imputados
+    proxy = pd.DataFrame([["A", 1930, 1.0, 5.0, 1.0, 0.0, 1, 0], ["B", 1930, 0.0, 2.0, 0.0, 0.0, 0, 0]],
+                         columns=["pais", "agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"])
+    ds = construir_dataset(partidos_df([["A", "B", 1, 0, 1934]]), partidos_df([]), proxy, agnos=[1934])
+    fila = ds.iloc[0]
+    self.assertEqual((fila["pk_real_0"], fila["pk_real_1"], fila["sot_real_0"]), (1, 0, 0))
