@@ -243,10 +243,34 @@ class PredictorKeras:
     import keras
     return cls(keras.models.load_model(Path(carpeta) / cls.ARCHIVO), esquema["config"])
 
+  def secuencias_desde_tabla(self, tabla):
+    """
+    ¿QUE HACE?
+    Arma las secuencias de un paso (k = 1) para la simulacion de la app, con la misma "construir_secuencias" del entrenamiento
+
+    ¿COMO LO HACE?
+    0-) Si el modelo usa mas de un paso lanza ValueError: la simulacion no guarda la historia partido a partido de cada equipo
+
+    1-) Traduce los equipos (nombres en "home" y "away") a los ids del entrenamiento (config "paises"); un equipo que no vio va al id de desconocidos
+
+    2-) Llama a "construir_secuencias" con k = 1 y los bloques de la config; (tabla) debe traer ALL_METRICS_0/1 y, con contexto, neutral, categoria, pk_real_0/1 y sot_real_0/1
+    """
+    from .dataset import construir_secuencias
+
+    c = self.config
+    if c["k"] != 1:
+      raise ValueError(f"La simulacion solo arma secuencias de 1 paso y este modelo usa k={c['k']}")
+    ids = {nombre: i for i, nombre in enumerate(c["paises"]) if nombre is not None}
+    tabla = tabla.assign(
+      home_id=tabla["home"].map(ids).fillna(c["n_paises"]).astype("int64"),
+      away_id=tabla["away"].map(ids).fillna(c["n_paises"]).astype("int64"),
+      goles_0=0, goles_1=0,
+    )
+    return construir_secuencias(tabla, k=1, con_rival=c["con_rival"], con_contexto=c["con_contexto"])
+
   def predecir(self, lote):
-    if lote.secuencias is None:
-      raise ValueError("El LSTM necesita lote.secuencias (construir_secuencias con k, con_rival y con_contexto de su config)")
-    return self.modelo.predict(self.entradas(lote.secuencias), verbose=0, batch_size=512)
+    secuencias = lote.secuencias if lote.secuencias is not None else self.secuencias_desde_tabla(lote.tabla)
+    return self.modelo.predict(self.entradas(secuencias), verbose=0, batch_size=512)
 
   def guardar_pesos(self, carpeta):
     Path(carpeta).mkdir(parents=True, exist_ok=True)
