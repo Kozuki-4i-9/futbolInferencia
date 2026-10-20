@@ -1,0 +1,306 @@
+{
+  "fecha": "2026-10-19",
+  "dataset": "partidos_features.csv",
+  "partidos": 8828,
+  "particion": {
+    "seleccion": "entrena ciclos <= 2010, valida ciclo 2014",
+    "prueba": "entrena ciclos <= 2014, prueba mundiales 2018 y 2022 (fase mundial)"
+  },
+  "seleccion": [
+    {
+      "k": 1,
+      "con_rival": true,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9549816962998193,
+          "desv": 0.0032366307036112195
+        },
+        "acierto_resultado": {
+          "media": 59.40860215053763,
+          "desv": 0.5974020424771137
+        },
+        "marcador_exacto": {
+          "media": 14.285714285714285,
+          "desv": 0.18813285274832442
+        },
+        "deviance": {
+          "media": 0.7405507978052149,
+          "desv": 0.002308272964292928
+        }
+      },
+      "epocas": [
+        11,
+        11,
+        12
+      ]
+    },
+    {
+      "k": 3,
+      "con_rival": true,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9560467163973506,
+          "desv": 0.006424341177134437
+        },
+        "acierto_resultado": {
+          "media": 59.562211981566826,
+          "desv": 0.6168348081493509
+        },
+        "marcador_exacto": {
+          "media": 14.1321044546851,
+          "desv": 0.19581488147437695
+        },
+        "deviance": {
+          "media": 0.7444200881478045,
+          "desv": 0.0021096308597794325
+        }
+      },
+      "epocas": [
+        9,
+        7,
+        7
+      ]
+    },
+    {
+      "k": 5,
+      "con_rival": true,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9527648818434521,
+          "desv": 0.006657271040027609
+        },
+        "acierto_resultado": {
+          "media": 59.8694316436252,
+          "desv": 0.19581488147437826
+        },
+        "marcador_exacto": {
+          "media": 13.863287250384024,
+          "desv": 0.4445405876647549
+        },
+        "deviance": {
+          "media": 0.746804367052182,
+          "desv": 0.0015352645361541438
+        }
+      },
+      "epocas": [
+        7,
+        6,
+        7
+      ]
+    },
+    {
+      "k": 8,
+      "con_rival": true,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9517855378849212,
+          "desv": 0.006246559665969816
+        },
+        "acierto_resultado": {
+          "media": 60.59907834101383,
+          "desv": 0.09406642637415931
+        },
+        "marcador_exacto": {
+          "media": 14.170506912442397,
+          "desv": 0.5874446444231317
+        },
+        "deviance": {
+          "media": 0.744631954571327,
+          "desv": 0.0032221426648386723
+        }
+      },
+      "epocas": [
+        6,
+        7,
+        6
+      ]
+    },
+    {
+      "k": 12,
+      "con_rival": true,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9455877638403356,
+          "desv": 0.004626428988302137
+        },
+        "acierto_resultado": {
+          "media": 60.48387096774193,
+          "desv": 0.43106651921359007
+        },
+        "marcador_exacto": {
+          "media": 13.940092165898617,
+          "desv": 0.7346822761024964
+        },
+        "deviance": {
+          "media": 0.740793944543254,
+          "desv": 0.002914140966834485
+        }
+      },
+      "epocas": [
+        5,
+        6,
+        5
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9547361353449467,
+          "desv": 0.00432303670429817
+        },
+        "acierto_resultado": {
+          "media": 60.02304147465438,
+          "desv": 0.24887637090659936
+        },
+        "marcador_exacto": {
+          "media": 13.210445468509986,
+          "desv": 0.44454058766475574
+        },
+        "deviance": {
+          "media": 0.7411280535672661,
+          "desv": 0.0017292589588002534
+        }
+      },
+      "epocas": [
+        13,
+        13,
+        12
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": true,
+      "con_contexto": false,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9696581894775048,
+          "desv": 0.0016508925936432018
+        },
+        "acierto_resultado": {
+          "media": 58.064516129032256,
+          "desv": 0.16292782976648768
+        },
+        "marcador_exacto": {
+          "media": 12.09677419354839,
+          "desv": 0.4310665192135886
+        },
+        "deviance": {
+          "media": 0.7604221725674423,
+          "desv": 0.00031621519468076923
+        }
+      },
+      "epocas": [
+        12,
+        7,
+        7
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": false,
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9701180070275283,
+          "desv": 0.003858321710507222
+        },
+        "acierto_resultado": {
+          "media": 58.02611367127496,
+          "desv": 0.271546382944145
+        },
+        "marcador_exacto": {
+          "media": 11.827956989247312,
+          "desv": 0.21723710635531382
+        },
+        "deviance": {
+          "media": 0.762870616689146,
+          "desv": 0.0006847798264904902
+        }
+      },
+      "epocas": [
+        15,
+        11,
+        8
+      ]
+    }
+  ],
+  "elegida": {
+    "k": 1,
+    "con_rival": false,
+    "con_contexto": true,
+    "epocas": 13
+  },
+  "prueba": {
+    "medias": {
+      "partidos": 128,
+      "mae_goles": 0.9838418972862667,
+      "acierto_resultado": 42.96875,
+      "marcador_exacto": 9.375,
+      "deviance": 0.9568416756596467
+    },
+    "mas_puntos": {
+      "partidos": 128,
+      "mae_goles": 1.09375,
+      "acierto_resultado": 46.09375,
+      "marcador_exacto": 8.59375,
+      "deviance": 11.682854240717203
+    },
+    "empate": {
+      "partidos": 128,
+      "mae_goles": 0.90234375,
+      "acierto_resultado": 21.875,
+      "marcador_exacto": 9.375,
+      "deviance": 1.0
+    },
+    "lstm": {
+      "mae_goles": {
+        "media": 0.9257973155472428,
+        "desv": 0.006710287612471262
+      },
+      "acierto_resultado": {
+        "media": 53.645833333333336,
+        "desv": 0.736569563735987
+      },
+      "marcador_exacto": {
+        "media": 9.375,
+        "desv": 0.637887953849786
+      },
+      "deviance": {
+        "media": 0.9295244775646986,
+        "desv": 0.00684127688692458
+      },
+      "semillas": [
+        {
+          "partidos": 128,
+          "mae_goles": 0.9347289800643921,
+          "acierto_resultado": 53.125,
+          "marcador_exacto": 8.59375,
+          "deviance": 0.9222997243158805
+        },
+        {
+          "partidos": 128,
+          "mae_goles": 0.9241083459928632,
+          "acierto_resultado": 53.125,
+          "marcador_exacto": 10.15625,
+          "deviance": 0.9387097178637027
+        },
+        {
+          "partidos": 128,
+          "mae_goles": 0.918554620584473,
+          "acierto_resultado": 54.6875,
+          "marcador_exacto": 9.375,
+          "deviance": 0.9275639905145123
+        }
+      ]
+    }
+  },
+  "modelo": "lstm-2026-10-19"
+}
