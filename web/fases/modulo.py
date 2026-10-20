@@ -45,7 +45,25 @@ C_S_Y_INDEX = C_S_DELETE_INDEX
 N_STEPS = 1 # partidos por ventana; el .h5 actual se entreno con 1 (el reentrenamiento lo leera de su esquema)
 
 MATCH_HOME_IDX = 0
-MATCH_AWAY_IDX = 1 
+MATCH_AWAY_IDX = 1
+
+def resultados_reales(df_partidos):
+  """
+  Diccionario (home, away) -> (score_0, score_1) con los marcadores reales de (df_partidos) (columnas home, away, score_0 y score_1, con ids de pais). Lo usa "intsc_prob_goles" (alterno=1) para jugar las fases anteriores a la objetivo
+  """
+  goles = df_partidos[["score_0", "score_1"]].apply(pd.to_numeric).to_numpy()
+  return {(h, a): (g0, g1) for h, a, (g0, g1) in zip(df_partidos["home"], df_partidos["away"], goles)}
+
+def marcador_real(resultados, home, away):
+  """
+  Marcador real de (home) contra (away) en (resultados) ("resultados_reales"); si el partido figura con los equipos invertidos se devuelve girado. Lanza ValueError si ese partido no se jugo en el mundial
+  """
+  if (home, away) in resultados:
+    return resultados[(home, away)]
+  if (away, home) in resultados:
+    g0, g1 = resultados[(away, home)]
+    return g1, g0
+  raise ValueError(f"El partido {home} - {away} no figura entre los resultados reales del mundial")
 
 def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
   """
@@ -1448,7 +1466,7 @@ class func_prediccion_orden(normali):
 
       1.0) si (alterno) es igual a 0. El predictor (model) devuelve con "predecir" un array (n, 2) con los goles esperados de home y away, que se guarda en (Y0)
 
-      1.1) si (alterno) es igual a 1. Se guarda en unas variables (Y_0, Y_1) los resultados default que carga la entrada array (X) en las columnas correspondientes. Se actualizan esas variables para hacerlahs un vector 2-dimensional de n filas, 1 columna. Se concatenan ambos resultados como columna a la variable (Y0)
+      1.1) si (alterno) es igual a 1. (X) es el df de la fase (o la Serie de un partido): para cada pareja (home, away) se toma con "marcador_real" el resultado que tuvo en el mundial real (atributo (resultados_reales), lo arma "consulta_general") y se entrega con los puntos que da ese marcador (3 al ganador, 1 y 1 si empatan), sin pasar por los pasos 2-) y 3-)
 
     2-) Se itera al mismo tiempo la entrada (X) y la inferencia o valores default (Y0). Se almacena en unas variables (home, away) los valores de desempeño de los equipos home y away. Se guarda en unas variables (y_home, y_away) los resultados default o arrojados por la inferencia del modelo.
 
@@ -1474,7 +1492,7 @@ class func_prediccion_orden(normali):
 
     Args:
 
-      - X: array con las entradas (home, away) referentes a cada partido de la fase del mundial estudiada
+      - X: si (alterno) es 0, array de "calculo_metricas_0" con las entradas (home, away) de cada partido de la fase; si es 1, df (o Serie) de la fase con las columnas "home" y "away" (ids)
 
       - model: predictor (interfaz "Predictor" de predictores.py) listo para hacer inferencia
 
@@ -1489,11 +1507,15 @@ class func_prediccion_orden(normali):
       Y0 = model.predecir(lote_desde_entrada(X))
 
     elif alterno == 1:
-      idx_y0 = 6
-      idx_y1 = COLS_FASE_POR_EQUIPO + 6
-      Y_0, Y_1 = X[:, idx_y0], X[:, idx_y1]
-      Y_0, Y_1 = np.reshape(Y_0, (-1, 1)), np.reshape(Y_1, (-1, 1))
-      Y0 = np.concatenate((Y_0, Y_1), axis=1)
+      # X es el df de la fase (o la Serie de un partido): el marcador se busca por pareja en el mundial real
+      filas = X.to_frame().T if isinstance(X, pd.Series) else X
+      Y0 = np.array([marcador_real(self.resultados_reales, h, a) for h, a in zip(filas["home"], filas["away"])], dtype=float)
+      # resultado real: los puntos salen del marcador, no de la interseccion de Poisson (2 por victoria hasta 1990)
+      victoria = 2 if isinstance(self.obj0, int) and self.obj0 < 1994 else 3
+      for y_home, y_away in Y0:
+        p_hm, p_aw = (victoria, 0) if y_home > y_away else (0, victoria) if y_away > y_home else (1, 1)
+        yield ((y_home, p_hm), (y_away, p_aw))
+      return
 
     for resultados_Y0, entradas_X in zip(Y0, X):
       home = entradas_X[MATCH_HOME_IDX]
@@ -1590,33 +1612,41 @@ class func_prediccion_orden(normali):
       - df_fixture_: es el mismo df (df_fixture_) que entra como parámetro pero con los parametros de rendimiento actualizados
 
     """
-    x = np.array([])
+    # marcadores por indice del fixture: los grupos se recorren en el orden de (dic_t), no en el del fixture
+    marcadores = pd.DataFrame(index=df_fixture_.index, columns=["score_0", "score_1"], dtype=float)
 
     for group, dfs in dic_t.items():
       paises = dfs['pais'].values
       df_fix_group_n = df_fixture_[(df_fixture_['home'].isin(paises)) & (df_fixture_['away'].isin(paises))]
-      X = np.array([])
-      
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
-        puntos = self.intsc_prob_goles(X, model, alterno=1)
+        # fase anterior a la objetivo: se juega con los resultados reales del df de la fase
+        puntos = self.intsc_prob_goles(df_fix_group_n, model, alterno=1)
       else:
         # X se arma con la salida de "calculo_metricas_0" (esquema fijo del modelo y métricas neutralizadas)
         df_modelo = calculo_metricas_0(df_fix_group_n, self.drop_metricas, self.metricas_opcionales)
         X = df_modelo.to_numpy()
         puntos = self.intsc_prob_goles(X, model, alterno=0)
 
+      goles = {pais: [0.0, 0.0] for pais in paises} # pais -> [goles a favor, goles en contra]
       for points_, row in zip(puntos, df_fix_group_n.itertuples()):
         home, away = row.home, row.away
-        x = np.append(x, [points_[0][0], points_[1][0]])
+        g0, g1 = points_[0][0], points_[1][0]
+        marcadores.loc[row.Index] = [g0, g1]
         dic_t[group].loc[dic_t[group]['pais'] == home, 'Pts'] += points_[0][1]
         dic_t[group].loc[dic_t[group]['pais'] == away, 'Pts'] += points_[1][1]
+        for equipo, a_favor, en_contra in ((home, g0, g1), (away, g1, g0)):
+          goles[equipo][0] += a_favor
+          goles[equipo][1] += en_contra
 
-      dic_t[group] = dic_t[group].sort_values('Pts', ascending=False).reset_index(drop=True)
+      # orden FIFA: puntos, diferencia de gol y goles a favor
+      dic_t[group]["DG"] = dic_t[group]["pais"].map(lambda p: goles[p][0] - goles[p][1])
+      dic_t[group]["GF"] = dic_t[group]["pais"].map(lambda p: goles[p][0])
+      dic_t[group] = dic_t[group].sort_values(["Pts", "DG", "GF"], ascending=False).reset_index(drop=True)
       dic_t[group] = dic_t[group][['pais', 'Pts']]
       dic_t[group] = dic_t[group].round(0)
 
-    df_fixture_["score_0"] = x[0::2]
-    df_fixture_["score_1"] = x[1::2]
+    df_fixture_["score_0"] = marcadores["score_0"]
+    df_fixture_["score_1"] = marcadores["score_1"]
 
     calculo_metricas_1(df_fixture_)
 
@@ -1701,11 +1731,10 @@ class func_prediccion_orden(normali):
     partido = ""
     tamagno = df_fixture_updated.shape[0]
     self.ganador_perdedor(tamagno)
-    X = np.array([]) # PEND (dar formato adecuado con "home", "away" para entrar con (alterno=1) a "intsc_prob_goles" y obtener los resultados default de los partidos previos a la fase objetivo de prediccion)
 
     if isinstance(df_fixture_updated, pd.DataFrame): # varios partidos (una fila por partido)
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
-        puntos = self.intsc_prob_goles(X, model, alterno=1)
+        puntos = self.intsc_prob_goles(df_fixture_updated, model, alterno=1) # resultados reales de la fase
       else:
         # PEND (agegar parametro 'valor=agno')
         # PEND recomentar docstring
@@ -1739,7 +1768,7 @@ class func_prediccion_orden(normali):
       partido = f"Match {indice}"
       
       if self.lista_fases.index(self.ind0[0]) < self.lista_fases.index(self.ind0[1]):
-        puntos = self.intsc_prob_goles(X, model, alterno=1)
+        puntos = self.intsc_prob_goles(df_fixture_updated, model, alterno=1) # resultados reales de la fase
       else:
         # PEND (agegar parametro 'valor=agno')
         # PEND recomentar docstring
@@ -2241,6 +2270,20 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
   objs.dic_fuerza["home"] = agg0
   objs.dic_fuerza["away"] = agg1
 
+  # create_features deja en df1[0] el historico de todos los mundiales (menos sus primeras filas); desde aqui las fases
+  # anteriores a la objetivo se arman con la fase final real del mundial consultado, y se juegan con sus marcadores reales
+  reales = objs.df2[objs.df2["agno"].astype(int) == int(pregunta_0[-4:])]
+  limpieza = {"(": r"", ")": r"", ":": r",", " ": r","}
+  partidos_agno = pd.DataFrame({
+    "home": reales["home"].map(objs.pais_id).to_list(),
+    "score_0": reales["score"].map(lambda x: objs.ajuste_score_partidos(x, limpieza)).to_list(),
+    "score_1": reales["score"].map(lambda x: objs.ajuste_score_partidos(x, limpieza, ind=1)).to_list(),
+    "away": reales["away"].map(objs.pais_id).to_list(),
+    "score": reales["score"].to_list(), # la rama 1986-1994 lee el marcador original ("marcadores_knockout")
+  })
+  objs.resultados_reales = resultados_reales(partidos_agno)
+  df1 = (partidos_agno.iloc[len(df2):].reset_index(drop=True), df1[1])
+
   from .predictores import cargar_predictor
   dir_modelo = settings.MODEL_PATH / settings.MODEL_DIR
   modelo, _ = cargar_predictor(dir_modelo)
@@ -2551,7 +2594,8 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     elif "knockout" in pregunta_0:
       objs.ind0[1] = "knockout"
       df_fixture_group_ = df2.copy()
-      marcadores_knockout = df1[1]
+      # la consulta del usuario trae score_0 y score_1; la llave lee "score" ("3:1")
+      marcadores_knockout = df1[1].assign(score=df1[1]["score_0"].astype(str) + ":" + df1[1]["score_1"].astype(str))
       df_fixture_quarter = df3[["home", "score", "away"]].iloc[8:12].copy()
       df_fixture_semi = df3[["home", "score", "away"]].iloc[12:14].copy()
       df_fixture_third = df3[["home", "score", "away"]].iloc[14].copy()
