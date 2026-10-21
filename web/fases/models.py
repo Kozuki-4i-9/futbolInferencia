@@ -51,6 +51,8 @@ class proxy_desempegno(models.Model):
     SOT = models.CharField(max_length=50)
     PKATT = models.CharField(max_length=50)
     PKATTALLOW = models.CharField(max_length=50)
+    # partidos de esa seleccion en ese mundial: denominador de las tasas por partido del historico
+    PJ = models.CharField(max_length=6, blank=True, default="")
     # 1 si los penales (PKATT, PKATTALLOW) o los tiros a puerta (SOT) son de fbref; 0 si los imputo etl/construye_proxy.py
     pk_real = models.CharField(max_length=1, default="0")
     sot_real = models.CharField(max_length=1, default="0")

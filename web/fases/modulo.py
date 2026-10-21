@@ -29,6 +29,9 @@ ALL_METRICS = BASE_METRICS + OPTIONAL_METRICS
 
 # insumos internos de gkps, mds, mos y mms; viven en (opcionales) y el usuario no los elige
 METRICAS_ABSTRACTAS = ["VI", "SOT", "PKATT", "PKATTALLOW"]
+# version de las formulas de las metricas derivadas: un modelo entrenado con otra version recibiria valores en otra escala
+# 2: gkps, mds, mos y mms dividen el historico abstracto por sus propios partidos (PJ del historico) y van de 0 a 100
+VERSION_METRICAS = 2
 
 # valor que recibe una métrica descartada o no aceptada: la media de esa columna en el set de entrenamiento
 # PEND rellenar desde el notebook de entrenamiento con X_tr (mismo orden que ALL_METRICS)
@@ -225,11 +228,11 @@ def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
 
   elif ind0 == "proxy_desempegno":
     df = pd.DataFrame(
-      list(proxy_desempegno.objects.values("pais", "agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real")),
-      columns=["pais", "agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"],
+      list(proxy_desempegno.objects.values("pais", "agno", "PJ", *METRICAS_ABSTRACTAS, "pk_real", "sot_real")),
+      columns=["pais", "agno", "PJ", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"],
     )
     # los campos son CharField: se pasan a número (float, porque SOT y PKATT pueden traer decimales); agno vacio -> NaN
-    numericas = ["agno", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"]
+    numericas = ["agno", "PJ", *METRICAS_ABSTRACTAS, "pk_real", "sot_real"]
     df[numericas] = df[numericas].apply(pd.to_numeric, errors="coerce")
     return df
 
@@ -258,7 +261,9 @@ def historico_abstractas(df_proxy, pais_id, agno=None):
     - df con columnas pais (id) y METRICAS_ABSTRACTAS, una fila por pais
   """
   df = df_proxy if agno is None else df_proxy[df_proxy["agno"] < agno]
-  df = df.groupby("pais", as_index=False)[METRICAS_ABSTRACTAS].sum(min_count=1)
+  # PJ: partidos de esos mundiales, denominador de las tasas por partido del historico (proxy anteriores a la version 2 no lo traen)
+  columnas = METRICAS_ABSTRACTAS + (["PJ"] if "PJ" in df.columns else [])
+  df = df.groupby("pais", as_index=False)[columnas].sum(min_count=1)
   df["pais"] = df["pais"].map(pais_id)
   df = df.dropna(subset=["pais"])
   df["pais"] = df["pais"].astype("int64")
@@ -533,74 +538,92 @@ def _por_partido(valor, PJ):
     """Divide fila a fila por PJ; NaN donde PJ es 0 (cada calc_* lo pasa luego a 0)."""
     return valor / PJ.where(PJ > 0)
 
-def calc_gkps(PJ, GC, VI, PKATTALLOW):
+# tasas por partido para un equipo sin partidos en su historico abstracto: ~30 % de vallas invictas, ~4 tiros a puerta y
+# ~0,12 penales a favor y en contra por partido (las de etl/construye_proxy.py)
+TASAS_REFERENCIA = {"VI": 0.30, "SOT": 4.0, "PKATT": 0.12, "PKATTALLOW": 0.12}
+# parte de los penales que terminan en gol, para descontar los goles de penal
+CONVERSION_PENAL = 0.75
+
+def _tasa_historica(valor, PJ_hist, metrica):
+    """(valor) del historico abstracto por partido de ese mismo historico (PJ_hist); la tasa de referencia si el equipo no tiene partidos en su historico"""
+    return (valor / PJ_hist.where(PJ_hist > 0)).fillna(TASAS_REFERENCIA[metrica])
+
+def _tope(serie, referencia):
+    """serie / referencia, sin pasar de 1: cuanto de un valor de referencia alcanza el equipo"""
+    return (serie / referencia).clip(upper=1)
+
+def calc_gkps(PJ, GC, VI, PKATTALLOW, PJ_hist):
     """
     ¿QUE HACE?
-    Calcula, partido a partido, el puntaje de portería (goalkeeping score) de un equipo: premia las vallas invictas y castiga los goles recibidos que no vinieron de penal permitido
+    Calcula, partido a partido, el puntaje de portería (goalkeeping score, 0 a 100): premia las vallas invictas y castiga los goles recibidos que no vinieron de penal
 
     Args:
 
-      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra hasta cada partido
+      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra del ciclo hasta cada partido
 
-      - VI, PKATTALLOW: Series con el progreso de vallas invictas y penales permitidos del equipo
+      - VI, PKATTALLOW, PJ_hist: Series con el progreso de vallas invictas, penales permitidos y partidos del historico abstracto
 
     Return:
 
-      - Serie con ((VI/PJ)*60) + (40 - ((GC - PKATTALLOW)/PJ)*10), o 0 donde PJ es 0
+      - Serie con 60 * VI/PJ_hist + 40 - 10 * (GC/PJ - 0,75 * PKATTALLOW/PJ_hist), entre 0 y 100, o 0 donde PJ es 0
     """
-    return (_por_partido(VI, PJ) * 60 + 40 - _por_partido(GC - PKATTALLOW, PJ) * 10).fillna(0)
+    vi, pka = _tasa_historica(VI, PJ_hist, "VI"), _tasa_historica(PKATTALLOW, PJ_hist, "PKATTALLOW")
+    gc_sin_penal = (_por_partido(GC, PJ) - CONVERSION_PENAL * pka).clip(lower=0)
+    return (vi * 60 + 40 - gc_sin_penal * 10).clip(0, 100).fillna(0)
 
-def calc_mds(PJ, GC, VI, PKATTALLOW):
+def calc_mds(PJ, GC, VI, PKATTALLOW, PJ_hist):
     """
     ¿QUE HACE?
-    Calcula, partido a partido, el puntaje defensivo (mean defensive score): premia las vallas invictas y castiga goles recibidos y penales permitidos
+    Calcula, partido a partido, el puntaje defensivo (mean defensive score, 0 a 100): premia las vallas invictas y castiga goles recibidos y penales permitidos
 
     Args:
 
-      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra hasta cada partido
+      - PJ, GC: Series con el acumulado de partidos jugados y goles en contra del ciclo hasta cada partido
 
-      - VI, PKATTALLOW: Series con el progreso de vallas invictas y penales permitidos del equipo
+      - VI, PKATTALLOW, PJ_hist: Series con el progreso de vallas invictas, penales permitidos y partidos del historico abstracto
 
     Return:
 
-      - Serie con ((VI/PJ)*50) + (50 - ((GC + PKATTALLOW)/PJ)*10), o 0 donde PJ es 0
+      - Serie con 50 * VI/PJ_hist + 50 - 10 * (GC/PJ + PKATTALLOW/PJ_hist), entre 0 y 100, o 0 donde PJ es 0
     """
-    return (_por_partido(VI, PJ) * 50 + 50 - _por_partido(GC + PKATTALLOW, PJ) * 10).fillna(0)
+    vi, pka = _tasa_historica(VI, PJ_hist, "VI"), _tasa_historica(PKATTALLOW, PJ_hist, "PKATTALLOW")
+    return (vi * 50 + 50 - (_por_partido(GC, PJ) + pka) * 10).clip(0, 100).fillna(0)
 
-def calc_mos(PJ, GF, SOT, PKATT):
+def calc_mos(PJ, GF, SOT, PKATT, PJ_hist):
     """
     ¿QUE HACE?
-    Calcula, partido a partido, el puntaje ofensivo (mean offensive score): goles por partido, tiros a puerta por partido y efectividad de los tiros sin contar penales
+    Calcula, partido a partido, el puntaje ofensivo (mean offensive score, 0 a 100): goles por partido, tiros a puerta por partido y efectividad de los tiros sin contar penales
 
     Args:
 
-      - PJ, GF: Series con el acumulado de partidos jugados y goles a favor hasta cada partido
+      - PJ, GF: Series con el acumulado de partidos jugados y goles a favor del ciclo hasta cada partido
 
-      - SOT, PKATT: Series con el progreso de tiros a puerta y penales intentados del equipo
+      - SOT, PKATT, PJ_hist: Series con el progreso de tiros a puerta, penales intentados y partidos del historico abstracto
 
     Return:
 
-      - Serie con (GF/PJ)*0.5 + (SOT/PJ)*0.3 + ((GF - PKATT)/SOT)*0.2, o 0 donde PJ o SOT son 0
+      - Serie con 50 * min(1, (GF/PJ)/3) + 30 * min(1, (SOT/PJ_hist)/6) + 20 * min(1, efectividad/0,5), donde efectividad = (GF/PJ - 0,75 * PKATT/PJ_hist) / (SOT/PJ_hist); 0 donde PJ es 0
     """
-    efectividad = (GF - PKATT) / SOT.where(SOT > 0)
-    return (_por_partido(GF, PJ) * 0.5 + _por_partido(SOT, PJ) * 0.3 + efectividad * 0.2).fillna(0)
+    gf, sot, pk = _por_partido(GF, PJ), _tasa_historica(SOT, PJ_hist, "SOT"), _tasa_historica(PKATT, PJ_hist, "PKATT")
+    efectividad = ((gf - CONVERSION_PENAL * pk).clip(lower=0) / sot.where(sot > 0)).fillna(0)
+    return (_tope(gf, 3) * 50 + _tope(sot, 6) * 30 + _tope(efectividad, 0.5) * 20).fillna(0)
 
-def calc_mms(PJ, PTS, PG, SOT):
+def calc_mms(PJ, PTS, PG, SOT, PJ_hist):
     """
     ¿QUE HACE?
-    Calcula, partido a partido, el puntaje de momento (mean momentum score): proporción de puntos obtenidos sobre los posibles, proporción de victorias y tiros a puerta por partido
+    Calcula, partido a partido, el puntaje de momento (mean momentum score, 0 a 100): proporción de puntos obtenidos sobre los posibles en el ciclo y tiros a puerta por partido del historico. (PG) no se usa: la proporción de victorias ya está dentro de los puntos
 
     Args:
 
-      - PJ, PTS, PG: Series con el acumulado de partidos jugados, puntos y partidos ganados hasta cada partido
+      - PJ, PTS, PG: Series con el acumulado de partidos jugados, puntos y partidos ganados del ciclo hasta cada partido
 
-      - SOT: Serie con el progreso de tiros a puerta del equipo
+      - SOT, PJ_hist: Series con el progreso de tiros a puerta y partidos del historico abstracto
 
     Return:
 
-      - Serie con (PTS/(PJ*3))*40 + (PG/PJ)*40 + (SOT/PJ)*2, o 0 donde PJ es 0
+      - Serie con 60 * PTS/(3*PJ) + 40 * min(1, (SOT/PJ_hist)/5), o 0 donde PJ es 0
     """
-    return (_por_partido(PTS, PJ * 3) * 40 + _por_partido(PG, PJ) * 40 + _por_partido(SOT, PJ) * 2).fillna(0)
+    return (_por_partido(PTS, PJ * 3) * 60 + _tope(_tasa_historica(SOT, PJ_hist, "SOT"), 5) * 40).fillna(0)
 
 def calc_rate(valor, PJ):
     """
@@ -677,7 +700,7 @@ def calculo_metricas_0(df_desempegno, drop_metricas=DROP_METRICS, metricas_opcio
 
       2.0) Toma las métricas base de ese lado por su nombre con sufijo (PTS_0, PJ_0, ...)
 
-      2.1) Busca el progreso abstracto del equipo de cada fila; si el país no tiene registros usa 0.1
+      2.1) Busca el progreso abstracto del equipo de cada fila (VI, SOT, PKATT, PKATTALLOW y sus partidos PJ); si el país no tiene registros queda en 0 y las calc_* usan las tasas de referencia (TASAS_REFERENCIA)
 
       2.2) Calcula fila a fila las opcionales con "calc_gkps", "calc_mds", "calc_mos", "calc_mms" y "calc_rate"; cada partido solo ve su propio acumulado
 
@@ -708,7 +731,8 @@ def calculo_metricas_0(df_desempegno, drop_metricas=DROP_METRICS, metricas_opcio
         raise RuntimeError("Llamar a reiniciar_opcionales(pais_id) antes de calcular métricas")
 
     # 1-) Un registro por país.
-    historico = opcionales.drop_duplicates(subset="pais", keep="first").set_index("pais")[METRICAS_ABSTRACTAS]
+    historico = opcionales.drop_duplicates(subset="pais", keep="first").set_index("pais")
+    historico = historico.reindex(columns=METRICAS_ABSTRACTAS + ["PJ"])
     bloques = []
 
     # 2-) Cada lado por separado.
@@ -717,16 +741,17 @@ def calculo_metricas_0(df_desempegno, drop_metricas=DROP_METRICS, metricas_opcio
         base = {m: df_desempegno[f"{m}_{idx}"].astype(float) for m in BASE_METRICS}
 
         # 2.1) Progreso abstracto del equipo de cada fila.
-        abst = historico.reindex(df_desempegno[lado].to_numpy()).fillna(0.1)
+        # sin historico: 0 partidos, y las calc_* usan las tasas de referencia
+        abst = historico.reindex(df_desempegno[lado].to_numpy()).fillna(0.0)
         abst.index = df_desempegno.index
 
         # 2.2) Opcionales calculadas fila a fila.
         features = {
             **base,
-            "gkps": calc_gkps(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"]),
-            "mds": calc_mds(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"]),
-            "mos": calc_mos(base["PJ"], base["GF"], abst["SOT"], abst["PKATT"]),
-            "mms": calc_mms(base["PJ"], base["PTS"], base["PG"], abst["SOT"]),
+            "gkps": calc_gkps(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"], abst["PJ"]),
+            "mds": calc_mds(base["PJ"], base["GC"], abst["VI"], abst["PKATTALLOW"], abst["PJ"]),
+            "mos": calc_mos(base["PJ"], base["GF"], abst["SOT"], abst["PKATT"], abst["PJ"]),
+            "mms": calc_mms(base["PJ"], base["PTS"], base["PG"], abst["SOT"], abst["PJ"]),
             "rate_GC": calc_rate(base["GC"], base["PJ"]),
             "rate_GF": calc_rate(base["GF"], base["PJ"]),
         }

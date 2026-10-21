@@ -1,7 +1,7 @@
 """
 Arma data/proxy_desempegno/metricas_abstractas_<año>.csv (lo que carga load_data en la tabla proxy_desempegno): una fila
-por seleccion y mundial con VI, SOT, PKATT y PKATTALLOW, de donde salen las puntuaciones por posicion (gkps, mds, mos,
-mms) de cada equipo.
+por seleccion y mundial con sus partidos (PJ), VI, SOT, PKATT y PKATTALLOW, de donde salen las puntuaciones por posicion
+(gkps, mds, mos, mms) de cada equipo. PJ es el denominador de las tasas por partido del historico.
 
 De donde sale cada metrica:
 
@@ -109,7 +109,7 @@ def construir_proxy(estadisticas, fbref):
 
   Returns:
 
-    - (df con agno, pais, VI, SOT, PKATT, PKATTALLOW, pk_real, sot_real; diccionario con las tasas usadas)
+    - (df con agno, pais, PJ, VI, SOT, PKATT, PKATTALLOW, pk_real, sot_real; diccionario con las tasas usadas)
   """
   df = estadisticas.merge(fbref, on=["agno", "pais"], how="left")
   pk_real = df["PKATT"].notna() & df["PKATTALLOW"].notna()
@@ -122,7 +122,7 @@ def construir_proxy(estadisticas, fbref):
   df.loc[~pk_real, "PKATTALLOW"] = df.loc[~pk_real, "PKATT"]
   df.loc[~sot_real, "SOT"] = (df.loc[~sot_real, "GF"] / tasa_sot).round(1)
   df["pk_real"], df["sot_real"] = pk_real.astype(int), sot_real.astype(int)
-  return df[["agno", "pais", "VI", "SOT", "PKATT", "PKATTALLOW", "pk_real", "sot_real"]], {"penales_por_partido": tasa_pk, "goles_por_tiro_a_puerta": tasa_sot}
+  return df[["agno", "pais", "PJ", "VI", "SOT", "PKATT", "PKATTALLOW", "pk_real", "sot_real"]], {"penales_por_partido": tasa_pk, "goles_por_tiro_a_puerta": tasa_sot}
 
 
 def main():
