@@ -52,19 +52,24 @@ MATCH_AWAY_IDX = 1
 
 def resultados_reales(df_partidos):
   """
-  Diccionario (home, away) -> (score_0, score_1) con los marcadores reales de (df_partidos) (columnas home, away, score_0 y score_1, con ids de pais). Lo usa "intsc_prob_goles" (alterno=1) para jugar las fases anteriores a la objetivo
+  Diccionario (home, away) -> lista de (score_0, score_1) en orden de juego con los marcadores reales de (df_partidos) (columnas home, away, score_0 y score_1, con ids de pais). Es una lista porque en 1934 y 1938 un empate se repetia (Italia - España 1:1 y luego 1:0). Lo usa "intsc_prob_goles" (alterno=1) para jugar las fases anteriores a la objetivo
   """
   goles = df_partidos[["score_0", "score_1"]].apply(pd.to_numeric).to_numpy()
-  return {(h, a): (g0, g1) for h, a, (g0, g1) in zip(df_partidos["home"], df_partidos["away"], goles)}
+  salida = {}
+  for h, a, (g0, g1) in zip(df_partidos["home"], df_partidos["away"], goles):
+    salida.setdefault((h, a), []).append((g0, g1))
+  return salida
 
 def marcador_real(resultados, home, away):
   """
-  Marcador real de (home) contra (away) en (resultados) ("resultados_reales"); si el partido figura con los equipos invertidos se devuelve girado. Lanza ValueError si ese partido no se jugo en el mundial
+  Marcador real de (home) contra (away) en (resultados) ("resultados_reales"); si el partido figura con los equipos invertidos se devuelve girado. Si la pareja se enfrento mas de una vez (partido de desempate) se consume el primero que queda, asi el original y su repeticion reciben cada uno su marcador. Lanza ValueError si ese partido no se jugo en el mundial
   """
+  def siguiente(lista):
+    return lista.pop(0) if len(lista) > 1 else lista[0]
   if (home, away) in resultados:
-    return resultados[(home, away)]
+    return siguiente(resultados[(home, away)])
   if (away, home) in resultados:
-    g0, g1 = resultados[(away, home)]
+    g0, g1 = siguiente(resultados[(away, home)])
     return g1, g0
   raise ValueError(f"El partido {home} - {away} no figura entre los resultados reales del mundial")
 
@@ -1628,6 +1633,20 @@ class func_prediccion_orden(normali):
 
       yield ((y_home, p_hm), (y_away, p_aw))
 
+  def registrar_partido(self, partido, ganador, perdedor, empate):
+    """
+    ¿QUE HACE?
+    Guarda en (dic_matches) el ganador y el perdedor de (partido). Si es la repeticion de un partido anterior que termino empatado (1934 y 1938 desempataban jugando de nuevo, sin penales), el ganador de la repeticion pasa a ser tambien el del partido original, que es al que se refieren las rondas siguientes ("Winner Match 12")
+    """
+    self.dic_matches[partido]["ganador"], self.dic_matches[partido]["perdedor"] = ganador, perdedor
+    pendientes = self.__dict__.setdefault("empates_por_repetir", {})
+    pareja = frozenset((ganador, perdedor))
+    original = pendientes.pop(pareja, None)
+    if original is not None:
+      self.dic_matches[original]["ganador"], self.dic_matches[original]["perdedor"] = ganador, perdedor
+    elif empate:
+      pendientes[pareja] = partido
+
   def ganador_perdedor(self, paso):
     """
     ¿QUE HACE?
@@ -1844,8 +1863,7 @@ class func_prediccion_orden(normali):
         
         indice = (self.n_partidos - tamagno) + row.Index
         partido = f"Match {indice}"
-        self.dic_matches[partido]["ganador"] = ganador
-        self.dic_matches[partido]["perdedor"] = perdedor
+        self.registrar_partido(partido, ganador, perdedor, point_h == point_a)
 
         Y0 = np.append(Y0, [point_h, point_a])
 
@@ -1877,8 +1895,7 @@ class func_prediccion_orden(normali):
           ganador = away
           perdedor = home
 
-        self.dic_matches[partido]["ganador"] = ganador
-        self.dic_matches[partido]["perdedor"] = perdedor
+        self.registrar_partido(partido, ganador, perdedor, point_h == point_a)
 
         Y0 = np.append(Y0, [point_h, point_a])
 

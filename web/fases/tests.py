@@ -276,3 +276,21 @@ class PuntajesPosicionTests(SimpleTestCase):
       ruta.write_text(json.dumps({"backend": "lstm", "metricas": list(ALL_METRICS), "config": {}}), encoding="utf-8")
       with self.assertRaisesRegex(ValueError, f"version 1 de las metricas y el codigo usa la {VERSION_METRICAS}"):
         cargar_predictor(carpeta)
+
+
+class DesempatesRealesTests(SimpleTestCase):
+
+  def test_partido_repetido_recibe_cada_marcador(self):
+    from .modulo import marcador_real, resultados_reales
+    reales = resultados_reales(pd.DataFrame({"home": [7, 7], "away": [6, 6], "score_0": [1, 1], "score_1": [1, 0]}))
+    # Italia - España 1934: el original 1:1 y la repeticion 1:0; con los equipos invertidos se gira
+    self.assertEqual(marcador_real(reales, 7, 6), (1, 1))
+    self.assertEqual(marcador_real(reales, 6, 7), (0, 1))
+
+  def test_repeticion_decide_el_partido_original(self):
+    from .modulo import func_prediccion_orden
+    objs = func_prediccion_orden.__new__(func_prediccion_orden)
+    objs.dic_matches = {f"Match {i}": {"ganador": None, "perdedor": None} for i in (12, 13)}
+    objs.registrar_partido("Match 12", 6, 7, empate=True)    # 1:1: provisoriamente pasa el visitante
+    objs.registrar_partido("Match 13", 7, 6, empate=False)   # la repeticion la gana Italia
+    self.assertEqual(objs.dic_matches["Match 12"], {"ganador": 7, "perdedor": 6})
