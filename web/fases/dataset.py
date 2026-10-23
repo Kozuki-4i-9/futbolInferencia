@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from . import modulo
+from .contexto import DESCANSO_MAXIMO, ELO_INICIAL, calcular_elo, contexto_de_mundiales, descansos
 from .modulo import BASE_METRICS, ALL_METRICS, calculo_metricas_0, calculo_metricas_1, historico_abstractas
 
 FASE_ELIMINATORIA = "eliminatoria"
@@ -26,6 +27,17 @@ CICLO_INTERNACIONALES = "internacionales"
 CATEGORIAS = ["mundial", "eliminatoria_mundial", "continental", "eliminatoria_continental", "liga_naciones", "amistoso", "regional"]
 # contexto por paso en "construir_secuencias": es_local, neutral, one-hot de categoria, pk_real, sot_real
 N_CONTEXTO = 2 + len(CATEGORIAS) + 2
+
+# contexto adicional opcional (lo agrega "agregar_contexto"); "{i}" es el lado (0 home, 1 away)
+EXTRAS = {
+  "elo": ["elo_{i}"],                                  # Elo antes del partido (al inicio del torneo en un mundial)
+  "fase": ["fase_final"],                              # 1 despues de la primera fase del mundial
+  "continental": ["local_continental_{i}"],            # juega en su propia confederacion
+  "descanso": ["descanso_{i}"],                        # dias desde su partido anterior
+  "grupo": ["pts_torneo_{i}", "pj_torneo_{i}"],        # puntos y partidos que lleva en este mundial
+}
+# los que la simulacion de la app sabe calcular igual que el entrenamiento ("contexto_simulacion")
+EXTRAS_EN_APP = ("elo", "fase", "continental")
 
 
 def mapa_paises(*dfs):
@@ -54,7 +66,7 @@ def cargar_fuentes():
 
   Returns:
 
-    - (partidos, clasificaciones, proxy, internacionales): df con home, away, score_0, score_1, agno (los dos primeros), df de "formar_dataset_real('proxy_desempegno')" y df de "formar_dataset_real('internacionales')" (vacio si no se cargo)
+    - (partidos, clasificaciones, proxy, internacionales, fixtures): df con home, away, score_0, score_1, agno (los dos primeros), df de "formar_dataset_real('proxy_desempegno')", df de "formar_dataset_real('internacionales')" (vacio si no se cargo) y df con agno, home, away del fixture de cada mundial
   """
   partidos = modulo.formar_dataset_real("partidos")
   # el marcador es el de los 90 o 120 minutos (la tanda queda aparte); los partidos no jugados (jugado = 0) no entran
@@ -62,7 +74,83 @@ def cargar_fuentes():
   clasificaciones = modulo.formar_dataset_real("clasificaciones")
   proxy = modulo.formar_dataset_real("proxy_desempegno")
   internacionales = modulo.formar_dataset_real("internacionales")
-  return partidos, clasificaciones, proxy, internacionales
+  fixtures = pd.DataFrame(list(modulo.fixtures.objects.values("agno", "home", "away"))).astype({"agno": "int64"})
+  return partidos, clasificaciones, proxy, internacionales, fixtures
+
+
+def partidos_primera_fase(fixtures):
+  """Partidos de la primera fase de cada mundial: las filas del fixture con los dos equipos ya definidos (como "create_features")"""
+  definidos = ~fixtures["away"].str.contains("Match|Grupo")
+  return fixtures[definidos].groupby("agno").size().to_dict()
+
+
+def agregar_contexto(ds, internacionales, fixtures=None):
+  """
+  ¿QUE HACE?
+  Agrega a (ds) (salida de "construir_dataset") las columnas de EXTRAS, con los mismos datos que usara la simulacion de la app
+
+  ¿COMO LO HACE?
+  0-) Cada fila que no es de mundial se ubica en (internacionales) por (agno, home, away, goles); de ahi su fecha y su Elo antes del partido. Si no se encuentra, Elo del inicio del mundial anterior (sin mirar ese partido) y descanso maximo
+
+  1-) En los partidos de mundial el Elo es el del inicio del torneo (la app no conoce los resultados simulados de antes), la fecha sale del mismo partido en (internacionales) y la fase final empieza al terminar los partidos de la primera fase del fixture
+
+  2-) local_continental: en un mundial, si la confederacion del equipo es la del anfitrion; fuera de los mundiales, si los dos equipos son de la misma confederacion o el equipo juega en su cancha
+
+  3-) pts_torneo / pj_torneo: lo que lleva el equipo en ese mundial antes del partido (2 puntos por victoria hasta 1990)
+  """
+  ds = ds.copy()
+  mundiales = contexto_de_mundiales(internacionales)
+  elo_0, elo_1, _, _ = calcular_elo(internacionales)
+  descanso = descansos(internacionales)
+  primera_fase = partidos_primera_fase(fixtures) if fixtures is not None else {}
+
+  no_mundial = (internacionales["categoria"] != "mundial").to_numpy()
+  por_partido = {}
+  for fecha, a, h, w, g0, g1, e0, e1 in zip(internacionales["fecha"].to_numpy()[no_mundial], internacionales["agno"].to_numpy()[no_mundial],
+                                            internacionales["home"].to_numpy()[no_mundial], internacionales["away"].to_numpy()[no_mundial],
+                                            internacionales["score_0"].to_numpy()[no_mundial], internacionales["score_1"].to_numpy()[no_mundial],
+                                            elo_0[no_mundial], elo_1[no_mundial]):
+    por_partido.setdefault((a, h, w, g0, g1), []).append((fecha, e0, e1))
+  fecha_mundial = {(r.agno, r.home, r.away): r.fecha for r in internacionales[~no_mundial].itertuples()}
+  agnos = sorted(mundiales)
+
+  columnas = {c.format(i=i): [] for cs in EXTRAS.values() for c in cs for i in (0, 1)}
+  torneo = {}  # (agno, pais) -> [puntos, partidos] en el mundial
+
+  for r in ds.itertuples(index=False):
+    ctx = mundiales.get(r.agno, {})
+    confed = ctx.get("confederacion", {})
+    if r.fase == FASE_MUNDIAL:
+      fecha = fecha_mundial.get((r.agno, r.home, r.away), fecha_mundial.get((r.agno, r.away, r.home)))
+      elos = [ctx.get("elo", {}).get(p, ELO_INICIAL) for p in (r.home, r.away)]
+      continental = [int(confed.get(p) in ctx.get("confederacion_anfitrion", set())) for p in (r.home, r.away)]
+      fase_final = int(r.orden >= primera_fase.get(r.agno, np.inf))
+      acumulado = [torneo.setdefault((r.agno, p), [0, 0]) for p in (r.home, r.away)]
+      grupo = [list(x) for x in acumulado]
+      victoria = 2 if r.agno < 1994 else 3
+      puntos = (victoria, 0) if r.goles_0 > r.goles_1 else (0, victoria) if r.goles_1 > r.goles_0 else (1, 1)
+      for x, pts in zip(acumulado, puntos):
+        x[0] += pts
+        x[1] += 1
+    else:
+      encontrados = por_partido.get((r.agno, r.home, r.away, r.goles_0, r.goles_1))
+      if encontrados:
+        fecha, e0, e1 = encontrados.pop(0) if len(encontrados) > 1 else encontrados[0]
+        elos = [e0, e1]
+      else:
+        anterior = max((a for a in agnos if a < r.agno), default=None)
+        fecha, elos = None, [mundiales.get(anterior, {}).get("elo", {}).get(p, ELO_INICIAL) for p in (r.home, r.away)]
+      misma = confed.get(r.home) is not None and confed.get(r.home) == confed.get(r.away)
+      continental = [int(misma or r.local_0), int(misma or r.local_1)]
+      fase_final, grupo = 0, [[0, 0], [0, 0]]
+    for i, p in enumerate((r.home, r.away)):
+      columnas[f"elo_{i}"].append(elos[i])
+      columnas[f"local_continental_{i}"].append(continental[i])
+      columnas[f"descanso_{i}"].append(descanso.get((fecha, p), DESCANSO_MAXIMO) if fecha else DESCANSO_MAXIMO)
+      columnas[f"pts_torneo_{i}"].append(grupo[i][0])
+      columnas[f"pj_torneo_{i}"].append(grupo[i][1])
+    columnas["fase_final"].append(fase_final)
+  return ds.assign(**columnas)
 
 
 def _jugar(estado, home, away, goles_0, goles_1):
@@ -106,7 +194,8 @@ def _jugar(estado, home, away, goles_0, goles_1):
   return entrada[[f"{m}_{i}" for i in (0, 1) for m in ALL_METRICS]]
 
 
-def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None, internacionales=None, ciclo=CICLO_ELIMINATORIAS):
+def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None, internacionales=None, ciclo=CICLO_ELIMINATORIAS,
+                      fixtures=None):
   """
   ¿QUE HACE?
   Arma la tabla de entrenamiento: una fila por partido real (ciclo previo y mundial) en orden cronologico, con las metricas de los dos equipos antes del partido, sus goles, el tipo de partido y si se jugo en campo neutral. Reproduce el ciclo que simula la app: cada mundial arranca con lo acumulado en su ciclo previo
@@ -143,6 +232,8 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
     - internacionales: df de "formar_dataset_real('internacionales')" (fecha, agno, home, away, score_0, score_1, categoria, neutral) o None
 
     - ciclo: CICLO_ELIMINATORIAS o CICLO_INTERNACIONALES (este exige (internacionales))
+
+    - fixtures: df con agno, home, away del fixture de cada mundial (para saber donde termina la primera fase); con (internacionales) se agregan las columnas de EXTRAS ("agregar_contexto")
 
   Returns:
 
@@ -229,10 +320,11 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
     # 2-) sin estado global residual
     modulo.opcionales = opcionales_previos
 
-  return pd.DataFrame(filas)
+  salida = pd.DataFrame(filas)
+  return agregar_contexto(salida, internacionales, fixtures) if hay_internacionales and len(salida) else salida
 
 
-def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
+def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True, extras=()):
   """
   ¿QUE HACE?
   Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta. Si (con_contexto), cada paso suma el contexto del partido: si el equipo jugo en su cancha (local_0 / local_1), si fue en campo neutral, su categoria en one-hot (CATEGORIAS) y si los penales y tiros a puerta de su historico son reales (pk_real, sot_real) o imputados
@@ -252,11 +344,14 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
 
     - con_contexto: True agrega a cada paso N_CONTEXTO valores (es_local, neutral, one-hot de categoria, pk_real, sot_real)
 
+    - extras: nombres de EXTRAS (elo, fase, continental, descanso, grupo) cuyas columnas se agregan al final de cada paso
+
   Returns:
 
     - diccionario con arrays: "id_0", "id_1" (n,), "seq_0", "seq_1" (n, k, len(ALL_METRICS), el doble con rival, mas N_CONTEXTO con contexto), "mascara_0", "mascara_1" (n, k) con 1 en pasos reales, "y" (n, 2) goles de home y away
   """
-  n, f = len(dataset), len(ALL_METRICS) * (2 if con_rival else 1) + (N_CONTEXTO if con_contexto else 0)
+  cols_extra = {i: [c.format(i=i) for e in extras for c in EXTRAS[e]] for i in (0, 1)}
+  n, f = len(dataset), len(ALL_METRICS) * (2 if con_rival else 1) + (N_CONTEXTO if con_contexto else 0) + len(cols_extra[0])
   salida = {
     "id_0": dataset["home_id"].to_numpy(), "id_1": dataset["away_id"].to_numpy(),
     "seq_0": np.zeros((n, k, f)), "seq_1": np.zeros((n, k, f)),
@@ -272,6 +367,7 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
     local = {i: dataset[f"local_{i}"].to_numpy(dtype=float) if f"local_{i}" in dataset else (1 - neutral) * (i == 0) for i in (0, 1)}
     categoria = np.array([[c == cat for cat in CATEGORIAS] for c in dataset["categoria"]], dtype=float)
     marcas = {i: dataset[[f"pk_real_{i}", f"sot_real_{i}"]].to_numpy(dtype=float) for i in (0, 1)}
+  valores_extra = {i: dataset[cols_extra[i]].to_numpy(dtype=float) for i in (0, 1)}
 
   for fila, (id_0, id_1) in enumerate(zip(salida["id_0"], salida["id_1"])):
     for lado, equipo in ((0, id_0), (1, id_1)):
@@ -281,6 +377,8 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
         paso = np.concatenate([paso, matriz[1 - lado][fila]])
       if con_contexto:
         paso = np.concatenate([paso, [local[lado][fila], neutral[fila]], categoria[fila], marcas[lado][fila]])
+      if extras:
+        paso = np.concatenate([paso, valores_extra[lado][fila]])
       pasos.append(paso)
       ultimos = pasos[-k:]
       salida[f"seq_{lado}"][fila, k - len(ultimos):] = ultimos

@@ -195,7 +195,7 @@ class PredictorKeras:
 
   @classmethod
   def entrenar(cls, dataset, secuencias, filas_entrenamiento, filas_validacion, k, con_rival, con_contexto,
-               semilla=0, epocas=80, paciencia=8, verbose=0):
+               semilla=0, epocas=80, paciencia=8, verbose=0, extras=()):
     """
     ¿QUE HACE?
     Entrena la red con (filas_entrenamiento) y detiene el entrenamiento cuando la perdida en (filas_validacion) deja de mejorar (se quedan los mejores pesos). Sin (filas_validacion) entrena (epocas) fijas
@@ -204,7 +204,7 @@ class PredictorKeras:
 
       - dataset: df de "construir_dataset" (para el nombre de cada id)
 
-      - secuencias: salida de "construir_secuencias(dataset, k, con_rival, con_contexto)" con esos mismos parametros
+      - secuencias: salida de "construir_secuencias(dataset, k, con_rival, con_contexto, extras)" con esos mismos parametros
 
       - filas_entrenamiento, filas_validacion: arrays booleanos o de indices sobre (dataset); (filas_validacion) puede ser None
 
@@ -224,7 +224,7 @@ class PredictorKeras:
                          dataset[["away_id", "away"]].set_axis(["id", "pais"], axis=1)]).drop_duplicates("id").set_index("id")["pais"]
     n_paises = int(nombres.index.max()) + 1
     config = {
-      "k": k, "con_rival": con_rival, "con_contexto": con_contexto, "n_paises": n_paises, "semilla": semilla,
+      "k": k, "con_rival": con_rival, "con_contexto": con_contexto, "extras": list(extras), "n_paises": n_paises, "semilla": semilla,
       "media": pasos.mean(axis=0).tolist(), "desv": np.where(desv > 0, desv, 1.0).tolist(),
       "paises": [nombres.get(i) for i in range(n_paises)],
     }
@@ -255,18 +255,21 @@ class PredictorKeras:
 
     2-) Llama a "construir_secuencias" con k = 1 y los bloques de la config; (tabla) debe traer ALL_METRICS_0/1 y, con contexto, neutral, categoria, pk_real_0/1 y sot_real_0/1
     """
-    from .dataset import construir_secuencias
+    from .dataset import EXTRAS_EN_APP, construir_secuencias
 
     c = self.config
     if c["k"] != 1:
       raise ValueError(f"La simulacion solo arma secuencias de 1 paso y este modelo usa k={c['k']}")
+    faltan = set(c.get("extras", [])) - set(EXTRAS_EN_APP)
+    if faltan:
+      raise ValueError(f"La simulacion no calcula el contexto {sorted(faltan)} que usa este modelo")
     ids = {nombre: i for i, nombre in enumerate(c["paises"]) if nombre is not None}
     tabla = tabla.assign(
       home_id=tabla["home"].map(ids).fillna(c["n_paises"]).astype("int64"),
       away_id=tabla["away"].map(ids).fillna(c["n_paises"]).astype("int64"),
       goles_0=0, goles_1=0,
     )
-    return construir_secuencias(tabla, k=1, con_rival=c["con_rival"], con_contexto=c["con_contexto"])
+    return construir_secuencias(tabla, k=1, con_rival=c["con_rival"], con_contexto=c["con_contexto"], extras=c.get("extras", []))
 
   def predecir(self, lote):
     secuencias = lote.secuencias if lote.secuencias is not None else self.secuencias_desde_tabla(lote.tabla)

@@ -47,8 +47,6 @@ C_S_DELETE_INDEX = EMBEDDING_DIM + len(ALL_METRICS) # posición del score tras r
 C_S_Y_INDEX = C_S_DELETE_INDEX
 N_STEPS = 1 # partidos por ventana; el .h5 actual se entreno con 1 (el reentrenamiento lo leera de su esquema)
 
-MATCH_HOME_IDX = 0
-MATCH_AWAY_IDX = 1
 
 def resultados_reales(df_partidos):
   """
@@ -1528,7 +1526,7 @@ class func_prediccion_orden(normali):
   def contexto_simulacion(self, tabla):
     """
     ¿QUE HACE?
-    Agrega a la (tabla) de entrada al predictor (ids home_id y away_id de la app) lo que el LSTM recibe como contexto, con las mismas columnas que "construir_dataset": nombres de los equipos, categoria ("mundial"), neutral (0 si juega un anfitrion), local_0 / local_1 (el anfitrion juega en su cancha) y si el historico de metricas abstractas de cada equipo tiene penales o tiros reales (pk_real, sot_real). Usa los atributos (anfitriones) y (con_datos_reales) que deja "consulta_general"; sin ellos, todo partido es neutral y sin datos reales
+    Agrega a la (tabla) de entrada al predictor (ids home_id y away_id de la app) lo que el LSTM recibe como contexto, con las mismas columnas que "construir_dataset": nombres de los equipos, categoria ("mundial"), neutral (0 si juega un anfitrion), local_0 / local_1 (el anfitrion juega en su cancha) y si el historico de metricas abstractas de cada equipo tiene penales o tiros reales (pk_real, sot_real). Agrega tambien el contexto de EXTRAS que la app sabe calcular (dataset.EXTRAS_EN_APP): elo_0/1 al inicio del mundial, local_continental_0/1 y fase_final. Usa los atributos (anfitriones), (con_datos_reales) y (primera_fase) que deja "consulta_general"; sin ellos, todo partido es neutral y sin datos reales
     """
     anfitriones = getattr(self, "anfitriones", set())
     reales = getattr(self, "con_datos_reales", {})
@@ -1540,43 +1538,30 @@ class func_prediccion_orden(normali):
     for marca in ("pk_real", "sot_real"):
       for i, lado in ((0, "home_id"), (1, "away_id")):
         tabla[f"{marca}_{i}"] = tabla[lado].isin(reales.get(marca, set())).astype(int)
+    # contexto adicional (EXTRAS de dataset.py) igual que "agregar_contexto": Elo al inicio del mundial, si ya paso la
+    # primera fase y si el equipo juega en la confederacion del anfitrion
+    from .contexto import ELO_INICIAL, contexto_desde_bd
+    mundial = contexto_desde_bd().get(self.obj0, {}) if isinstance(self.obj0, int) else {}
+    elo, confed = mundial.get("elo", {}), mundial.get("confederacion", {})
+    for i, lado in ((0, "home"), (1, "away")):
+      tabla[f"elo_{i}"] = tabla[lado].map(lambda p: elo.get(p, ELO_INICIAL))
+      tabla[f"local_continental_{i}"] = tabla[lado].map(lambda p: int(confed.get(p) in mundial.get("confederacion_anfitrion", set())))
+    tabla["fase_final"] = int(self.ind0[0] != getattr(self, "primera_fase", "grupo"))
     return tabla
 
   def intsc_prob_goles(self, X, model, alterno=0):
     """
     ¿QUE HACE?
-    Realiza la inferencia hacia la entrada array (X) con el modelo (model). Obtiene la probabilidad de que un resultado del modelo sea factible mediante el "metodo de interseccion de Poisson". Usa las probabilidades  de Poisson arrojadas para sacar el puntaje por el metodo convencional dado para la fase de grupos (3 puntos partido ganado, 0 puntos partido perdido, 1 punto partido empatado para cada equipo). Tambien puede entregar los resultados default de (X) segun si (alterno) es 0 o 1 respectivamente
+    Juega los partidos de la entrada (X): con el predictor (alterno=0) o con sus resultados reales (alterno=1, fases anteriores a la objetivo), y entrega para cada uno los goles y los puntos de home y away
 
     ¿COMO LO HACE?
-    0-) Si (alterno) es 0, la entrada array (X) se convierte con "lote_desde_entrada" en el (Lote) que recibe cualquier predictor (ver predictores.py); el predictor decide como usarla (medias, secuencias para una LSTM, etc.)
+    0-) alterno = 0: (X) se convierte con "lote_desde_entrada" y "contexto_simulacion" en el (Lote) que recibe cualquier predictor (ver predictores.py), que devuelve los goles esperados (n, 2)
 
-    1-) hay 2 condicionales
+      0.0) "resultado_y_marcador" (evaluacion.py) decide el resultado (empate si las probabilidades de ganar de los dos estan a menos del umbral de empate del modelo) y el marcador mas probable dentro de ese resultado: los mismos que mide la evaluacion
 
-      1.0) si (alterno) es igual a 0. El predictor (model) devuelve con "predecir" un array (n, 2) con los goles esperados de home y away, que se guarda en (Y0)
+      0.1) Puntos segun el resultado (3 por victoria, 2 hasta 1990, 1 por empate). Si en una eliminatoria el marcador es empate, pasa el que tenia mas probabilidad de ganar: se guarda en el atributo (ganador_empate) para "jugar"
 
-      1.1) si (alterno) es igual a 1. (X) es el df de la fase (o la Serie de un partido): para cada pareja (home, away) se toma con "marcador_real" el resultado que tuvo en el mundial real (atributo (resultados_reales), lo arma "consulta_general") y se entrega con los puntos que da ese marcador (3 al ganador, 1 y 1 si empatan), sin pasar por los pasos 2-) y 3-)
-
-    2-) Se itera al mismo tiempo la entrada (X) y la inferencia o valores default (Y0). Se almacena en unas variables (home, away) los valores de desempeño de los equipos home y away. Se guarda en unas variables (y_home, y_away) los resultados default o arrojados por la inferencia del modelo.
-
-    3-) Se calcula la fuerza de cada equipo
-
-      3.0) Se multiplican los primedios de goles por equipo a enfrentarse para obtener el correspondiente lambda de la distribucion de Poisson y se almacena un una variable (prob_puntaje). Se almacena en unas variables (p_hm, p_aw) la probabilidad de Poisson segun (prob_puntaje) y la salida iterada de (Y0). Se multiplican ambas probabilidades y se dejan en una variable (p)
-
-        3.0.0) Se tienen 2 condicionales
-
-          3.0.0.0) Si (p) redondeada es mayor o igual a 0.5. Se tienen 2 condicionales
-
-            3.0.0.0.0) Si (p_h) es mayor que (p_a). p_hm es igual a 3, p_aw es igual a 0
-
-            3.0.0.0.1) Si (p_a) es mayor que (p_h). p_aw es igual a 3, p_hm es equal a 0
-
-          3.0.0.1) Si (p) redondeada es menor a 0.5
-
-            3.0.0.1.0) (p_hm) es igual a 1, (p_aw) es igual a 1
-
-        3.0.1) Se entrega un iterable con el numero de goles predicho o default para home y away respectivamente, y el puntaje determinado con la distribucion de Poisson para home y away respectivamente
-
-      3.1) Si (home) o (away) no tienen registro en dic_fuerza (no jugaron en ese rol en la fase), se usa la media de goles de todos los equipos en ese rol, y se sigue como en 3.0)
+    1-) alterno = 1: (X) es el df de la fase (o la Serie de un partido): para cada pareja (home, away) se toma con "marcador_real" el resultado que tuvo en el mundial real (atributo (resultados_reales), lo arma "consulta_general") y se entrega con los puntos que da ese marcador
 
     Args:
 
@@ -1592,7 +1577,16 @@ class func_prediccion_orden(normali):
     if alterno == 0:
       # X viene de "calculo_metricas_0" (esquema fijo); el predictor devuelve (n, 2) goles esperados de home y away
       from .predictores import Lote, lote_desde_entrada
+      from .evaluacion import resultado_y_marcador
       Y0 = model.predecir(Lote(self.contexto_simulacion(lote_desde_entrada(X).tabla)))
+      resultado, marcador, probs = resultado_y_marcador(Y0, getattr(model, "config", {}).get("umbral_empate", 0.0))
+      victoria = 2 if isinstance(self.obj0, int) and self.obj0 < 1994 else 3
+      self.__dict__.setdefault("ganador_empate", {})
+      for r, (g0, g1), p, fila in zip(resultado, marcador, probs, np.atleast_2d(X)):
+        self.ganador_empate[(fila[0], fila[COLS_MODELO_POR_EQUIPO])] = "home" if p[0] >= p[2] else "away"
+        puntos = (victoria, 0) if r == 1 else (0, victoria) if r == -1 else (1, 1)
+        yield ((float(g0), puntos[0]), (float(g1), puntos[1]))
+      return
 
     elif alterno == 1:
       # X es el df de la fase (o la Serie de un partido): el marcador se busca por pareja en el mundial real
@@ -1605,33 +1599,6 @@ class func_prediccion_orden(normali):
         yield ((y_home, p_hm), (y_away, p_aw))
       return
 
-    for resultados_Y0, entradas_X in zip(Y0, X):
-      home = entradas_X[MATCH_HOME_IDX]
-      away = entradas_X[MATCH_AWAY_IDX]
-
-      y_home = resultados_Y0[0]
-      y_away = resultados_Y0[1]
-
-      p_hm, p_aw = 0, 0
-
-      # un equipo sin registro como local (o visitante) toma la media de goles de todos los equipos en ese rol
-      fuerza_h, fuerza_a = self.dic_fuerza["home"]["goles"], self.dic_fuerza["away"]["goles"]
-      prob_puntaje = fuerza_h.get(home, fuerza_h.mean()) * fuerza_a.get(away, fuerza_a.mean())
-
-      p_h = poisson.pmf(y_home, prob_puntaje)
-      p_a = poisson.pmf(y_away, prob_puntaje)
-      p = p_h * p_a
-
-      if round(p) >= 0.5:
-        if p_h > p_a:
-          p_hm, p_aw = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar)
-        elif p_a > p_h:
-          p_aw, p_hm = 3, 0 # PEND (idear forma colocar aqui 2 para antes de 1981 y 3 para despues e implementar
-
-      if round(p) < 0.5:
-        p_hm, p_aw = 1, 1
-
-      yield ((y_home, p_hm), (y_away, p_aw))
 
   def registrar_partido(self, partido, ganador, perdedor, empate):
     """
@@ -1851,8 +1818,9 @@ class func_prediccion_orden(normali):
       for points_, row in zip(puntos, df_fixture_updated.itertuples()):
         home, away = row.home, row.away
         point_h, point_a = points_[0][0], points_[1][0]
-        # en una fase anterior a la objetivo (resultados reales) el empate lo decide la tanda real
-        desempate_local = rejugada and point_h == point_a and gana_local_desempate(self.desempates, home, away)
+        # empate en eliminatoria: en una fase anterior a la objetivo lo decide la tanda real; si se predijo, el mas probable
+        desempate_local = point_h == point_a and (gana_local_desempate(self.desempates, home, away) if rejugada
+                                                  else self.__dict__.get("ganador_empate", {}).get((home, away)) == "home")
 
         if point_h > point_a or desempate_local:
           ganador = home
@@ -1886,7 +1854,8 @@ class func_prediccion_orden(normali):
       for points_ in puntos:
         home, away = df_fixture_updated["home"], df_fixture_updated["away"]
         point_h, point_a = points_[0][0], points_[1][0]
-        desempate_local = rejugada and point_h == point_a and gana_local_desempate(self.desempates, home, away)
+        desempate_local = point_h == point_a and (gana_local_desempate(self.desempates, home, away) if rejugada
+                                                  else self.__dict__.get("ganador_empate", {}).get((home, away)) == "home")
 
         if point_h > point_a or desempate_local:
           ganador = home
@@ -2393,6 +2362,8 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
   objs.resultados_reales = resultados_reales(partidos_agno)
   # quien paso en los empates reales (tanda de penales o partido no jugado), para rejugar las fases previas
   objs.desempates = desempates_reales(partidos_agno)
+  # 1934 y 1938 no tienen fase de grupos: su primera fase son los octavos (para el contexto "fase_final")
+  objs.primera_fase = "knockout" if int(pregunta_0[-4:]) in (1934, 1938) else "grupo"
   # contexto del LSTM: anfitriones del mundial (no juegan en campo neutral) y equipos con penales / tiros reales en su historico
   agno_consulta = int(pregunta_0[-4:])
   objs.anfitriones = {objs.pais_id[n] for n in internacionales.objects.filter(categoria="mundial", agno=str(agno_consulta), neutral="0")

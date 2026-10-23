@@ -34,8 +34,8 @@ class Command(BaseCommand):
                         help="partidos previos a cada mundial: solo eliminatorias o todos los internacionales")
 
   def handle(self, *args, **opciones):
-    partidos, clasificaciones, proxy, internacionales = cargar_fuentes()
-    dataset = construir_dataset(partidos, clasificaciones, proxy, internacionales=internacionales, ciclo=opciones["ciclo"])
+    partidos, clasificaciones, proxy, internacionales, fixtures = cargar_fuentes()
+    dataset = construir_dataset(partidos, clasificaciones, proxy, internacionales=internacionales, ciclo=opciones["ciclo"], fixtures=fixtures)
     salida = SALIDAS[opciones["ciclo"]]
     salida.parent.mkdir(parents=True, exist_ok=True)
     dataset.to_csv(salida, index=False, encoding="utf-8")
