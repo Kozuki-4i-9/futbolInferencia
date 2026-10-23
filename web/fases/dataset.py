@@ -227,7 +227,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 
     - pais_id: diccionario nombre del país -> id; None lo arma con todos los equipos de las fuentes usadas
 
-    - agnos: mundiales a procesar; None usa "modulo.agnos" (1934 - 2022)
+    - agnos: mundiales a procesar; None usa "modulo.agnos" (1934 - 2026)
 
     - internacionales: df de "formar_dataset_real('internacionales')" (fecha, agno, home, away, score_0, score_1, categoria, neutral) o None
 

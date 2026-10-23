@@ -328,3 +328,47 @@ class ContextoTests(SimpleTestCase):
     # con umbral 0,1 el partido parejo pasa a empate, con el marcador de empate mas probable
     resultado, marcador, _ = resultado_y_marcador(np.array([[1.2, 1.15]]), umbral_empate=0.1)
     self.assertEqual((resultado.tolist(), marcador.tolist()), ([0], [[1, 1]]))
+
+
+class FormatoTorneoTests(SimpleTestCase):
+
+  TABLAS = {f"Grupo {g}": pd.DataFrame({"pais": [f"{g}{i}" for i in range(1, 5)], "Pts": [6, 4, p3, 0]})
+            for g, p3 in zip("ABCDEF", [3, 1, 3, 2, 3, 1])}
+
+  def test_llaves_1986_1994_no_cambian(self):
+    from .modulo import alinear_llave_terceros
+    # resultado guardado antes de pasar los datos a FormatoTorneo (los 4 mejores terceros: A, C, E, D)
+    esperado = {
+      1986: [("Winner Grupo A", "Third-p Grupo C"), ("Winner Grupo F", "Runners-up Grupo E"), ("Runners-up Grupo A", "Runners-up Grupo C"),
+             ("Winner Grupo B", "Third-p Grupo D"), ("Winner Grupo C", "Third-p Grupo A"), ("Runners-up Grupo F", "Runners-up Grupo B"),
+             ("Winner Grupo E", "Runners-up Grupo D"), ("Winner Grupo D", "Third-p Grupo E")],
+      1990: [("Winner Grupo A", "Third-p Grupo C"), ("Winner Grupo E", "Runners-up Grupo D"), ("Runners-up Grupo F", "Runners-up Grupo B"),
+             ("Winner Grupo B", "Third-p Grupo D"), ("Runners-up Grupo A", "Runners-up Grupo C"), ("Winner Grupo C", "Third-p Grupo A"),
+             ("Winner Grupo D", "Third-p Grupo E"), ("Winner Grupo F", "Runners-up Grupo E")],
+      1994: [("Runners-up Grupo A", "Runners-up Grupo C"), ("Winner Grupo A", "Third-p Grupo C"), ("Winner Grupo B", "Third-p Grupo D"),
+             ("Winner Grupo F", "Runners-up Grupo E"), ("Winner Grupo C", "Third-p Grupo A"), ("Winner Grupo E", "Runners-up Grupo D"),
+             ("Winner Grupo D", "Third-p Grupo E"), ("Runners-up Grupo F", "Runners-up Grupo B")],
+    }
+    for agno, partidos in esperado.items():
+      llave = alinear_llave_terceros(self.TABLAS, agno)
+      self.assertEqual(list(zip(llave.home, llave.away)), partidos)
+
+  def test_2026_reglamento_oficial(self):
+    from .modulo import FORMATOS, ReglamentoTerceros, alinear_llave_terceros
+    formato = FORMATOS[2026]
+    self.assertEqual((len(formato.llave), len(formato.cruces), formato.n_terceros), (16, 495, 8))
+    ReglamentoTerceros.oficial(2026)   # se valida al crearse
+    # pasan los terceros de B, D, E, F, I, J, K y L (como en 2026): el 1E enfrenta al 3D, el 1A al 3E
+    tablas = {f"Grupo {g}": pd.DataFrame({"pais": [f"{g}{i}" for i in range(1, 5)], "Pts": [7, 5, 3 if g in "BDEFIJKL" else 2, 0]})
+              for g in "ABCDEFGHIJKL"}
+    llave = alinear_llave_terceros(tablas, 2026)
+    cruces = dict(zip(llave.home, llave.away))
+    self.assertEqual(len(llave), 16)
+    self.assertEqual((cruces["Winner Grupo E"], cruces["Winner Grupo A"]), ("Third-p Grupo D", "Third-p Grupo E"))
+
+  def test_reglamento_2026_invalido(self):
+    from .modulo import ReglamentoInvalido, ReglamentoTerceros
+    oficial = ReglamentoTerceros.oficial(2026).a_json()
+    oficial["llave"] = oficial["llave"][:-1]
+    with self.assertRaisesRegex(ReglamentoInvalido, "16 partidos"):
+      ReglamentoTerceros.desde_json(2026, oficial)

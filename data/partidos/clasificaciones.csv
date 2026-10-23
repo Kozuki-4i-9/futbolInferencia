@@ -8175,3 +8175,610 @@ id,agno,home,away,score_0,score_1,tournament
 8173,2024,Guayana,Belice,3,1,FIFA World Cup qualification
 8174,2024,República Dominicana,Islas Vírgenes Británicas,4,0,FIFA World Cup qualification
 8175,2024,Puerto Rico,Anguila,8,0,FIFA World Cup qualification
+8176,2024,Bolivia,Venezuela,4,0,FIFA World Cup qualification
+8177,2024,Argentina,Chile,3,0,FIFA World Cup qualification
+8178,2024,Catar,Emiratos Árabes Unidos,1,3,FIFA World Cup qualification
+8179,2024,Uzbekistán,Corea del Norte,1,0,FIFA World Cup qualification
+8180,2024,Irán,Kirguistán,1,0,FIFA World Cup qualification
+8181,2024,Irak,Omán,1,0,FIFA World Cup qualification
+8182,2024,Corea del Sur,Palestina,0,0,FIFA World Cup qualification
+8183,2024,Jordania,Kuwait,1,1,FIFA World Cup qualification
+8184,2024,Japón,China,7,0,FIFA World Cup qualification
+8185,2024,Australia,Baréin,0,1,FIFA World Cup qualification
+8186,2024,Arabia Saudita,Indonesia,1,1,FIFA World Cup qualification
+8187,2024,Islas Cook,Tonga,1,3,FIFA World Cup qualification
+8188,2024,Samoa,Samoa Americana,2,0,FIFA World Cup qualification
+8189,2024,Perú,Colombia,1,1,FIFA World Cup qualification
+8190,2024,Uruguay,Paraguay,0,0,FIFA World Cup qualification
+8191,2024,Brasil,Ecuador,1,0,FIFA World Cup qualification
+8192,2024,Samoa,Tonga,2,1,FIFA World Cup qualification
+8193,2024,Colombia,Argentina,2,1,FIFA World Cup qualification
+8194,2024,Ecuador,Perú,1,0,FIFA World Cup qualification
+8195,2024,Chile,Bolivia,1,2,FIFA World Cup qualification
+8196,2024,Venezuela,Uruguay,0,0,FIFA World Cup qualification
+8197,2024,Paraguay,Brasil,1,0,FIFA World Cup qualification
+8198,2024,Corea del Norte,Catar,2,2,FIFA World Cup qualification
+8199,2024,Kirguistán,Uzbekistán,2,3,FIFA World Cup qualification
+8200,2024,Emiratos Árabes Unidos,Irán,0,1,FIFA World Cup qualification
+8201,2024,Omán,Corea del Sur,1,3,FIFA World Cup qualification
+8202,2024,Kuwait,Irak,0,0,FIFA World Cup qualification
+8203,2024,Palestina,Jordania,1,3,FIFA World Cup qualification
+8204,2024,Baréin,Japón,0,5,FIFA World Cup qualification
+8205,2024,Indonesia,Australia,0,0,FIFA World Cup qualification
+8206,2024,China,Arabia Saudita,1,2,FIFA World Cup qualification
+8207,2024,Bolivia,Colombia,1,0,FIFA World Cup qualification
+8208,2024,Ecuador,Paraguay,0,0,FIFA World Cup qualification
+8209,2024,Venezuela,Argentina,1,1,FIFA World Cup qualification
+8210,2024,Chile,Brasil,1,2,FIFA World Cup qualification
+8211,2024,Papúa Nueva Guinea,Nueva Caledonia,1,3,FIFA World Cup qualification
+8212,2024,Fiyi,Islas Salomón,1,0,FIFA World Cup qualification
+8213,2024,Catar,Kirguistán,3,1,FIFA World Cup qualification
+8214,2024,Uzbekistán,Irán,0,0,FIFA World Cup qualification
+8215,2024,Emiratos Árabes Unidos,Corea del Norte,1,1,FIFA World Cup qualification
+8216,2024,Jordania,Corea del Sur,0,2,FIFA World Cup qualification
+8217,2024,Omán,Kuwait,4,0,FIFA World Cup qualification
+8218,2024,Irak,Palestina,1,0,FIFA World Cup qualification
+8219,2024,Baréin,Indonesia,2,2,FIFA World Cup qualification
+8220,2024,Australia,China,3,1,FIFA World Cup qualification
+8221,2024,Arabia Saudita,Japón,0,2,FIFA World Cup qualification
+8222,2024,Perú,Uruguay,1,0,FIFA World Cup qualification
+8223,2024,Nueva Zelanda,Tahití,3,0,FIFA World Cup qualification
+8224,2024,Vanuatu,Samoa,4,1,FIFA World Cup qualification
+8225,2024,Colombia,Chile,4,0,FIFA World Cup qualification
+8226,2024,Paraguay,Venezuela,2,1,FIFA World Cup qualification
+8227,2024,Uruguay,Ecuador,0,0,FIFA World Cup qualification
+8228,2024,Argentina,Bolivia,6,0,FIFA World Cup qualification
+8229,2024,Brasil,Perú,4,0,FIFA World Cup qualification
+8230,2024,Uzbekistán,Emiratos Árabes Unidos,1,0,FIFA World Cup qualification
+8231,2024,Irán,Catar,4,1,FIFA World Cup qualification
+8232,2024,Kirguistán,Corea del Norte,1,0,FIFA World Cup qualification
+8233,2024,Jordania,Omán,4,0,FIFA World Cup qualification
+8234,2024,Palestina,Kuwait,2,2,FIFA World Cup qualification
+8235,2024,Corea del Sur,Irak,3,2,FIFA World Cup qualification
+8236,2024,Japón,Australia,1,1,FIFA World Cup qualification
+8237,2024,China,Indonesia,2,1,FIFA World Cup qualification
+8238,2024,Arabia Saudita,Baréin,0,0,FIFA World Cup qualification
+8239,2024,Venezuela,Brasil,1,1,FIFA World Cup qualification
+8240,2024,Ecuador,Bolivia,4,0,FIFA World Cup qualification
+8241,2024,Paraguay,Argentina,2,1,FIFA World Cup qualification
+8242,2024,Islas Salomón,Nueva Caledonia,2,3,FIFA World Cup qualification
+8243,2024,Papúa Nueva Guinea,Fiyi,3,3,FIFA World Cup qualification
+8244,2024,Corea del Norte,Irán,2,3,FIFA World Cup qualification
+8245,2024,Catar,Uzbekistán,3,2,FIFA World Cup qualification
+8246,2024,Emiratos Árabes Unidos,Kirguistán,3,0,FIFA World Cup qualification
+8247,2024,Kuwait,Corea del Sur,1,3,FIFA World Cup qualification
+8248,2024,Irak,Jordania,0,0,FIFA World Cup qualification
+8249,2024,Omán,Palestina,1,0,FIFA World Cup qualification
+8250,2024,Baréin,China,0,1,FIFA World Cup qualification
+8251,2024,Australia,Arabia Saudita,0,0,FIFA World Cup qualification
+8252,2024,Perú,Chile,0,0,FIFA World Cup qualification
+8253,2024,Uruguay,Colombia,3,2,FIFA World Cup qualification
+8254,2024,Samoa,Tahití,0,3,FIFA World Cup qualification
+8255,2024,Nueva Zelanda,Vanuatu,8,1,FIFA World Cup qualification
+8256,2024,Indonesia,Japón,0,4,FIFA World Cup qualification
+8257,2024,Fiyi,Nueva Caledonia,1,1,FIFA World Cup qualification
+8258,2024,Papúa Nueva Guinea,Islas Salomón,1,2,FIFA World Cup qualification
+8259,2024,Tahití,Vanuatu,2,0,FIFA World Cup qualification
+8260,2024,Nueva Zelanda,Samoa,8,0,FIFA World Cup qualification
+8261,2024,Bolivia,Paraguay,2,2,FIFA World Cup qualification
+8262,2024,Colombia,Ecuador,0,1,FIFA World Cup qualification
+8263,2024,Argentina,Perú,1,0,FIFA World Cup qualification
+8264,2024,Chile,Venezuela,4,2,FIFA World Cup qualification
+8265,2024,Brasil,Uruguay,1,1,FIFA World Cup qualification
+8266,2024,Corea del Norte,Uzbekistán,0,1,FIFA World Cup qualification
+8267,2024,Kirguistán,Irán,2,3,FIFA World Cup qualification
+8268,2024,Emiratos Árabes Unidos,Catar,5,0,FIFA World Cup qualification
+8269,2024,Palestina,Corea del Sur,1,1,FIFA World Cup qualification
+8270,2024,Omán,Irak,0,1,FIFA World Cup qualification
+8271,2024,Kuwait,Jordania,1,1,FIFA World Cup qualification
+8272,2024,Baréin,Australia,2,2,FIFA World Cup qualification
+8273,2024,Indonesia,Arabia Saudita,2,0,FIFA World Cup qualification
+8274,2024,China,Japón,1,3,FIFA World Cup qualification
+8275,2025,Eswatini,Camerún,0,0,FIFA World Cup qualification
+8276,2025,Liberia,Túnez,0,1,FIFA World Cup qualification
+8277,2025,República Centroafricana,Madagascar,1,4,FIFA World Cup qualification
+8278,2025,Paraguay,Chile,1,0,FIFA World Cup qualification
+8279,2025,Perú,Bolivia,3,1,FIFA World Cup qualification
+8280,2025,Brasil,Colombia,2,1,FIFA World Cup qualification
+8281,2025,Irán,Emiratos Árabes Unidos,2,0,FIFA World Cup qualification
+8282,2025,Uzbekistán,Kirguistán,1,0,FIFA World Cup qualification
+8283,2025,Catar,Corea del Norte,5,1,FIFA World Cup qualification
+8284,2025,Corea del Sur,Omán,1,1,FIFA World Cup qualification
+8285,2025,Irak,Kuwait,2,2,FIFA World Cup qualification
+8286,2025,Jordania,Palestina,3,1,FIFA World Cup qualification
+8287,2025,Japón,Baréin,2,0,FIFA World Cup qualification
+8288,2025,Australia,Indonesia,5,1,FIFA World Cup qualification
+8289,2025,Arabia Saudita,China,1,0,FIFA World Cup qualification
+8290,2025,Sierra Leona,Guinea-Bissau,3,1,FIFA World Cup qualification
+8291,2025,Zimbabue,Benín,2,2,FIFA World Cup qualification
+8292,2025,Cabo Verde,Mauricio,1,0,FIFA World Cup qualification
+8293,2025,Libia,Angola,1,1,FIFA World Cup qualification
+8294,2025,Gambia,Kenia,3,3,FIFA World Cup qualification
+8295,2025,Gabón,Seychelles,3,0,FIFA World Cup qualification
+8296,2025,Mozambique,Uganda,3,1,FIFA World Cup qualification
+8297,2025,Malaui,Namibia,0,1,FIFA World Cup qualification
+8298,2025,Comoras,Malí,0,3,FIFA World Cup qualification
+8299,2025,Ecuador,Venezuela,2,1,FIFA World Cup qualification
+8300,2025,Uruguay,Argentina,0,1,FIFA World Cup qualification
+8301,2025,Nueva Caledonia,Tahití,3,0,FIFA World Cup qualification
+8302,2025,Nueva Zelanda,Fiyi,7,0,FIFA World Cup qualification
+8303,2025,Burkina Faso,Yibuti,4,1,FIFA World Cup qualification
+8304,2025,Etiopía,Egipto,0,2,FIFA World Cup qualification
+8305,2025,República Democrática del Congo,Sudán del Sur,1,0,FIFA World Cup qualification
+8306,2025,Ruanda,Nigeria,0,2,FIFA World Cup qualification
+8307,2025,Sudáfrica,Lesoto,0,3,FIFA World Cup qualification
+8308,2025,Marruecos,Níger,2,1,FIFA World Cup qualification
+8309,2025,Burundi,Costa de Marfil,0,1,FIFA World Cup qualification
+8310,2025,Botsuana,Argelia,1,3,FIFA World Cup qualification
+8311,2025,Guinea,Somalia,0,0,FIFA World Cup qualification
+8312,2025,Guinea Ecuatorial,Santo Tomé y Príncipe,2,0,FIFA World Cup qualification
+8313,2025,Ghana,Chad,5,0,FIFA World Cup qualification
+8314,2025,Malta,Finlandia,0,1,FIFA World Cup qualification
+8315,2025,Polonia,Lituania,1,0,FIFA World Cup qualification
+8316,2025,Chipre,San Marino,2,0,FIFA World Cup qualification
+8317,2025,Rumania,Bosnia y Herzegovina,0,1,FIFA World Cup qualification
+8318,2025,Inglaterra,Albania,2,0,FIFA World Cup qualification
+8319,2025,Andorra,Letonia,0,1,FIFA World Cup qualification
+8320,2025,Togo,Mauritania,2,2,FIFA World Cup qualification
+8321,2025,Sudán,Senegal,0,0,FIFA World Cup qualification
+8322,2025,Moldavia,Noruega,0,5,FIFA World Cup qualification
+8323,2025,Israel,Estonia,2,1,FIFA World Cup qualification
+8324,2025,Liechtenstein,Macedonia del Norte,0,3,FIFA World Cup qualification
+8325,2025,Gales,Kazajistán,3,1,FIFA World Cup qualification
+8326,2025,Montenegro,Gibraltar,3,1,FIFA World Cup qualification
+8327,2025,República Checa,Islas Feroe,2,1,FIFA World Cup qualification
+8328,2025,Eswatini,Mauricio,3,3,FIFA World Cup qualification
+8329,2025,Kenia,Gabón,1,2,FIFA World Cup qualification
+8330,2025,Nueva Zelanda,Nueva Caledonia,3,0,FIFA World Cup qualification
+8331,2025,Guinea-Bissau,Burkina Faso,1,2,FIFA World Cup qualification
+8332,2025,Etiopía,Yibuti,6,1,FIFA World Cup qualification
+8333,2025,Costa de Marfil,Gambia,1,0,FIFA World Cup qualification
+8334,2025,Namibia,Guinea Ecuatorial,1,1,FIFA World Cup qualification
+8335,2025,Liberia,Santo Tomé y Príncipe,2,1,FIFA World Cup qualification
+8336,2025,Túnez,Malaui,2,0,FIFA World Cup qualification
+8337,2025,República Centroafricana,Malí,0,0,FIFA World Cup qualification
+8338,2025,Madagascar,Ghana,0,3,FIFA World Cup qualification
+8339,2025,Lituania,Finlandia,2,2,FIFA World Cup qualification
+8340,2025,Polonia,Malta,2,0,FIFA World Cup qualification
+8341,2025,Bosnia y Herzegovina,Chipre,2,1,FIFA World Cup qualification
+8342,2025,San Marino,Rumania,1,5,FIFA World Cup qualification
+8343,2025,Inglaterra,Letonia,3,0,FIFA World Cup qualification
+8344,2025,Albania,Andorra,3,0,FIFA World Cup qualification
+8345,2025,Bolivia,Uruguay,0,0,FIFA World Cup qualification
+8346,2025,Colombia,Paraguay,2,2,FIFA World Cup qualification
+8347,2025,Venezuela,Perú,1,0,FIFA World Cup qualification
+8348,2025,Argentina,Brasil,4,1,FIFA World Cup qualification
+8349,2025,Chile,Ecuador,0,0,FIFA World Cup qualification
+8350,2025,Irán,Uzbekistán,2,2,FIFA World Cup qualification
+8351,2025,Kirguistán,Catar,3,1,FIFA World Cup qualification
+8352,2025,Corea del Norte,Emiratos Árabes Unidos,1,2,FIFA World Cup qualification
+8353,2025,Corea del Sur,Jordania,1,1,FIFA World Cup qualification
+8354,2025,Kuwait,Omán,0,1,FIFA World Cup qualification
+8355,2025,Palestina,Irak,2,1,FIFA World Cup qualification
+8356,2025,China,Australia,0,2,FIFA World Cup qualification
+8357,2025,Japón,Arabia Saudita,0,0,FIFA World Cup qualification
+8358,2025,Indonesia,Baréin,1,0,FIFA World Cup qualification
+8359,2025,Egipto,Sierra Leona,1,0,FIFA World Cup qualification
+8360,2025,Mauritania,República Democrática del Congo,0,2,FIFA World Cup qualification
+8361,2025,Senegal,Togo,2,0,FIFA World Cup qualification
+8362,2025,Sudán,Sudán del Sur,1,1,FIFA World Cup qualification
+8363,2025,Benín,Sudáfrica,0,2,FIFA World Cup qualification
+8364,2025,Nigeria,Zimbabue,1,1,FIFA World Cup qualification
+8365,2025,Ruanda,Lesoto,1,1,FIFA World Cup qualification
+8366,2025,Angola,Cabo Verde,1,2,FIFA World Cup qualification
+8367,2025,Camerún,Libia,3,1,FIFA World Cup qualification
+8368,2025,Marruecos,Tanzania,2,0,FIFA World Cup qualification
+8369,2025,Burundi,Seychelles,5,0,FIFA World Cup qualification
+8370,2025,Uganda,Guinea,1,0,FIFA World Cup qualification
+8371,2025,Botsuana,Somalia,2,0,FIFA World Cup qualification
+8372,2025,Argelia,Mozambique,5,1,FIFA World Cup qualification
+8373,2025,Comoras,Chad,1,0,FIFA World Cup qualification
+8374,2025,Moldavia,Estonia,2,3,FIFA World Cup qualification
+8375,2025,Israel,Noruega,2,4,FIFA World Cup qualification
+8376,2025,Liechtenstein,Kazajistán,0,2,FIFA World Cup qualification
+8377,2025,Macedonia del Norte,Gales,1,1,FIFA World Cup qualification
+8378,2025,Gibraltar,República Checa,0,4,FIFA World Cup qualification
+8379,2025,Montenegro,Islas Feroe,1,0,FIFA World Cup qualification
+8380,2025,islas Bermudas,Islas Caimán,5,0,FIFA World Cup qualification
+8381,2025,Granada,Bahamas,6,0,FIFA World Cup qualification
+8382,2025,Barbados,Aruba,1,1,FIFA World Cup qualification
+8383,2025,Montserrat,Belice,1,0,FIFA World Cup qualification
+8384,2025,Dominica,Islas Vírgenes Británicas,3,0,FIFA World Cup qualification
+8385,2025,San Vicente y las Granadinas,Anguila,6,0,FIFA World Cup qualification
+8386,2025,Ecuador,Brasil,0,0,FIFA World Cup qualification
+8387,2025,Paraguay,Uruguay,2,0,FIFA World Cup qualification
+8388,2025,Chile,Argentina,0,1,FIFA World Cup qualification
+8389,2025,Emiratos Árabes Unidos,Uzbekistán,0,0,FIFA World Cup qualification
+8390,2025,Corea del Norte,Kirguistán,2,2,FIFA World Cup qualification
+8391,2025,Catar,Irán,1,0,FIFA World Cup qualification
+8392,2025,Omán,Jordania,0,3,FIFA World Cup qualification
+8393,2025,Irak,Corea del Sur,0,2,FIFA World Cup qualification
+8394,2025,Kuwait,Palestina,0,2,FIFA World Cup qualification
+8395,2025,Baréin,Arabia Saudita,0,2,FIFA World Cup qualification
+8396,2025,Australia,Japón,1,0,FIFA World Cup qualification
+8397,2025,Indonesia,China,1,0,FIFA World Cup qualification
+8398,2025,Colombia,Perú,0,0,FIFA World Cup qualification
+8399,2025,Venezuela,Bolivia,2,0,FIFA World Cup qualification
+8400,2025,Noruega,Italia,3,0,FIFA World Cup qualification
+8401,2025,Estonia,Israel,1,3,FIFA World Cup qualification
+8402,2025,Gales,Liechtenstein,3,0,FIFA World Cup qualification
+8403,2025,Macedonia del Norte,Bélgica,1,1,FIFA World Cup qualification
+8404,2025,República Checa,Montenegro,2,0,FIFA World Cup qualification
+8405,2025,Gibraltar,Croacia,0,7,FIFA World Cup qualification
+8406,2025,Antigua y Barbuda,Cuba,0,1,FIFA World Cup qualification
+8407,2025,Trinidad y Tobago,San Cristóbal y Nieves,6,2,FIFA World Cup qualification
+8408,2025,Curazao,Santa Lucía,4,0,FIFA World Cup qualification
+8409,2025,Nicaragua,Guayana,1,0,FIFA World Cup qualification
+8410,2025,Guatemala,República Dominicana,4,2,FIFA World Cup qualification
+8411,2025,Surinam,Puerto Rico,1,0,FIFA World Cup qualification
+8412,2025,Malta,Lituania,0,0,FIFA World Cup qualification
+8413,2025,Finlandia,Países Bajos,0,2,FIFA World Cup qualification
+8414,2025,Bosnia y Herzegovina,San Marino,1,0,FIFA World Cup qualification
+8415,2025,Austria,Rumania,2,1,FIFA World Cup qualification
+8416,2025,Andorra,Inglaterra,0,1,FIFA World Cup qualification
+8417,2025,Albania,Serbia,0,0,FIFA World Cup qualification
+8418,2025,Islas Caimán,Honduras,0,1,FIFA World Cup qualification
+8419,2025,Bahamas,Costa Rica,0,8,FIFA World Cup qualification
+8420,2025,Aruba,Haití,0,5,FIFA World Cup qualification
+8421,2025,Belice,Panamá,0,2,FIFA World Cup qualification
+8422,2025,Islas Vírgenes Británicas,Jamaica,0,1,FIFA World Cup qualification
+8423,2025,Anguila,El Salvador,0,3,FIFA World Cup qualification
+8424,2025,Italia,Moldavia,2,0,FIFA World Cup qualification
+8425,2025,Estonia,Noruega,0,1,FIFA World Cup qualification
+8426,2025,Kazajistán,Macedonia del Norte,0,1,FIFA World Cup qualification
+8427,2025,Bélgica,Gales,4,3,FIFA World Cup qualification
+8428,2025,Islas Feroe,Gibraltar,2,1,FIFA World Cup qualification
+8429,2025,Croacia,República Checa,5,1,FIFA World Cup qualification
+8430,2025,Bolivia,Chile,2,0,FIFA World Cup qualification
+8431,2025,Uruguay,Venezuela,2,0,FIFA World Cup qualification
+8432,2025,Perú,Ecuador,0,0,FIFA World Cup qualification
+8433,2025,Argentina,Colombia,1,1,FIFA World Cup qualification
+8434,2025,Brasil,Paraguay,1,0,FIFA World Cup qualification
+8435,2025,Uzbekistán,Catar,3,0,FIFA World Cup qualification
+8436,2025,Irán,Corea del Norte,3,0,FIFA World Cup qualification
+8437,2025,Kirguistán,Emiratos Árabes Unidos,1,1,FIFA World Cup qualification
+8438,2025,Corea del Sur,Kuwait,4,0,FIFA World Cup qualification
+8439,2025,Jordania,Irak,0,1,FIFA World Cup qualification
+8440,2025,Palestina,Omán,1,1,FIFA World Cup qualification
+8441,2025,China,Baréin,1,0,FIFA World Cup qualification
+8442,2025,Japón,Indonesia,6,0,FIFA World Cup qualification
+8443,2025,Arabia Saudita,Australia,1,2,FIFA World Cup qualification
+8444,2025,Países Bajos,Malta,8,0,FIFA World Cup qualification
+8445,2025,Finlandia,Polonia,2,1,FIFA World Cup qualification
+8446,2025,San Marino,Austria,0,4,FIFA World Cup qualification
+8447,2025,Rumania,Chipre,2,0,FIFA World Cup qualification
+8448,2025,Serbia,Andorra,3,0,FIFA World Cup qualification
+8449,2025,Letonia,Albania,1,1,FIFA World Cup qualification
+8450,2025,Cuba,islas Bermudas,1,2,FIFA World Cup qualification
+8451,2025,Honduras,Antigua y Barbuda,2,0,FIFA World Cup qualification
+8452,2025,San Cristóbal y Nieves,Granada,2,3,FIFA World Cup qualification
+8453,2025,Costa Rica,Trinidad y Tobago,2,1,FIFA World Cup qualification
+8454,2025,Santa Lucía,Barbados,2,1,FIFA World Cup qualification
+8455,2025,Haití,Curazao,1,5,FIFA World Cup qualification
+8456,2025,Guayana,Montserrat,3,0,FIFA World Cup qualification
+8457,2025,Panamá,Nicaragua,3,0,FIFA World Cup qualification
+8458,2025,República Dominicana,Dominica,5,0,FIFA World Cup qualification
+8459,2025,Jamaica,Guatemala,3,0,FIFA World Cup qualification
+8460,2025,Puerto Rico,San Vicente y las Granadinas,2,1,FIFA World Cup qualification
+8461,2025,El Salvador,Surinam,1,1,FIFA World Cup qualification
+8462,2025,Seychelles,Gabón,0,4,FIFA World Cup qualification
+8463,2025,Colombia,Bolivia,3,0,FIFA World Cup qualification
+8464,2025,Argentina,Venezuela,3,0,FIFA World Cup qualification
+8465,2025,Paraguay,Ecuador,0,0,FIFA World Cup qualification
+8466,2025,Uruguay,Perú,3,0,FIFA World Cup qualification
+8467,2025,Brasil,Chile,3,0,FIFA World Cup qualification
+8468,2025,Guinea-Bissau,Sierra Leona,1,1,FIFA World Cup qualification
+8469,2025,Angola,Libia,0,1,FIFA World Cup qualification
+8470,2025,Camerún,Eswatini,3,0,FIFA World Cup qualification
+8471,2025,Mauricio,Cabo Verde,0,2,FIFA World Cup qualification
+8472,2025,Argelia,Botsuana,3,1,FIFA World Cup qualification
+8473,2025,Santo Tomé y Príncipe,Guinea Ecuatorial,2,3,FIFA World Cup qualification
+8474,2025,Túnez,Liberia,3,0,FIFA World Cup qualification
+8475,2025,Chad,Ghana,1,1,FIFA World Cup qualification
+8476,2025,Madagascar,República Centroafricana,2,0,FIFA World Cup qualification
+8477,2025,Malí,Comoras,3,0,FIFA World Cup qualification
+8478,2025,Luxemburgo,Irlanda del Norte,1,3,FIFA World Cup qualification
+8479,2025,Eslovaquia,Alemania,2,0,FIFA World Cup qualification
+8480,2025,Georgia,Turquía,2,3,FIFA World Cup qualification
+8481,2025,Bulgaria,España,0,3,FIFA World Cup qualification
+8482,2025,Lituania,Malta,1,1,FIFA World Cup qualification
+8483,2025,Países Bajos,Polonia,1,1,FIFA World Cup qualification
+8484,2025,Kazajistán,Gales,0,1,FIFA World Cup qualification
+8485,2025,Liechtenstein,Bélgica,0,6,FIFA World Cup qualification
+8486,2025,Surinam,Panamá,0,0,FIFA World Cup qualification
+8487,2025,Guatemala,El Salvador,0,1,FIFA World Cup qualification
+8488,2025,Yibuti,Burkina Faso,0,6,FIFA World Cup qualification
+8489,2025,Egipto,Etiopía,2,0,FIFA World Cup qualification
+8490,2025,Sudán del Sur,República Democrática del Congo,1,4,FIFA World Cup qualification
+8491,2025,Mauritania,Togo,2,0,FIFA World Cup qualification
+8492,2025,Senegal,Sudán,2,0,FIFA World Cup qualification
+8493,2025,Benín,Zimbabue,1,0,FIFA World Cup qualification
+8494,2025,Sudáfrica,Lesoto,3,0,FIFA World Cup qualification
+8495,2025,Congo,Tanzania,1,1,FIFA World Cup qualification
+8496,2025,Marruecos,Níger,5,0,FIFA World Cup qualification
+8497,2025,Kenia,Gambia,1,3,FIFA World Cup qualification
+8498,2025,Costa de Marfil,Burundi,1,0,FIFA World Cup qualification
+8499,2025,Somalia,Guinea,0,3,FIFA World Cup qualification
+8500,2025,Uganda,Mozambique,4,0,FIFA World Cup qualification
+8501,2025,Namibia,Malaui,1,2,FIFA World Cup qualification
+8502,2025,Eslovenia,Suecia,2,2,FIFA World Cup qualification
+8503,2025,Suiza,Kosovo,4,0,FIFA World Cup qualification
+8504,2025,Dinamarca,Escocia,0,0,FIFA World Cup qualification
+8505,2025,Grecia,Bielorrusia,5,1,FIFA World Cup qualification
+8506,2025,Islandia,Azerbaiyán,5,0,FIFA World Cup qualification
+8507,2025,Ucrania,Francia,0,2,FIFA World Cup qualification
+8508,2025,Italia,Estonia,5,0,FIFA World Cup qualification
+8509,2025,Moldavia,Israel,0,4,FIFA World Cup qualification
+8510,2025,Islas Feroe,Croacia,0,1,FIFA World Cup qualification
+8511,2025,Montenegro,República Checa,0,2,FIFA World Cup qualification
+8512,2025,islas Bermudas,Jamaica,0,4,FIFA World Cup qualification
+8513,2025,Trinidad y Tobago,Curazao,0,0,FIFA World Cup qualification
+8514,2025,Haití,Honduras,0,0,FIFA World Cup qualification
+8515,2025,Nicaragua,Costa Rica,1,1,FIFA World Cup qualification
+8516,2025,Nigeria,Ruanda,1,0,FIFA World Cup qualification
+8517,2025,Irlanda,Hungría,2,2,FIFA World Cup qualification
+8518,2025,Armenia,Portugal,0,5,FIFA World Cup qualification
+8519,2025,Austria,Chipre,1,0,FIFA World Cup qualification
+8520,2025,San Marino,Bosnia y Herzegovina,0,6,FIFA World Cup qualification
+8521,2025,Letonia,Serbia,0,1,FIFA World Cup qualification
+8522,2025,Inglaterra,Andorra,2,0,FIFA World Cup qualification
+8523,2025,República Centroafricana,Comoras,0,2,FIFA World Cup qualification
+8524,2025,Alemania,Irlanda del Norte,3,1,FIFA World Cup qualification
+8525,2025,Luxemburgo,Eslovaquia,0,1,FIFA World Cup qualification
+8526,2025,Georgia,Bulgaria,3,0,FIFA World Cup qualification
+8527,2025,Turquía,España,0,6,FIFA World Cup qualification
+8528,2025,Lituania,Países Bajos,2,3,FIFA World Cup qualification
+8529,2025,Polonia,Finlandia,3,1,FIFA World Cup qualification
+8530,2025,Macedonia del Norte,Liechtenstein,5,0,FIFA World Cup qualification
+8531,2025,Bélgica,Kazajistán,6,0,FIFA World Cup qualification
+8532,2025,Guinea-Bissau,Yibuti,2,0,FIFA World Cup qualification
+8533,2025,Libia,Eswatini,2,0,FIFA World Cup qualification
+8534,2025,Zambia,Marruecos,0,2,FIFA World Cup qualification
+8535,2025,Mozambique,Botsuana,2,0,FIFA World Cup qualification
+8536,2025,Guinea,Argelia,0,0,FIFA World Cup qualification
+8537,2025,Uganda,Somalia,2,0,FIFA World Cup qualification
+8538,2025,Guinea Ecuatorial,Túnez,0,1,FIFA World Cup qualification
+8539,2025,Malaui,Liberia,2,2,FIFA World Cup qualification
+8540,2025,Madagascar,Chad,3,1,FIFA World Cup qualification
+8541,2025,Ghana,Malí,1,0,FIFA World Cup qualification
+8542,2025,Kosovo,Suecia,2,0,FIFA World Cup qualification
+8543,2025,Suiza,Eslovenia,3,0,FIFA World Cup qualification
+8544,2025,Bielorrusia,Escocia,0,2,FIFA World Cup qualification
+8545,2025,Grecia,Dinamarca,0,3,FIFA World Cup qualification
+8546,2025,Israel,Italia,4,5,FIFA World Cup qualification
+8547,2025,Croacia,Montenegro,4,0,FIFA World Cup qualification
+8548,2025,Gibraltar,Islas Feroe,0,1,FIFA World Cup qualification
+8549,2025,El Salvador,Surinam,1,2,FIFA World Cup qualification
+8550,2025,Panamá,Guatemala,1,1,FIFA World Cup qualification
+8551,2025,Ecuador,Argentina,1,0,FIFA World Cup qualification
+8552,2025,Perú,Paraguay,0,1,FIFA World Cup qualification
+8553,2025,Bolivia,Brasil,1,0,FIFA World Cup qualification
+8554,2025,Venezuela,Colombia,3,6,FIFA World Cup qualification
+8555,2025,Chile,Uruguay,0,0,FIFA World Cup qualification
+8556,2025,Sierra Leona,Etiopía,2,0,FIFA World Cup qualification
+8557,2025,Burkina Faso,Egipto,0,0,FIFA World Cup qualification
+8558,2025,Togo,Sudán,1,0,FIFA World Cup qualification
+8559,2025,República Democrática del Congo,Senegal,2,3,FIFA World Cup qualification
+8560,2025,Mauritania,Sudán del Sur,0,0,FIFA World Cup qualification
+8561,2025,Zimbabue,Ruanda,0,1,FIFA World Cup qualification
+8562,2025,Sudáfrica,Nigeria,1,1,FIFA World Cup qualification
+8563,2025,Benín,Lesoto,4,0,FIFA World Cup qualification
+8564,2025,Cabo Verde,Camerún,1,0,FIFA World Cup qualification
+8565,2025,Angola,Mauricio,3,1,FIFA World Cup qualification
+8566,2025,Tanzania,Níger,0,1,FIFA World Cup qualification
+8567,2025,Kenia,Seychelles,5,0,FIFA World Cup qualification
+8568,2025,Gabón,Costa de Marfil,0,0,FIFA World Cup qualification
+8569,2025,Gambia,Burundi,2,0,FIFA World Cup qualification
+8570,2025,Namibia,Santo Tomé y Príncipe,3,0,FIFA World Cup qualification
+8571,2025,Azerbaiyán,Ucrania,1,1,FIFA World Cup qualification
+8572,2025,Francia,Islandia,2,1,FIFA World Cup qualification
+8573,2025,Armenia,Irlanda,2,1,FIFA World Cup qualification
+8574,2025,Hungría,Portugal,2,3,FIFA World Cup qualification
+8575,2025,Bosnia y Herzegovina,Austria,1,2,FIFA World Cup qualification
+8576,2025,Chipre,Rumania,2,2,FIFA World Cup qualification
+8577,2025,Noruega,Moldavia,11,1,FIFA World Cup qualification
+8578,2025,Albania,Letonia,1,0,FIFA World Cup qualification
+8579,2025,Serbia,Inglaterra,0,5,FIFA World Cup qualification
+8580,2025,Jamaica,Trinidad y Tobago,2,0,FIFA World Cup qualification
+8581,2025,Curazao,islas Bermudas,3,2,FIFA World Cup qualification
+8582,2025,Costa Rica,Haití,3,3,FIFA World Cup qualification
+8583,2025,Honduras,Nicaragua,2,0,FIFA World Cup qualification
+8584,2025,Catar,Omán,0,0,FIFA World Cup qualification
+8585,2025,Arabia Saudita,Indonesia,3,2,FIFA World Cup qualification
+8586,2025,Etiopía,Guinea-Bissau,1,0,FIFA World Cup qualification
+8587,2025,Sierra Leona,Burkina Faso,0,1,FIFA World Cup qualification
+8588,2025,Yibuti,Egipto,0,3,FIFA World Cup qualification
+8589,2025,Libia,Cabo Verde,3,3,FIFA World Cup qualification
+8590,2025,Eswatini,Angola,2,2,FIFA World Cup qualification
+8591,2025,Mauricio,Camerún,0,2,FIFA World Cup qualification
+8592,2025,Níger,Congo,3,1,FIFA World Cup qualification
+8593,2025,Tanzania,Zambia,0,1,FIFA World Cup qualification
+8594,2025,Comoras,Madagascar,1,2,FIFA World Cup qualification
+8595,2025,República Centroafricana,Ghana,0,5,FIFA World Cup qualification
+8596,2025,Chad,Malí,0,2,FIFA World Cup qualification
+8597,2025,Burundi,Kenia,0,1,FIFA World Cup qualification
+8598,2025,Argelia,Somalia,3,0,FIFA World Cup qualification
+8599,2025,Botsuana,Uganda,0,1,FIFA World Cup qualification
+8600,2025,Mozambique,Guinea,1,2,FIFA World Cup qualification
+8601,2025,Malaui,Guinea Ecuatorial,3,0,FIFA World Cup qualification
+8602,2025,Escocia,Grecia,3,1,FIFA World Cup qualification
+8603,2025,Bielorrusia,Dinamarca,0,6,FIFA World Cup qualification
+8604,2025,Malta,Países Bajos,0,4,FIFA World Cup qualification
+8605,2025,Finlandia,Lituania,2,1,FIFA World Cup qualification
+8606,2025,Austria,San Marino,10,0,FIFA World Cup qualification
+8607,2025,Chipre,Bosnia y Herzegovina,2,2,FIFA World Cup qualification
+8608,2025,Islas Feroe,Montenegro,4,0,FIFA World Cup qualification
+8609,2025,República Checa,Croacia,0,0,FIFA World Cup qualification
+8610,2025,Liberia,Namibia,3,1,FIFA World Cup qualification
+8611,2025,Nicaragua,Haití,0,3,FIFA World Cup qualification
+8612,2025,Honduras,Costa Rica,0,0,FIFA World Cup qualification
+8613,2025,Togo,República Democrática del Congo,0,1,FIFA World Cup qualification
+8614,2025,Sudán del Sur,Senegal,0,5,FIFA World Cup qualification
+8615,2025,Sudán,Mauritania,0,0,FIFA World Cup qualification
+8616,2025,Lesoto,Nigeria,1,2,FIFA World Cup qualification
+8617,2025,Ruanda,Benín,0,1,FIFA World Cup qualification
+8618,2025,Sudáfrica,Zimbabue,0,0,FIFA World Cup qualification
+8619,2025,Gambia,Gabón,3,4,FIFA World Cup qualification
+8620,2025,Seychelles,Costa de Marfil,0,7,FIFA World Cup qualification
+8621,2025,Túnez,Santo Tomé y Príncipe,6,0,FIFA World Cup qualification
+8622,2025,Irlanda del Norte,Eslovaquia,2,0,FIFA World Cup qualification
+8623,2025,Alemania,Luxemburgo,4,0,FIFA World Cup qualification
+8624,2025,Kosovo,Eslovenia,0,0,FIFA World Cup qualification
+8625,2025,Suecia,Suiza,0,2,FIFA World Cup qualification
+8626,2025,Islandia,Ucrania,3,5,FIFA World Cup qualification
+8627,2025,Francia,Azerbaiyán,3,0,FIFA World Cup qualification
+8628,2025,Kazajistán,Liechtenstein,4,0,FIFA World Cup qualification
+8629,2025,Bélgica,Macedonia del Norte,0,0,FIFA World Cup qualification
+8630,2025,Surinam,Guatemala,1,1,FIFA World Cup qualification
+8631,2025,El Salvador,Panamá,0,1,FIFA World Cup qualification
+8632,2025,islas Bermudas,Trinidad y Tobago,0,3,FIFA World Cup qualification
+8633,2025,Curazao,Jamaica,2,0,FIFA World Cup qualification
+8634,2025,Emiratos Árabes Unidos,Omán,2,1,FIFA World Cup qualification
+8635,2025,Irak,Indonesia,1,0,FIFA World Cup qualification
+8636,2025,España,Georgia,2,0,FIFA World Cup qualification
+8637,2025,Bulgaria,Turquía,1,6,FIFA World Cup qualification
+8638,2025,Hungría,Armenia,2,0,FIFA World Cup qualification
+8639,2025,Portugal,Irlanda,1,0,FIFA World Cup qualification
+8640,2025,Noruega,Israel,5,0,FIFA World Cup qualification
+8641,2025,Estonia,Italia,1,3,FIFA World Cup qualification
+8642,2025,Letonia,Andorra,2,2,FIFA World Cup qualification
+8643,2025,Serbia,Albania,0,1,FIFA World Cup qualification
+8644,2025,Burkina Faso,Etiopía,3,1,FIFA World Cup qualification
+8645,2025,Yibuti,Sierra Leona,1,2,FIFA World Cup qualification
+8646,2025,Egipto,Guinea-Bissau,1,0,FIFA World Cup qualification
+8647,2025,Zambia,Níger,0,1,FIFA World Cup qualification
+8648,2025,Chad,República Centroafricana,2,3,FIFA World Cup qualification
+8649,2025,Ghana,Comoras,1,0,FIFA World Cup qualification
+8650,2025,Malí,Madagascar,4,1,FIFA World Cup qualification
+8651,2025,Escocia,Bielorrusia,2,1,FIFA World Cup qualification
+8652,2025,Dinamarca,Grecia,3,1,FIFA World Cup qualification
+8653,2025,Países Bajos,Finlandia,4,0,FIFA World Cup qualification
+8654,2025,Lituania,Polonia,0,2,FIFA World Cup qualification
+8655,2025,San Marino,Chipre,0,4,FIFA World Cup qualification
+8656,2025,Rumania,Austria,1,0,FIFA World Cup qualification
+8657,2025,Islas Feroe,República Checa,2,1,FIFA World Cup qualification
+8658,2025,Croacia,Gibraltar,3,0,FIFA World Cup qualification
+8659,2025,Sudán del Sur,Togo,0,0,FIFA World Cup qualification
+8660,2025,Lesoto,Zimbabue,1,0,FIFA World Cup qualification
+8661,2025,Cabo Verde,Eswatini,3,0,FIFA World Cup qualification
+8662,2025,Camerún,Angola,0,0,FIFA World Cup qualification
+8663,2025,Mauricio,Libia,0,0,FIFA World Cup qualification
+8664,2025,Guinea Ecuatorial,Liberia,1,1,FIFA World Cup qualification
+8665,2025,Santo Tomé y Príncipe,Malaui,1,0,FIFA World Cup qualification
+8666,2025,Túnez,Namibia,3,0,FIFA World Cup qualification
+8667,2025,Irlanda del Norte,Alemania,0,1,FIFA World Cup qualification
+8668,2025,Eslovaquia,Luxemburgo,2,0,FIFA World Cup qualification
+8669,2025,Eslovenia,Suiza,0,0,FIFA World Cup qualification
+8670,2025,Suecia,Kosovo,0,1,FIFA World Cup qualification
+8671,2025,Islandia,Francia,2,2,FIFA World Cup qualification
+8672,2025,Ucrania,Azerbaiyán,2,1,FIFA World Cup qualification
+8673,2025,Gales,Bélgica,2,4,FIFA World Cup qualification
+8674,2025,Macedonia del Norte,Kazajistán,1,1,FIFA World Cup qualification
+8675,2025,Honduras,Haití,3,0,FIFA World Cup qualification
+8676,2025,Costa Rica,Nicaragua,4,1,FIFA World Cup qualification
+8677,2025,Catar,Emiratos Árabes Unidos,2,1,FIFA World Cup qualification
+8678,2025,Arabia Saudita,Irak,0,0,FIFA World Cup qualification
+8679,2025,Senegal,Mauritania,4,0,FIFA World Cup qualification
+8680,2025,República Democrática del Congo,Sudán,1,0,FIFA World Cup qualification
+8681,2025,Nigeria,Benín,4,0,FIFA World Cup qualification
+8682,2025,Sudáfrica,Ruanda,3,0,FIFA World Cup qualification
+8683,2025,Marruecos,Congo,1,0,FIFA World Cup qualification
+8684,2025,Seychelles,Gambia,0,7,FIFA World Cup qualification
+8685,2025,Costa de Marfil,Kenia,3,0,FIFA World Cup qualification
+8686,2025,Gabón,Burundi,2,0,FIFA World Cup qualification
+8687,2025,Argelia,Uganda,2,1,FIFA World Cup qualification
+8688,2025,Guinea,Botsuana,2,2,FIFA World Cup qualification
+8689,2025,Somalia,Mozambique,0,1,FIFA World Cup qualification
+8690,2025,España,Bulgaria,4,0,FIFA World Cup qualification
+8691,2025,Turquía,Georgia,4,1,FIFA World Cup qualification
+8692,2025,Portugal,Hungría,2,2,FIFA World Cup qualification
+8693,2025,Irlanda,Armenia,1,0,FIFA World Cup qualification
+8694,2025,Estonia,Moldavia,1,1,FIFA World Cup qualification
+8695,2025,Italia,Israel,3,0,FIFA World Cup qualification
+8696,2025,Andorra,Serbia,1,3,FIFA World Cup qualification
+8697,2025,Letonia,Inglaterra,0,5,FIFA World Cup qualification
+8698,2025,Panamá,Surinam,1,1,FIFA World Cup qualification
+8699,2025,El Salvador,Guatemala,0,1,FIFA World Cup qualification
+8700,2025,Curazao,Trinidad y Tobago,1,1,FIFA World Cup qualification
+8701,2025,Jamaica,islas Bermudas,4,0,FIFA World Cup qualification
+8702,2025,Emiratos Árabes Unidos,Irak,1,1,FIFA World Cup qualification
+8703,2025,Camerún,República Democrática del Congo,0,1,FIFA World Cup qualification
+8704,2025,Nigeria,Gabón,4,1,FIFA World Cup qualification
+8705,2025,Francia,Ucrania,4,0,FIFA World Cup qualification
+8706,2025,Azerbaiyán,Islandia,0,2,FIFA World Cup qualification
+8707,2025,Irlanda,Portugal,2,0,FIFA World Cup qualification
+8708,2025,Armenia,Hungría,0,1,FIFA World Cup qualification
+8709,2025,Noruega,Estonia,4,1,FIFA World Cup qualification
+8710,2025,Moldavia,Italia,0,2,FIFA World Cup qualification
+8711,2025,Inglaterra,Serbia,2,0,FIFA World Cup qualification
+8712,2025,Andorra,Albania,0,1,FIFA World Cup qualification
+8713,2025,Surinam,El Salvador,4,0,FIFA World Cup qualification
+8714,2025,Guatemala,Panamá,2,3,FIFA World Cup qualification
+8715,2025,islas Bermudas,Curazao,0,7,FIFA World Cup qualification
+8716,2025,Trinidad y Tobago,Jamaica,1,1,FIFA World Cup qualification
+8717,2025,Haití,Costa Rica,1,0,FIFA World Cup qualification
+8718,2025,Nicaragua,Honduras,2,0,FIFA World Cup qualification
+8719,2025,Luxemburgo,Alemania,0,2,FIFA World Cup qualification
+8720,2025,Eslovaquia,Irlanda del Norte,1,0,FIFA World Cup qualification
+8721,2025,Finlandia,Malta,0,1,FIFA World Cup qualification
+8722,2025,Polonia,Países Bajos,1,1,FIFA World Cup qualification
+8723,2025,Croacia,Islas Feroe,3,1,FIFA World Cup qualification
+8724,2025,Gibraltar,Montenegro,1,2,FIFA World Cup qualification
+8725,2025,Eslovenia,Kosovo,0,2,FIFA World Cup qualification
+8726,2025,Suiza,Suecia,4,1,FIFA World Cup qualification
+8727,2025,Dinamarca,Bielorrusia,2,2,FIFA World Cup qualification
+8728,2025,Grecia,Escocia,3,2,FIFA World Cup qualification
+8729,2025,Turquía,Bulgaria,2,0,FIFA World Cup qualification
+8730,2025,Georgia,España,0,4,FIFA World Cup qualification
+8731,2025,Chipre,Austria,0,2,FIFA World Cup qualification
+8732,2025,Bosnia y Herzegovina,Rumania,3,1,FIFA World Cup qualification
+8733,2025,Liechtenstein,Gales,0,1,FIFA World Cup qualification
+8734,2025,Kazajistán,Bélgica,1,1,FIFA World Cup qualification
+8735,2025,Nigeria,República Democrática del Congo,1,1,FIFA World Cup qualification
+8736,2025,Ucrania,Islandia,2,0,FIFA World Cup qualification
+8737,2025,Azerbaiyán,Francia,1,3,FIFA World Cup qualification
+8738,2025,Portugal,Armenia,9,1,FIFA World Cup qualification
+8739,2025,Hungría,Irlanda,2,3,FIFA World Cup qualification
+8740,2025,Moldavia,Israel,1,4,FIFA World Cup qualification
+8741,2025,Italia,Noruega,1,4,FIFA World Cup qualification
+8742,2025,Albania,Inglaterra,0,2,FIFA World Cup qualification
+8743,2025,Serbia,Letonia,2,1,FIFA World Cup qualification
+8744,2025,Irlanda del Norte,Luxemburgo,1,0,FIFA World Cup qualification
+8745,2025,Alemania,Eslovaquia,6,0,FIFA World Cup qualification
+8746,2025,Malta,Polonia,2,3,FIFA World Cup qualification
+8747,2025,Países Bajos,Lituania,4,0,FIFA World Cup qualification
+8748,2025,República Checa,Gibraltar,6,0,FIFA World Cup qualification
+8749,2025,Montenegro,Croacia,2,3,FIFA World Cup qualification
+8750,2025,Irak,Emiratos Árabes Unidos,2,1,FIFA World Cup qualification
+8751,2025,Kosovo,Suiza,1,1,FIFA World Cup qualification
+8752,2025,Suecia,Eslovenia,1,1,FIFA World Cup qualification
+8753,2025,Escocia,Dinamarca,4,2,FIFA World Cup qualification
+8754,2025,Bielorrusia,Grecia,0,0,FIFA World Cup qualification
+8755,2025,España,Turquía,2,2,FIFA World Cup qualification
+8756,2025,Bulgaria,Georgia,2,1,FIFA World Cup qualification
+8757,2025,Austria,Bosnia y Herzegovina,1,1,FIFA World Cup qualification
+8758,2025,Rumania,San Marino,7,1,FIFA World Cup qualification
+8759,2025,Gales,Macedonia del Norte,7,1,FIFA World Cup qualification
+8760,2025,Bélgica,Liechtenstein,7,0,FIFA World Cup qualification
+8761,2025,Guatemala,Surinam,3,1,FIFA World Cup qualification
+8762,2025,Panamá,El Salvador,3,0,FIFA World Cup qualification
+8763,2025,Jamaica,Curazao,0,0,FIFA World Cup qualification
+8764,2025,Trinidad y Tobago,islas Bermudas,2,2,FIFA World Cup qualification
+8765,2025,Costa Rica,Honduras,0,0,FIFA World Cup qualification
+8766,2025,Haití,Nicaragua,2,0,FIFA World Cup qualification
+8767,2026,Nueva Caledonia,Jamaica,0,1,FIFA World Cup qualification
+8768,2026,Bolivia,Surinam,2,1,FIFA World Cup qualification
+8769,2026,Italia,Irlanda del Norte,2,0,FIFA World Cup qualification
+8770,2026,Gales,Bosnia y Herzegovina,1,1,FIFA World Cup qualification
+8771,2026,Polonia,Albania,2,1,FIFA World Cup qualification
+8772,2026,Ucrania,Suecia,1,3,FIFA World Cup qualification
+8773,2026,Eslovaquia,Kosovo,3,4,FIFA World Cup qualification
+8774,2026,Turquía,Rumania,1,0,FIFA World Cup qualification
+8775,2026,República Checa,Irlanda,2,2,FIFA World Cup qualification
+8776,2026,Dinamarca,Macedonia del Norte,4,0,FIFA World Cup qualification
+8777,2026,República Democrática del Congo,Jamaica,1,0,FIFA World Cup qualification
+8778,2026,Irak,Bolivia,2,1,FIFA World Cup qualification
+8779,2026,Bosnia y Herzegovina,Italia,1,1,FIFA World Cup qualification
+8780,2026,Suecia,Polonia,3,2,FIFA World Cup qualification
+8781,2026,Kosovo,Turquía,0,1,FIFA World Cup qualification
+8782,2026,República Checa,Dinamarca,2,2,FIFA World Cup qualification

@@ -48,7 +48,9 @@ class Command(BaseCommand):
 
   1-) Prueba: reentrena la configuracion elegida con los ciclos hasta 2014 (epocas fijas = media de las mejores epocas de la seleccion) y la mide en los partidos de mundial de 2018 y 2022, igual que las lineas base (medias entrenadas hasta 2014, mas puntos y siempre 1-1)
 
-  2-) Guarda el modelo de la semilla 0 (con su umbral de empate) y el json de resultados
+  2-) Segunda prueba, el mundial 2026: la misma configuracion entrenada con los ciclos hasta 2022 y medida en sus 104 partidos, que ningun modelo vio
+
+  3-) Guarda el modelo de la semilla 0 entrenado hasta 2022 (con su umbral de empate), que es el que usa la app, y el json de resultados
 
   Tarda unos 20 minutos en una CPU de 4 nucleos; imprime el avance de cada entrenamiento
   """
@@ -162,10 +164,27 @@ class Command(BaseCommand):
     prueba_resultados["lstm"] = {**resumen(corridas), "semillas": corridas}
     prueba_resultados["lstm_sin_umbral"] = {**resumen(sin_umbral), "semillas": sin_umbral}
 
+    # 2-) mundial 2026, entrenando con todo hasta 2022
+    tr_2026, _, prueba_2026 = particion(ds, hasta=2022, prueba=[2026])
+    resultados_2026 = {}
+    if prueba_2026.any():
+      self.avisar(f"Prueba en el mundial 2026 ({prueba_2026.sum()} partidos), entrenando hasta 2022")
+      resultados_2026 = {nombre: evaluar(p, ds, None, prueba_2026) for nombre, p in
+                         {"medias": PredictorMedias.entrenar(ds[tr_2026]), "mas_puntos": PredictorMasPuntos(), "empate": PredictorEmpate()}.items()}
+      corridas_2026, predictores = [], []
+      for semilla in SEMILLAS:
+        predictor, _ = PredictorKeras.entrenar(ds, sec, tr_2026, None, k, base["con_rival"], base["con_contexto"], semilla=semilla,
+                                               epocas=epocas_final, extras=base["extras"])
+        predictor.config["umbral_empate"] = umbral_empate
+        corridas_2026.append(evaluar(predictor, ds, sec, prueba_2026))
+        predictores.append(predictor)
+        self.avisar(f"  semilla={semilla}: acierto {corridas_2026[-1]['acierto_resultado']:.1f}%")
+      resultados_2026["lstm"] = {**resumen(corridas_2026), "semillas": corridas_2026}
+
     # 2-) guardar
     carpeta = settings.MODEL_PATH / f"lstm-{date.today().isoformat()}"
-    guardar_predictor(predictores[0], carpeta, fecha=date.today().isoformat(), entrenado_hasta=2014,
-                      prueba=prueba_resultados["lstm"]["semillas"][0])
+    guardar_predictor(predictores[0], carpeta, fecha=date.today().isoformat(), entrenado_hasta=2022 if resultados_2026 else 2014,
+                      prueba=(resultados_2026 or prueba_resultados)["lstm"]["semillas"][0])
     RESULTADOS.parent.mkdir(parents=True, exist_ok=True)
     RESULTADOS.write_text(json.dumps({
       "fecha": date.today().isoformat(), "dataset": DATASET.name, "partidos": len(ds),
@@ -174,11 +193,13 @@ class Command(BaseCommand):
       "elegida": {"k": k, "con_rival": base["con_rival"], "con_contexto": base["con_contexto"], "extras": base["extras"],
                   "epocas": epocas_final, "umbral_empate": umbral_empate},
       "umbral_empate": {"umbrales": [round(u, 2) for u in np.arange(0, 0.41, 0.01)], "acierto_validacion": curva},
-      "prueba": prueba_resultados, "modelo": carpeta.name,
+      "prueba": prueba_resultados, "prueba_2026": resultados_2026, "modelo": carpeta.name,
     }, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    for nombre, r in prueba_resultados.items():
-      valor = (lambda m: r[m]["media"]) if nombre.startswith("lstm") else (lambda m: r[m])
-      self.avisar(f"{nombre:<16} acierto {valor('acierto_resultado'):5.1f}%  exacto {valor('marcador_exacto'):5.1f}%  "
-                  f"MAE {valor('mae_goles'):.3f}  deviance {valor('deviance'):.3f}")
+    for titulo, tabla in (("2018 y 2022", prueba_resultados), ("2026", resultados_2026)):
+      self.avisar(f"Prueba {titulo}:")
+      for nombre, r in tabla.items():
+        valor = (lambda m: r[m]["media"]) if nombre.startswith("lstm") else (lambda m: r[m])
+        self.avisar(f"  {nombre:<16} acierto {valor('acierto_resultado'):5.1f}%  exacto {valor('marcador_exacto'):5.1f}%  "
+                    f"MAE {valor('mae_goles'):.3f}  deviance {valor('deviance'):.3f}")
     self.stdout.write(self.style.SUCCESS(f"Resultados -> {RESULTADOS}; modelo -> {carpeta}"))

@@ -29,7 +29,7 @@ def formar_dataset_consulta(valores):
     #print(f"dfd\n{dfd[["home", "score_0", "score_1", "away"]]}, {dfd.shape}")
     return(dfd)
 
-dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "Fase Final": "Fase Final", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
+dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "Fase Final": "Fase Final", "16vos": "dieciseisavos", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
 
 def leer_reglamento(agno, datos):
     """
