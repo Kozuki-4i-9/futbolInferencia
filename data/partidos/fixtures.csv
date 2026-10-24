@@ -946,3 +946,107 @@ id,home,score,away,agno
 944,Winner Match 60,Match 62,Winner Match 59,2022
 945,Loser Match 61,Match 63,Loser Match 62,2022
 946,Winner Match 61,Match 64,Winner Match 62,2022
+947,México,2:0,Sudáfrica,2026
+948,Corea del Sur,2:1,República Checa,2026
+949,República Checa,1:1,Sudáfrica,2026
+950,México,1:0,Corea del Sur,2026
+951,México,3:0,República Checa,2026
+952,Sudáfrica,1:0,Corea del Sur,2026
+953,Canadá,1:1,Bosnia y Herzegovina,2026
+954,Catar,1:1,Suiza,2026
+955,Suiza,4:1,Bosnia y Herzegovina,2026
+956,Canadá,6:0,Catar,2026
+957,Canadá,1:2,Suiza,2026
+958,Bosnia y Herzegovina,3:1,Catar,2026
+959,Brasil,1:1,Marruecos,2026
+960,Haití,0:1,Escocia,2026
+961,Escocia,0:1,Marruecos,2026
+962,Brasil,3:0,Haití,2026
+963,Escocia,0:3,Brasil,2026
+964,Marruecos,4:2,Haití,2026
+965,Estados Unidos,4:1,Paraguay,2026
+966,Australia,2:0,Turquía,2026
+967,Estados Unidos,2:0,Australia,2026
+968,Turquía,0:1,Paraguay,2026
+969,Estados Unidos,2:3,Turquía,2026
+970,Paraguay,0:0,Australia,2026
+971,Alemania,7:1,Curazao,2026
+972,Costa de Marfil,1:0,Ecuador,2026
+973,Alemania,2:1,Costa de Marfil,2026
+974,Ecuador,0:0,Curazao,2026
+975,Curazao,0:2,Costa de Marfil,2026
+976,Ecuador,2:1,Alemania,2026
+977,Países Bajos,2:2,Japón,2026
+978,Suecia,5:1,Túnez,2026
+979,Países Bajos,5:1,Suecia,2026
+980,Túnez,0:4,Japón,2026
+981,Japón,1:1,Suecia,2026
+982,Túnez,1:3,Países Bajos,2026
+983,Bélgica,1:1,Egipto,2026
+984,Irán,2:2,Nueva Zelanda,2026
+985,Bélgica,0:0,Irán,2026
+986,Nueva Zelanda,1:3,Egipto,2026
+987,Egipto,1:1,Irán,2026
+988,Nueva Zelanda,1:5,Bélgica,2026
+989,España,0:0,Cabo Verde,2026
+990,Arabia Saudita,1:1,Uruguay,2026
+991,España,4:0,Arabia Saudita,2026
+992,Uruguay,2:2,Cabo Verde,2026
+993,Cabo Verde,0:0,Arabia Saudita,2026
+994,Uruguay,0:1,España,2026
+995,Francia,3:1,Senegal,2026
+996,Irak,1:4,Noruega,2026
+997,Francia,3:0,Irak,2026
+998,Noruega,3:2,Senegal,2026
+999,Noruega,1:4,Francia,2026
+1000,Senegal,5:0,Irak,2026
+1001,Argentina,3:0,Argelia,2026
+1002,Austria,3:1,Jordania,2026
+1003,Argentina,2:0,Austria,2026
+1004,Jordania,1:2,Argelia,2026
+1005,Argelia,3:3,Austria,2026
+1006,Jordania,1:3,Argentina,2026
+1007,Portugal,1:1,República Democrática del Congo,2026
+1008,Uzbekistán,1:3,Colombia,2026
+1009,Portugal,5:0,Uzbekistán,2026
+1010,Colombia,1:0,República Democrática del Congo,2026
+1011,Colombia,0:0,Portugal,2026
+1012,República Democrática del Congo,3:1,Uzbekistán,2026
+1013,Inglaterra,4:2,Croacia,2026
+1014,Ghana,1:0,Panamá,2026
+1015,Inglaterra,0:0,Ghana,2026
+1016,Panamá,0:1,Croacia,2026
+1017,Panamá,0:2,Inglaterra,2026
+1018,Croacia,2:1,Ghana,2026
+1019,Runners-up Grupo A,Match 73,Runners-up Grupo B,2026
+1020,Winner Grupo E,Match 74,Third-p Grupo D,2026
+1021,Winner Grupo F,Match 75,Runners-up Grupo C,2026
+1022,Winner Grupo C,Match 76,Runners-up Grupo F,2026
+1023,Winner Grupo I,Match 77,Third-p Grupo F,2026
+1024,Runners-up Grupo E,Match 78,Runners-up Grupo I,2026
+1025,Winner Grupo A,Match 79,Third-p Grupo E,2026
+1026,Winner Grupo L,Match 80,Third-p Grupo K,2026
+1027,Winner Grupo D,Match 81,Third-p Grupo B,2026
+1028,Winner Grupo G,Match 82,Third-p Grupo I,2026
+1029,Runners-up Grupo K,Match 83,Runners-up Grupo L,2026
+1030,Winner Grupo H,Match 84,Runners-up Grupo J,2026
+1031,Winner Grupo B,Match 85,Third-p Grupo J,2026
+1032,Winner Grupo J,Match 86,Runners-up Grupo H,2026
+1033,Winner Grupo K,Match 87,Third-p Grupo L,2026
+1034,Runners-up Grupo D,Match 88,Runners-up Grupo G,2026
+1035,Winner Match 73,Match 89,Winner Match 75,2026
+1036,Winner Match 74,Match 90,Winner Match 77,2026
+1037,Winner Match 76,Match 91,Winner Match 78,2026
+1038,Winner Match 79,Match 92,Winner Match 80,2026
+1039,Winner Match 83,Match 93,Winner Match 84,2026
+1040,Winner Match 81,Match 94,Winner Match 82,2026
+1041,Winner Match 86,Match 95,Winner Match 88,2026
+1042,Winner Match 85,Match 96,Winner Match 87,2026
+1043,Winner Match 90,Match 97,Winner Match 89,2026
+1044,Winner Match 93,Match 98,Winner Match 94,2026
+1045,Winner Match 91,Match 99,Winner Match 92,2026
+1046,Winner Match 95,Match 100,Winner Match 96,2026
+1047,Winner Match 97,Match 101,Winner Match 98,2026
+1048,Winner Match 99,Match 102,Winner Match 100,2026
+1049,Loser Match 101,Match 103,Loser Match 102,2026
+1050,Winner Match 101,Match 104,Winner Match 102,2026

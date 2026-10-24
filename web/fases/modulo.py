@@ -989,7 +989,7 @@ class normali():
   def __init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0="-", evitar="-", embedding_dim=3):
     """
     ¿QUE HACE?
-    Genera una serie de df y capas de embedding necesarios para dar funcionamiento a la busqueda de nombres de grupos para equipos y el orden de juego en cada mundial (los emparejamientos por mejores terceros de 1986-1994 viven fuera de la clase, en "alinear_knockout_1986_1994")
+    Genera una serie de df y capas de embedding necesarios para dar funcionamiento a la busqueda de nombres de grupos para equipos y el orden de juego en cada mundial (los emparejamientos por mejores terceros de 1986-1994 viven fuera de la clase, en "alinear_llave_terceros")
 
     ¿COMO LO HACE?
     0-) Se coloca en una variable (df0) el resultado de la funcion "formar_dataset_real" ingresandole el argumento (ind_partidos), que será un df contenedor de todos los partidos de cierto mundial 
@@ -1258,30 +1258,79 @@ class normali():
 # =====================================================================
 
 _POSICIONES = {"1": "Winner", "2": "Runners-up", "3": "Third-p"}
-_GRUPOS = "ABCDEF"
-_GANADORES_CON_TERCERO = "ABCD"
-_COMBINACIONES = frozenset(frozenset(c) for c in combinations(_GRUPOS, 4))
-_CLASIFICADOS_FIJOS = frozenset(p + g for p in "12" for g in _GRUPOS)
-_PATRON_PARTIDO = re.compile(r"[12][A-F]-(?:[12][A-F]|3)")
 
-# Reglamento FIFA (el mismo en los 3 mundiales): segun que 4 grupos aporten mejor tercero,
+@dataclass(frozen=True)
+class FormatoTorneo:
+  """
+  ¿QUE HACE?
+  Datos del formato de un mundial con mejores terceros (lo que cambia de un año a otro son datos, no codigo): grupos, que ganadores de grupo enfrentan a un mejor tercero, cuantos terceros pasan, el orden de juego del 1er round de la fase final (llave) y los cruces oficiales FIFA
+
+  Atributos:
+
+    - grupos: letras de los grupos ("ABCDEF" en 1986-1994, "ABCDEFGHIJKL" en 2026)
+
+    - ganadores_con_tercero: letras de los ganadores que enfrentan a un mejor tercero ("ABCD"; en 2026 "ABDEGIKL")
+
+    - n_terceros: cuantos terceros pasan (4; en 2026, 8)
+
+    - llave: partidos del 1er round en notacion "<posicion><grupo>-<posicion><grupo>": "2E" = Runners-up Grupo E, "1A-3" = el ganador del grupo A enfrenta al mejor tercero que le asignen los cruces
+
+    - cruces: mapeo frozenset(grupos con mejor tercero) -> {ganador: grupo del 3ro rival}
+  """
+  grupos: str
+  ganadores_con_tercero: str
+  n_terceros: int
+  llave: tuple
+  cruces: MappingProxyType
+
+  @property
+  def partidos_llave(self):
+    """1ros y 2dos de cada grupo mas los mejores terceros, de a dos por partido"""
+    return (2 * len(self.grupos) + self.n_terceros) // 2
+
+  @property
+  def combinaciones(self):
+    return frozenset(frozenset(c) for c in combinations(self.grupos, self.n_terceros))
+
+  @property
+  def clasificados_fijos(self):
+    return frozenset(p + g for p in "12" for g in self.grupos)
+
+  @property
+  def patron_partido(self):
+    letra = f"[{self.grupos[0]}-{self.grupos[-1]}]"
+    return re.compile(rf"[12]{letra}-(?:[12]{letra}|3)")
+
+def _cruces_desde_texto(ganadores, tabla):
+  """{"ABCD": "CDAB", ...} -> mapeo frozenset(grupos) -> {ganador: grupo del 3ro rival}"""
+  return MappingProxyType({frozenset(grupos): MappingProxyType(dict(zip(ganadores, rivales))) for grupos, rivales in tabla.items()})
+
+def _cruces_2026():
+  """Las 495 combinaciones del reglamento FIFA 2026 (data/partidos/terceros_2026.csv, de etl/construye_mundial_2026.py)"""
+  ruta = settings.BASE_DIR.parent / "data" / "partidos" / "terceros_2026.csv"
+  return dict(pd.read_csv(ruta, dtype=str).itertuples(index=False)) if ruta.exists() else {}
+
+# Reglamento FIFA (el mismo en 1986, 1990 y 1994): segun que 4 grupos aporten mejor tercero,
 # de que grupo es el tercero que enfrenta a cada ganador de los grupos A, B, C y D
-_CRUCES_TERCEROS = MappingProxyType({
-  frozenset(grupos): MappingProxyType(dict(zip(_GANADORES_CON_TERCERO, rivales)))
-  for grupos, rivales in {
-    "ABCD": "CDAB", "ABCE": "CABE", "ABCF": "CABF", "ABDE": "DABE", "ABDF": "DABF",
-    "ABEF": "EABF", "ACDE": "CDAE", "ACDF": "CDAF", "ACEF": "CAFE", "ADEF": "DAFE",
-    "BCDE": "CDBE", "BCDF": "CDBF", "BCEF": "ECBF", "BDEF": "EDBF", "CDEF": "CDFE",
-  }.items()
-})
-
-# Orden de juego del 1er round de la fase final. Notacion "<posicion><grupo>": "2E" = Runners-up Grupo E.
-# "1A-3" = el ganador del grupo A enfrenta al mejor tercero que le asignen los cruces
-_LLAVES_1986_1994 = MappingProxyType({
+_CRUCES_1986_1994 = {
+  "ABCD": "CDAB", "ABCE": "CABE", "ABCF": "CABF", "ABDE": "DABE", "ABDF": "DABF",
+  "ABEF": "EABF", "ACDE": "CDAE", "ACDF": "CDAF", "ACEF": "CAFE", "ADEF": "DAFE",
+  "BCDE": "CDBE", "BCDF": "CDBF", "BCEF": "ECBF", "BDEF": "EDBF", "CDEF": "CDFE",
+}
+_LLAVES = {
   1986: ("1A-3", "1F-2E", "2A-2C", "1B-3", "1C-3", "2F-2B", "1E-2D", "1D-3"),
   1990: ("1A-3", "1E-2D", "2F-2B", "1B-3", "2A-2C", "1C-3", "1D-3", "1F-2E"),
   1994: ("2A-2C", "1A-3", "1B-3", "1F-2E", "1C-3", "1E-2D", "1D-3", "2F-2B"),
+  # dieciseisavos 2026, Match 73 a 88
+  2026: ("2A-2B", "1E-3", "1F-2C", "1C-2F", "1I-3", "2E-2I", "1A-3", "1L-3",
+         "1D-3", "1G-3", "2K-2L", "1H-2J", "1B-3", "1J-2H", "1K-3", "2D-2G"),
+}
+FORMATOS = MappingProxyType({
+  **{agno: FormatoTorneo("ABCDEF", "ABCD", 4, _LLAVES[agno], _cruces_desde_texto("ABCD", _CRUCES_1986_1994)) for agno in (1986, 1990, 1994)},
+  2026: FormatoTorneo("ABCDEFGHIJKL", "ABDEGIKL", 8, _LLAVES[2026], _cruces_desde_texto("ABDEGIKL", _cruces_2026())),
 })
+# mundiales cuyo reglamento se puede editar desde el frontend (el editor dibuja 6 grupos)
+EDITABLES_EN_FRONTEND = (1986, 1990, 1994)
 
 def _etiqueta(codigo):
   """Traduce un codigo de llave ("2E") a la etiqueta que entiende "camb_grp_elm_smpl" ("Runners-up Grupo E")"""
@@ -1297,38 +1346,43 @@ class ReglamentoInvalido(ValueError):
 class ReglamentoTerceros:
   """
   ¿QUE HACE?
-  Representa el reglamento de mejores terceros de un mundial: el orden de los 8 partidos del 1er round de la fase final (llave) y, para cada combinacion de 4 grupos con mejor tercero, el rival de 1A, 1B, 1C y 1D (cruces). Es inmutable y se valida al crearse, venga del reglamento FIFA o del frontend
+  Representa el reglamento de mejores terceros de un mundial: el orden de los partidos del 1er round de la fase final (llave) y, para cada combinacion de grupos con mejor tercero, el rival de cada ganador que enfrenta a un tercero (cruces). Es inmutable y se valida al crearse contra el (FormatoTorneo) de su año, venga del reglamento FIFA o del frontend
 
   ¿COMO LO HACE?
   0-) "__post_init__" junta todos los errores de la llave y de los cruces, y si hay alguno lanza (ReglamentoInvalido)
 
-  1-) La llave es valida si tiene 8 partidos con formato "1A-2C" / "1A-3", cada 1ro y 2do de grupo aparece exactamente una vez, solo 1A, 1B, 1C y 1D enfrentan a un mejor tercero y no hay cruces entre equipos del mismo grupo
+  1-) La llave es valida si tiene los partidos del formato (8 en 1986-1994, 16 en 2026) con formato "1A-2C" / "1A-3", cada 1ro y 2do de grupo aparece exactamente una vez, solo los ganadores del formato enfrentan a un mejor tercero y no hay cruces entre equipos del mismo grupo
 
-  2-) Los cruces son validos si estan las 15 combinaciones, cada combinacion reparte sus 4 grupos entre 1A, 1B, 1C y 1D, y ningun ganador enfrenta al tercero de su propio grupo
+  2-) Los cruces son validos si estan todas las combinaciones (15 en 1986-1994, 495 en 2026), cada combinacion reparte sus grupos entre los ganadores con tercero y ningun ganador enfrenta al tercero de su propio grupo
 
   Atributos:
 
-    - agno: año del mundial (1986, 1990 o 1994)
+    - agno: año del mundial (una clave de FORMATOS: 1986, 1990, 1994 o 2026)
 
-    - llave: tupla de 8 partidos en notacion "<posicion><grupo>-<posicion><grupo>"
+    - llave: tupla de partidos en notacion "<posicion><grupo>-<posicion><grupo>"
 
-    - cruces: mapeo frozenset(4 grupos) -> {"A": grupo del 3ro rival, "B": ..., "C": ..., "D": ...}
+    - cruces: mapeo frozenset(grupos) -> {ganador: grupo del 3ro rival}
   """
   agno: int
   llave: tuple
   cruces: MappingProxyType
 
+  @property
+  def formato(self):
+    return FORMATOS[self.agno]
+
   def __post_init__(self):
+    if self.agno not in FORMATOS:
+      raise ReglamentoInvalido([f"el mundial {self.agno} no usa el formato de mejores terceros (solo {', '.join(map(str, FORMATOS))})"])
     errores = [*self._errores_llave(), *self._errores_cruces()]
-    if self.agno not in _LLAVES_1986_1994:
-      errores.insert(0, f"el mundial {self.agno} no usa el formato de mejores terceros (solo 1986, 1990 y 1994)")
     if errores:
       raise ReglamentoInvalido(errores)
 
   def _errores_llave(self):
-    if len(self.llave) != 8:
-      yield f"la llave debe tener 8 partidos y tiene {len(self.llave)}"
-    malos = [p for p in self.llave if not (isinstance(p, str) and _PATRON_PARTIDO.fullmatch(p))]
+    f = self.formato
+    if len(self.llave) != f.partidos_llave:
+      yield f"la llave debe tener {f.partidos_llave} partidos y tiene {len(self.llave)}"
+    malos = [p for p in self.llave if not (isinstance(p, str) and f.patron_partido.fullmatch(p))]
     if malos:
       yield f"partidos con formato invalido: {malos}"
       return
@@ -1336,50 +1390,53 @@ class ReglamentoTerceros:
     fijos = [c for cruce in cruces for c in cruce if c != "3"]
     if repetidos := sorted({c for c in fijos if fijos.count(c) > 1}):
       yield f"equipos repetidos en la llave: {repetidos}"
-    if faltan := sorted(_CLASIFICADOS_FIJOS - set(fijos)):
+    if faltan := sorted(f.clasificados_fijos - set(fijos)):
       yield f"equipos sin partido en la llave: {faltan}"
     contra_tercero = {local for local, visita in cruces if visita == "3"}
-    if contra_tercero != {"1" + g for g in _GANADORES_CON_TERCERO}:
-      yield f"solo 1A, 1B, 1C y 1D enfrentan a un mejor tercero (recibido: {sorted(contra_tercero)})"
+    if contra_tercero != {"1" + g for g in f.ganadores_con_tercero}:
+      esperados = ", ".join("1" + g for g in f.ganadores_con_tercero)
+      yield f"solo {esperados} enfrentan a un mejor tercero (recibido: {sorted(contra_tercero)})"
     if mismos := [f"{l}-{v}" for l, v in cruces if v != "3" and l[1] == v[1]]:
       yield f"cruces entre equipos del mismo grupo: {mismos}"
 
   def _errores_cruces(self):
-    if set(self.cruces) != _COMBINACIONES:
-      yield "deben definirse los cruces para las 15 combinaciones de 4 grupos"
+    f = self.formato
+    if set(self.cruces) != f.combinaciones:
+      yield f"deben definirse los cruces para las {len(f.combinaciones)} combinaciones de {f.n_terceros} grupos"
       return
     for grupos, rival_de in self.cruces.items():
       nombre = "".join(sorted(grupos))
-      if sorted(rival_de) != list(_GANADORES_CON_TERCERO) or sorted(rival_de.values()) != sorted(grupos):
-        yield f"{nombre}: cada grupo debe aportar exactamente un rival a 1A, 1B, 1C y 1D"
+      if sorted(rival_de) != list(f.ganadores_con_tercero) or sorted(rival_de.values()) != sorted(grupos):
+        yield f"{nombre}: cada grupo debe aportar exactamente un rival a {', '.join('1' + g for g in f.ganadores_con_tercero)}"
       elif mismos := [g for g, rival in rival_de.items() if g == rival]:
         yield f"{nombre}: el ganador de {mismos} no puede enfrentar al tercero de su propio grupo"
 
   @classmethod
   def oficial(cls, agno):
     """Reglamento FIFA del año (agno)"""
-    return cls(agno, _LLAVES_1986_1994.get(agno, ()), _CRUCES_TERCEROS)
+    formato = FORMATOS.get(agno)
+    return cls(agno, formato.llave if formato else (), formato.cruces if formato else MappingProxyType({}))
 
   @classmethod
   def desde_json(cls, agno, datos):
-    """Construye (y valida) el reglamento enviado por el frontend: {"llave": [...8], "cruces": {"ABCD": "CDAB", ...}}"""
+    """Construye (y valida) el reglamento enviado por el frontend: {"llave": [...], "cruces": {"ABCD": "CDAB", ...}}"""
+    ganadores = FORMATOS[agno].ganadores_con_tercero if agno in FORMATOS else ""
     try:
       llave = tuple(datos["llave"])
-      cruces = {frozenset(grupos): MappingProxyType(dict(zip(_GANADORES_CON_TERCERO, rivales)))
-                for grupos, rivales in datos["cruces"].items()}
+      cruces = _cruces_desde_texto(ganadores, datos["cruces"])
     except (KeyError, TypeError, AttributeError):
-      raise ReglamentoInvalido(['se esperaba {"llave": [8 partidos], "cruces": {"ABCD": "CDAB", ...}}']) from None
-    return cls(agno, llave, MappingProxyType(cruces))
+      raise ReglamentoInvalido(['se esperaba {"llave": [partidos], "cruces": {"ABCD": "CDAB", ...}}']) from None
+    return cls(agno, llave, cruces)
 
   def a_json(self):
     """Inverso de "desde_json", para precargar el editor del frontend"""
     return {"llave": list(self.llave),
-            "cruces": {"".join(sorted(grupos)): "".join(rival_de[g] for g in _GANADORES_CON_TERCERO)
+            "cruces": {"".join(sorted(grupos)): "".join(rival_de[g] for g in self.formato.ganadores_con_tercero)
                        for grupos, rival_de in sorted(self.cruces.items(), key=lambda kv: sorted(kv[0]))}}
 
 def reglamentos_oficiales():
-  """Diccionario {agno: reglamento FIFA en formato JSON} para entregar al template"""
-  return {agno: ReglamentoTerceros.oficial(agno).a_json() for agno in _LLAVES_1986_1994}
+  """Diccionario {agno: reglamento FIFA en formato JSON} para el editor del template (los mundiales de EDITABLES_EN_FRONTEND)"""
+  return {agno: ReglamentoTerceros.oficial(agno).a_json() for agno in EDITABLES_EN_FRONTEND}
 
 def tabla_terceros(dict_table, df_grupos=None):
   """
@@ -1431,15 +1488,15 @@ def con_reglamento_terceros(func):
   return envoltura
 
 @con_reglamento_terceros
-def alinear_knockout_1986_1994(dict_table, reglamento, df_grupos=None):
+def alinear_llave_terceros(dict_table, reglamento, df_grupos=None):
   """
   ¿QUE HACE?
-  Genera el df (home, away) del 1er round de la fase final segun los 4 mejores terceros de las tablas de grupos ya jugadas y el (reglamento) que inyecta "con_reglamento_terceros". Quien llama pasa (dict_table, agno, df_grupos=..., personalizado=...)
+  Genera el df (home, away) del 1er round de la fase final segun los mejores terceros (4 en 1986-1994, 8 en 2026) de las tablas de grupos ya jugadas y el (reglamento) que inyecta "con_reglamento_terceros". Quien llama pasa (dict_table, agno, df_grupos=..., personalizado=...)
 
   ¿COMO LO HACE?
-  0-) Se obtienen los 4 mejores terceros con "tabla_terceros"
+  0-) Se obtienen los mejores terceros del formato con "tabla_terceros"
 
-  1-) Se busca en los cruces del (reglamento) el rival de 1A, 1B, 1C y 1D para esa combinacion de grupos
+  1-) Se busca en los cruces del (reglamento) el rival de cada ganador con tercero para esa combinacion de grupos
 
   2-) Se recorre la llave del (reglamento) traduciendo cada codigo a etiqueta; los "3" se reemplazan por el tercero asignado al ganador local
 
@@ -1453,9 +1510,9 @@ def alinear_knockout_1986_1994(dict_table, reglamento, df_grupos=None):
 
   Returns:
 
-    - df con columnas "home" y "away" en formato "Winner Grupo A" / "Third-p Grupo C", con los 4 mejores terceros en attrs["mejores_terceros"]
+    - df con columnas "home" y "away" en formato "Winner Grupo A" / "Third-p Grupo C", con los mejores terceros en attrs["mejores_terceros"]
   """
-  terceros = tabla_terceros(dict_table, df_grupos).iloc[:4]
+  terceros = tabla_terceros(dict_table, df_grupos).iloc[:reglamento.formato.n_terceros]
   rival_de = reglamento.cruces[frozenset(terceros.Grupo)]
   partidos = []
   for local, visita in (partido.split("-") for partido in reglamento.llave):
@@ -1515,7 +1572,7 @@ class func_prediccion_orden(normali):
     """
     normali.__init__(self, ind_partidos, ind_fixtures, df_prediccion_usuario, clsif, obj0=obj0, evitar=evitar, embedding_dim=embedding_dim)
 
-    self.lista_fases = ["grupo", "doce", "knockout", "quarter", "semi", "third", "final", "Fase Final"]
+    self.lista_fases = ["grupo", "doce", "dieciseisavos", "knockout", "quarter", "semi", "third", "final", "Fase Final"]
     self.dic_matches = {}
     self.dic_fuerza = {}
     self.ind0 = ind0
@@ -2187,7 +2244,7 @@ class func_prediccion_orden(normali):
     return dffix
 
 # Global setups: se construyen la primera vez que se piden, no al importar (asi migrate y load_data funcionan con la BD vacia)
-agnos = [1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022]
+agnos = [1934, 1938, 1950, 1954, 1958, 1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026]
 _cache_global = {}
 
 def obtener_clasificaciones():
@@ -2297,7 +2354,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
     - df_ent: df con los resultados predichos para cada fase del mundial de interes y nombres de equipos ya en formato texto, con las alteraciones que el usuario haya hecho en su consulta, concatenando los dfs de cada fase del mundial de interes (fase de grupos, 2da fase de grupos, semifinales, partido por el tercer lugar y final) cada uno con sus resultados predichos y nombres de equipos ya en formato texto
 
-    - Para 1986, 1990 y 1994 el 1er round de la fase final se arma con "alinear_knockout_1986_1994" DESPUES de jugar la fase de grupos, y (df_ent.attrs) lleva las tablas "mejores_terceros" y "llave_octavos" para mostrarlas en el template
+    - Para 1986, 1990 y 1994 el 1er round de la fase final se arma con "alinear_llave_terceros" DESPUES de jugar la fase de grupos, y (df_ent.attrs) lleva las tablas "mejores_terceros" y "llave_octavos" para mostrarlas en el template
 
   Args:
 
@@ -2667,6 +2724,84 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
     return df_ent
   
+  elif "2026" in pregunta_0:
+    # 48 equipos en 12 grupos; pasan los 2 primeros y los 8 mejores terceros a dieciseisavos (Match 73 a 88), que se arman
+    # con el reglamento de mejores terceros (FORMATOS[2026], o el personalizado). Despues del fixture de 2026 (df3):
+    # filas 0-15 dieciseisavos, 16-23 octavos, 24-27 cuartos, 28-29 semifinales, 30 tercer puesto y 31 final
+    agno = 2026
+    filas = lambda a, b: df3[["home", "score", "away"]].iloc[a:b].copy()
+    marcadores_32 = df3
+    df_fixture_group_ = df2.copy()
+    df_fixture_knockout, df_fixture_quarter, df_fixture_semi = filas(16, 24), filas(24, 28), filas(28, 30)
+    df_fixture_third, df_fixture_final = df3[["home", "score", "away"]].iloc[30].copy(), df3[["home", "score", "away"]].iloc[31].copy()
+
+    if "dieciseisavos" in pregunta_0:
+      objs.ind0[1] = "dieciseisavos"
+      # la consulta del usuario trae score_0 y score_1; la llave lee "score" ("3:1")
+      marcadores_32 = df1[1].assign(score=df1[1]["score_0"].astype(str) + ":" + df1[1]["score_1"].astype(str))
+    elif "grupo" in pregunta_0:
+      objs.ind0[1] = "grupo"
+      df_fixture_group_ = agregar_features(df1[1].copy(), dic_agnos, ind=0)
+    elif "knockout" in pregunta_0:
+      objs.ind0[1] = "knockout"
+      df_fixture_knockout = df1[1].copy()
+    elif "quarter" in pregunta_0:
+      objs.ind0[1] = "quarter"
+      df_fixture_quarter = df1[1].copy()
+    elif "semi" in pregunta_0:
+      objs.ind0[1] = "semi"
+      df_fixture_semi = df1[1].copy()
+    elif "third" in pregunta_0:
+      objs.ind0[1] = "third"
+      df_fixture_third = df1[1].copy()
+    elif "final" in pregunta_0:
+      objs.ind0[1] = "final"
+      df_fixture_final = df1[1].copy()
+
+    objs.ind0[0] = "grupo"
+    dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo)
+
+    # dieciseisavos con las tablas de grupos YA jugadas y el reglamento de mejores terceros
+    df_fixture_32 = alinear_llave_terceros(dict_table, agno, df_grupos=df_fixture_group_, personalizado=reglamento_terceros)
+    mejores_terceros = df_fixture_32.attrs["mejores_terceros"]
+    cruces_32 = df_fixture_32[["home", "away"]].rename(columns={"home": "cruce_local", "away": "cruce_visita"})
+    df_fixture_32.insert(1, "score", marcadores_32["score"].iloc[:16].to_numpy())
+    df_fixture_32 = objs.camb_grp_elm_smpl(df_fixture_group_, df_fixture_32, dict_table)
+
+    objs.n_partidos = df_fixture_group_.shape[0] + 1 # dieciseisavos: partidos de grupos + 1 (Match 73)
+    objs.ind0[0] = "dieciseisavos"
+    objs.jugar(df_fixture_32, modelo)
+
+    df_fixture_knockout = objs.ordenar_elm_smpl(df_fixture_32, df_fixture_knockout)
+    objs.ind0[0] = "knockout"
+    objs.jugar(df_fixture_knockout, modelo)
+
+    df_fixture_quarter = objs.ordenar_elm_smpl(df_fixture_knockout, df_fixture_quarter)
+    objs.ind0[0] = "quarter"
+    objs.jugar(df_fixture_quarter, modelo)
+
+    df_fixture_semi = objs.ordenar_elm_smpl(df_fixture_quarter, df_fixture_semi)
+    objs.ind0[0] = "semi"
+    objs.jugar(df_fixture_semi, modelo)
+
+    df_fixture_third = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_third, tipo="Loser")
+    objs.ind0[0] = "third"
+    objs.jugar(df_fixture_third, modelo)
+
+    df_fixture_final = objs.ordenar_elm_smpl(df_fixture_semi, df_fixture_final)
+    objs.ind0[0] = "final"
+    objs.jugar(df_fixture_final, modelo)
+
+    columnas = ["home", "score_0", "score_1", "away"]
+    df_ent = pd.concat([df[columnas] for df in (df_fixture_group_, df_fixture_32, df_fixture_knockout, df_fixture_quarter,
+                                                  df_fixture_semi, df_fixture_third, df_fixture_final)], axis=0)
+    df_ent.home = df_ent.home.map(objs.id_pais)
+    df_ent.away = df_ent.away.map(objs.id_pais)
+    df_ent.attrs["mejores_terceros"] = mejores_terceros.assign(pais=mejores_terceros.pais.map(objs.id_pais))
+    df_ent.attrs["llave_octavos"] = cruces_32.assign(local=df_fixture_32.home.map(objs.id_pais).to_numpy(),
+                                                     visita=df_fixture_32.away.map(objs.id_pais).to_numpy())
+    return df_ent
+
   elif "1986" in pregunta_0 or "1990" in pregunta_0 or "1994" in pregunta_0:
     agno = int(pregunta_0[-4:])
 
@@ -2729,7 +2864,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
     dict_table = objs.fase_de_grupos(dict_g, df_fixture_group_, modelo)
 
     # la llave se arma con las tablas de grupos YA jugadas, con el reglamento FIFA o el personalizado desde el frontend
-    df_fixture_knockout = alinear_knockout_1986_1994(dict_table, agno, df_grupos=df_fixture_group_, personalizado=reglamento_terceros)
+    df_fixture_knockout = alinear_llave_terceros(dict_table, agno, df_grupos=df_fixture_group_, personalizado=reglamento_terceros)
     mejores_terceros = df_fixture_knockout.attrs["mejores_terceros"]
     cruces_octavos = df_fixture_knockout[["home", "away"]].rename(columns={"home": "cruce_local", "away": "cruce_visita"})
     df_fixture_knockout.insert(1, "score", marcadores_knockout["score"].iloc[:8].to_numpy())

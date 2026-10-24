@@ -1,7 +1,7 @@
 {
-  "fecha": "2026-10-20",
+  "fecha": "2026-10-23",
   "dataset": "partidos_features.csv",
-  "partidos": 8828,
+  "partidos": 9833,
   "particion": {
     "seleccion": "entrena ciclos <= 2010, valida ciclo 2014",
     "prueba": "entrena ciclos <= 2014, prueba mundiales 2018 y 2022 (fase mundial)"
@@ -11,6 +11,7 @@
       "k": 1,
       "con_rival": true,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9577592447651879,
@@ -21,8 +22,8 @@
           "desv": 0.24887637090659936
         },
         "marcador_exacto": {
-          "media": 13.632872503840247,
-          "desv": 0.38016493612179986
+          "media": 13.90168970814132,
+          "desv": 0.05430927658882783
         },
         "deviance": {
           "media": 0.7391769352829778,
@@ -39,6 +40,7 @@
       "k": 3,
       "con_rival": true,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9599029543665102,
@@ -49,8 +51,8 @@
           "desv": 0.3916297629487579
         },
         "marcador_exacto": {
-          "media": 14.208909370199692,
-          "desv": 0.6402969278238513
+          "media": 13.748079877112135,
+          "desv": 0.7122594850611145
         },
         "deviance": {
           "media": 0.7438338652268267,
@@ -67,6 +69,7 @@
       "k": 5,
       "con_rival": true,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9580245476842681,
@@ -77,8 +80,8 @@
           "desv": 0.46401866258044017
         },
         "marcador_exacto": {
-          "media": 13.786482334869431,
-          "desv": 0.6402969278238507
+          "media": 13.440860215053762,
+          "desv": 0.5511789590786219
         },
         "deviance": {
           "media": 0.746482765001072,
@@ -95,6 +98,7 @@
       "k": 8,
       "con_rival": true,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9564591594592606,
@@ -106,7 +110,7 @@
         },
         "marcador_exacto": {
           "media": 14.055299539170507,
-          "desv": 0.8037038992494756
+          "desv": 0.5874446444231317
         },
         "deviance": {
           "media": 0.7432498895460565,
@@ -123,6 +127,7 @@
       "k": 12,
       "con_rival": true,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9506030330483082,
@@ -133,8 +138,8 @@
           "desv": 0.35612974253055685
         },
         "marcador_exacto": {
-          "media": 14.01689708141321,
-          "desv": 1.2771343431886246
+          "media": 13.901689708141319,
+          "desv": 0.6263251317319541
         },
         "deviance": {
           "media": 0.738977908947386,
@@ -151,6 +156,7 @@
       "k": 1,
       "con_rival": false,
       "con_contexto": true,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9582600920745808,
@@ -161,8 +167,8 @@
           "desv": 0.3801649361218009
         },
         "marcador_exacto": {
-          "media": 12.711213517665131,
-          "desv": 0.6120344643052706
+          "media": 12.980030721966207,
+          "desv": 0.19581488147437717
         },
         "deviance": {
           "media": 0.7403225011721967,
@@ -179,6 +185,7 @@
       "k": 1,
       "con_rival": true,
       "con_contexto": false,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9728823310127638,
@@ -189,8 +196,8 @@
           "desv": 0.24887637090660264
         },
         "marcador_exacto": {
-          "media": 12.05837173579109,
-          "desv": 0.14368883973786228
+          "media": 12.250384024577572,
+          "desv": 0.2715463829441425
         },
         "deviance": {
           "media": 0.7577339041329956,
@@ -207,6 +214,7 @@
       "k": 1,
       "con_rival": false,
       "con_contexto": false,
+      "extras": [],
       "validacion": {
         "mae_goles": {
           "media": 0.9724736827183887,
@@ -217,8 +225,8 @@
           "desv": 0.14368883973786356
         },
         "marcador_exacto": {
-          "media": 11.943164362519203,
-          "desv": 0.21723710635531465
+          "media": 12.05837173579109,
+          "desv": 0.19581488147437717
         },
         "deviance": {
           "media": 0.7576201941061802,
@@ -230,20 +238,331 @@
         14,
         13
       ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "elo"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9442248376066326,
+          "desv": 0.003933123823731831
+        },
+        "acierto_resultado": {
+          "media": 61.17511520737327,
+          "desv": 0.16292782976648432
+        },
+        "marcador_exacto": {
+          "media": 12.480798771121352,
+          "desv": 0.14368883973786292
+        },
+        "deviance": {
+          "media": 0.7223173263188176,
+          "desv": 0.0019865257337411102
+        }
+      },
+      "epocas": [
+        5,
+        5,
+        5
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "fase"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9600994179365777,
+          "desv": 0.0063330700105560765
+        },
+        "acierto_resultado": {
+          "media": 60.02304147465438,
+          "desv": 0.5721837337078111
+        },
+        "marcador_exacto": {
+          "media": 13.13364055299539,
+          "desv": 0.28219927912248594
+        },
+        "deviance": {
+          "media": 0.7423207928055405,
+          "desv": 0.0003115629086813124
+        }
+      },
+      "epocas": [
+        12,
+        13,
+        12
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "continental"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.955347982415509,
+          "desv": 0.004145395367343866
+        },
+        "acierto_resultado": {
+          "media": 60.215053763440864,
+          "desv": 0.19581488147437498
+        },
+        "marcador_exacto": {
+          "media": 13.210445468509983,
+          "desv": 0.2367286483475035
+        },
+        "deviance": {
+          "media": 0.7392432622126869,
+          "desv": 0.001261998772449504
+        }
+      },
+      "epocas": [
+        12,
+        12,
+        11
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "descanso"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9580792775163042,
+          "desv": 0.005077388064633708
+        },
+        "acierto_resultado": {
+          "media": 59.984639016897084,
+          "desv": 0.19581488147437823
+        },
+        "marcador_exacto": {
+          "media": 12.980030721966203,
+          "desv": 0.1086185531776565
+        },
+        "deviance": {
+          "media": 0.7401152086050717,
+          "desv": 0.0002593937639015264
+        }
+      },
+      "epocas": [
+        13,
+        13,
+        12
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "grupo"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9594292375423622,
+          "desv": 0.005327771404774586
+        },
+        "acierto_resultado": {
+          "media": 60.25345622119816,
+          "desv": 0.41002604654498354
+        },
+        "marcador_exacto": {
+          "media": 12.864823348694317,
+          "desv": 0.2873776794757244
+        },
+        "deviance": {
+          "media": 0.741704222407407,
+          "desv": 0.0010030503742472353
+        }
+      },
+      "epocas": [
+        13,
+        12,
+        13
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "elo",
+        "fase"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9442911838537538,
+          "desv": 0.0037639354087615896
+        },
+        "acierto_resultado": {
+          "media": 61.52073732718893,
+          "desv": 0.41002604654497954
+        },
+        "marcador_exacto": {
+          "media": 12.634408602150538,
+          "desv": 0.4241690098766218
+        },
+        "deviance": {
+          "media": 0.7231753302611671,
+          "desv": 0.002519664628750495
+        }
+      },
+      "epocas": [
+        5,
+        5,
+        5
+      ]
+    },
+    {
+      "k": 1,
+      "con_rival": false,
+      "con_contexto": true,
+      "extras": [
+        "elo",
+        "continental"
+      ],
+      "validacion": {
+        "mae_goles": {
+          "media": 0.9414825878104627,
+          "desv": 0.00387416420187027
+        },
+        "acierto_resultado": {
+          "media": 61.55913978494624,
+          "desv": 0.10861855317766067
+        },
+        "marcador_exacto": {
+          "media": 12.864823348694316,
+          "desv": 0.4241690098766232
+        },
+        "deviance": {
+          "media": 0.7204141628391012,
+          "desv": 0.0015372347083715614
+        }
+      },
+      "epocas": [
+        5,
+        5,
+        5
+      ]
     }
   ],
   "elegida": {
     "k": 1,
     "con_rival": false,
     "con_contexto": true,
-    "epocas": 13
+    "extras": [
+      "elo"
+    ],
+    "epocas": 5,
+    "umbral_empate": 0.01
+  },
+  "umbral_empate": {
+    "umbrales": [
+      0.0,
+      0.01,
+      0.02,
+      0.03,
+      0.04,
+      0.05,
+      0.06,
+      0.07,
+      0.08,
+      0.09,
+      0.1,
+      0.11,
+      0.12,
+      0.13,
+      0.14,
+      0.15,
+      0.16,
+      0.17,
+      0.18,
+      0.19,
+      0.2,
+      0.21,
+      0.22,
+      0.23,
+      0.24,
+      0.25,
+      0.26,
+      0.27,
+      0.28,
+      0.29,
+      0.3,
+      0.31,
+      0.32,
+      0.33,
+      0.34,
+      0.35,
+      0.36,
+      0.37,
+      0.38,
+      0.39,
+      0.4
+    ],
+    "acierto_validacion": [
+      0.6117511520737328,
+      0.6129032258064516,
+      0.6102150537634409,
+      0.6125192012288787,
+      0.6117511520737328,
+      0.6109831029185869,
+      0.6109831029185868,
+      0.6113671274961597,
+      0.6098310291858678,
+      0.6075268817204301,
+      0.6059907834101382,
+      0.6059907834101382,
+      0.6052227342549923,
+      0.6052227342549923,
+      0.6013824884792626,
+      0.598310291858679,
+      0.5956221198156683,
+      0.5925499231950844,
+      0.5883256528417818,
+      0.5844854070660522,
+      0.5794930875576038,
+      0.5775729646697388,
+      0.5760368663594471,
+      0.5733486943164362,
+      0.5691244239631337,
+      0.564900153609831,
+      0.5622119815668203,
+      0.5591397849462365,
+      0.5541474654377879,
+      0.5533794162826421,
+      0.5506912442396313,
+      0.5480030721966206,
+      0.5476190476190476,
+      0.5437788018433181,
+      0.5422427035330261,
+      0.5410906298003072,
+      0.5395545314900154,
+      0.5368663594470046,
+      0.5364823348694316,
+      0.5357142857142857,
+      0.5341781874039939
+    ]
   },
   "prueba": {
     "medias": {
       "partidos": 128,
       "mae_goles": 0.9838418972862667,
       "acierto_resultado": 42.96875,
-      "marcador_exacto": 9.375,
+      "marcador_exacto": 10.15625,
       "deviance": 0.9568416756596467
     },
     "mas_puntos": {
@@ -262,45 +581,150 @@
     },
     "lstm": {
       "mae_goles": {
-        "media": 0.9342247024566556,
-        "desv": 0.004809199827913979
+        "media": 0.9200250223899881,
+        "desv": 0.005139076849088591
       },
       "acierto_resultado": {
-        "media": 53.125,
-        "desv": 0.637887953849786
+        "media": 53.90625,
+        "desv": 0.0
       },
       "marcador_exacto": {
-        "media": 10.9375,
-        "desv": 1.275775907699572
+        "media": 10.677083333333334,
+        "desv": 0.9743899444723806
       },
       "deviance": {
-        "media": 0.9320420839378561,
-        "desv": 0.009326621452225193
+        "media": 0.9166363290715968,
+        "desv": 0.0015399150458986456
       },
       "semillas": [
         {
           "partidos": 128,
-          "mae_goles": 0.9403092155698687,
-          "acierto_resultado": 53.125,
+          "mae_goles": 0.9267847153823823,
+          "acierto_resultado": 53.90625,
           "marcador_exacto": 10.9375,
-          "deviance": 0.9218975832750922
+          "deviance": 0.9144791828182863
         },
         {
           "partidos": 128,
-          "mae_goles": 0.9338142949854955,
-          "acierto_resultado": 52.34375,
-          "marcador_exacto": 12.5,
-          "deviance": 0.9444147199643262
+          "mae_goles": 0.9189571186434478,
+          "acierto_resultado": 53.90625,
+          "marcador_exacto": 11.71875,
+          "deviance": 0.9179738376231149
         },
         {
           "partidos": 128,
-          "mae_goles": 0.9285505968146026,
+          "mae_goles": 0.9143332331441343,
           "acierto_resultado": 53.90625,
           "marcador_exacto": 9.375,
-          "deviance": 0.9298139485741501
+          "deviance": 0.9174559667733893
+        }
+      ]
+    },
+    "lstm_sin_umbral": {
+      "mae_goles": {
+        "media": 0.9200250223899881,
+        "desv": 0.005139076849088591
+      },
+      "acierto_resultado": {
+        "media": 53.90625,
+        "desv": 0.637887953849786
+      },
+      "marcador_exacto": {
+        "media": 10.416666666666666,
+        "desv": 0.9743899444723806
+      },
+      "deviance": {
+        "media": 0.9166363290715968,
+        "desv": 0.0015399150458986456
+      },
+      "semillas": [
+        {
+          "partidos": 128,
+          "mae_goles": 0.9267847153823823,
+          "acierto_resultado": 53.90625,
+          "marcador_exacto": 10.15625,
+          "deviance": 0.9144791828182863
+        },
+        {
+          "partidos": 128,
+          "mae_goles": 0.9189571186434478,
+          "acierto_resultado": 54.6875,
+          "marcador_exacto": 11.71875,
+          "deviance": 0.9179738376231149
+        },
+        {
+          "partidos": 128,
+          "mae_goles": 0.9143332331441343,
+          "acierto_resultado": 53.125,
+          "marcador_exacto": 9.375,
+          "deviance": 0.9174559667733893
         }
       ]
     }
   },
-  "modelo": "lstm-2026-10-20"
+  "prueba_2026": {
+    "medias": {
+      "partidos": 104,
+      "mae_goles": 1.0496137726116204,
+      "acierto_resultado": 47.11538461538461,
+      "marcador_exacto": 6.730769230769231,
+      "deviance": 0.8829297422170157
+    },
+    "mas_puntos": {
+      "partidos": 104,
+      "mae_goles": 1.1875,
+      "acierto_resultado": 50.96153846153846,
+      "marcador_exacto": 10.576923076923077,
+      "deviance": 13.257586669385288
+    },
+    "empate": {
+      "partidos": 104,
+      "mae_goles": 1.0096153846153846,
+      "acierto_resultado": 23.076923076923077,
+      "marcador_exacto": 11.538461538461538,
+      "deviance": 1.0
+    },
+    "lstm": {
+      "mae_goles": {
+        "media": 0.9450412183426894,
+        "desv": 0.006266135346439033
+      },
+      "acierto_resultado": {
+        "media": 63.78205128205128,
+        "desv": 2.398498324855091
+      },
+      "marcador_exacto": {
+        "media": 8.974358974358974,
+        "desv": 0.4532735776836852
+      },
+      "deviance": {
+        "media": 0.7733119573761238,
+        "desv": 0.004417230118698807
+      },
+      "semillas": [
+        {
+          "partidos": 104,
+          "mae_goles": 0.9463433998708541,
+          "acierto_resultado": 66.34615384615384,
+          "marcador_exacto": 8.653846153846153,
+          "deviance": 0.7742606668969061
+        },
+        {
+          "partidos": 104,
+          "mae_goles": 0.936799019575119,
+          "acierto_resultado": 60.57692307692307,
+          "marcador_exacto": 8.653846153846153,
+          "deviance": 0.7674903747763572
+        },
+        {
+          "partidos": 104,
+          "mae_goles": 0.9519812355820949,
+          "acierto_resultado": 64.42307692307693,
+          "marcador_exacto": 9.615384615384617,
+          "deviance": 0.7781848304551082
+        }
+      ]
+    }
+  },
+  "modelo": "lstm-2026-10-23"
 }
