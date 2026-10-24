@@ -2,12 +2,14 @@ import json
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from django.test import SimpleTestCase
 
 from .dataset import CATEGORIAS, CICLO_INTERNACIONALES, N_CONTEXTO, construir_dataset, construir_secuencias, mapa_paises
 from .modulo import ALL_METRICS, COLS_MODELO_POR_EQUIPO, METRICAS_ABSTRACTAS, historico_abstractas
-from .predictores import Lote, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
+from .evaluacion import metricas, particion
+from .predictores import Lote, PredictorEmpate, PredictorKeras, PredictorMasPuntos, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
 
 
 def partidos_df(filas):
@@ -187,3 +189,57 @@ class CicloInternacionalesTests(SimpleTestCase):
     ds = construir_dataset(partidos_df([["A", "B", 1, 0, 1934]]), partidos_df([]), proxy, agnos=[1934])
     fila = ds.iloc[0]
     self.assertEqual((fila["pk_real_0"], fila["pk_real_1"], fila["sot_real_0"]), (1, 0, 0))
+
+
+class EvaluacionTests(SimpleTestCase):
+
+  def test_metricas_deterministas(self):
+    goles = [[2, 1], [1, 1], [0, 3]]
+    r = metricas(goles, [[1, 0], [1, 1], [1, 0]], determinista=True)
+    # acierta el ganador del 1ro y el empate del 2do; marcador exacto solo el 1-1
+    self.assertAlmostEqual(r["acierto_resultado"], 200 / 3)
+    self.assertAlmostEqual(r["marcador_exacto"], 100 / 3)
+    self.assertAlmostEqual(r["mae_goles"], (1 + 1 + 0 + 0 + 1 + 3) / 6)
+
+  def test_resultado_mas_probable(self):
+    # 2,5 contra 0,3 goles esperados: lo mas probable es que gane el local
+    self.assertEqual(metricas([[3, 0]], [[2.5, 0.3]])["acierto_resultado"], 100.0)
+
+  def test_particion_temporal(self):
+    ds = pd.DataFrame({"agno": [2010, 2014, 2014, 2018], "fase": ["mundial", "eliminatoria", "mundial", "mundial"]})
+    tr, va, pr = particion(ds, hasta=2010, validacion=2014, prueba=[2018])
+    self.assertEqual((tr.tolist(), va.tolist(), pr.tolist()), ([True, False, False, False], [False, True, True, False], [False, False, False, True]))
+
+  def test_lineas_base(self):
+    tabla = pd.DataFrame({"PTS_0": [6, 1], "PJ_0": [2, 1], "PTS_1": [3, 3], "PJ_1": [2, 1]})
+    self.assertEqual(PredictorMasPuntos().predecir(Lote(tabla)).tolist(), [[1, 0], [0, 1]])
+    self.assertEqual(PredictorEmpate().predecir(Lote(tabla)).tolist(), [[1, 1], [1, 1]])
+
+
+class PredictorKerasTests(SimpleTestCase):
+
+  def test_entrenar_guardar_y_cargar(self):
+    clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1934], ["C", "A", 0, 1, 1934]] * 4)
+    ds = construir_dataset(partidos_df([["A", "C", 1, 0, 1934]]), clasif, PROXY_VACIO, agnos=[1934])
+    sec = construir_secuencias(ds, k=2)
+    filas = np.ones(len(ds), dtype=bool)
+    predictor, _ = PredictorKeras.entrenar(ds, sec, filas, filas, 2, True, True, epocas=2)
+    salida = predictor.predecir(Lote(ds, sec))
+    self.assertEqual(salida.shape, (len(ds), 2))
+    self.assertTrue((salida > 0).all())
+    with tempfile.TemporaryDirectory() as carpeta:
+      guardar_predictor(predictor, carpeta)
+      cargado, esquema = cargar_predictor(carpeta)
+      self.assertEqual(esquema["config"]["k"], 2)
+      np.testing.assert_allclose(cargado.predecir(Lote(ds, sec)), salida, rtol=1e-5)
+
+  def test_anfitrion_listado_de_visitante(self):
+    internacionales = pd.DataFrame([["1934-05-27", 1934, "B", "A", 2, 1, "mundial", 0]],
+                                   columns=["fecha", "agno", "home", "away", "score_0", "score_1", "categoria", "neutral"])
+    ds = construir_dataset(partidos_df([["A", "B", 1, 2, 1934]]), partidos_df([]), PROXY_VACIO, agnos=[1934], internacionales=internacionales)
+    fila = ds.iloc[0]
+    # B es el anfitrion aunque la tabla de mundiales lo liste de visitante
+    self.assertEqual((fila["neutral"], fila["local_0"], fila["local_1"]), (0, 0, 1))
+    sec = construir_secuencias(ds, k=1, con_rival=False)
+    self.assertEqual(sec["seq_1"][0, -1, len(ALL_METRICS)], 1.0)
+    self.assertEqual(sec["seq_0"][0, -1, len(ALL_METRICS)], 0.0)

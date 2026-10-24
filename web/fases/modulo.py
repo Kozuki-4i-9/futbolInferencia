@@ -86,6 +86,17 @@ def gana_local_desempate(desempates, home, away):
     return desempates[(away, home)] == "away"
   return False
 
+# predictor cargado por carpeta: cargar un LSTM de Keras tarda segundos y no conviene repetirlo en cada consulta
+_PREDICTORES = {}
+
+def predictor_en_uso(carpeta):
+  """Predictor de (carpeta) con "cargar_predictor", guardado en memoria; se vuelve a cargar si cambia su esquema.json"""
+  from .predictores import ESQUEMA, cargar_predictor
+  version = (carpeta / ESQUEMA).stat().st_mtime
+  if _PREDICTORES.get(carpeta, (None,))[0] != version:
+    _PREDICTORES[carpeta] = (version, cargar_predictor(carpeta)[0])
+  return _PREDICTORES[carpeta][1]
+
 def formar_dataset_real(ind0, valores=None): # PEND recomentar docstring
   """
   ¿QUE HACE?
@@ -1484,6 +1495,23 @@ class func_prediccion_orden(normali):
     self.drop_metricas = tuple(drop_metricas)
     self.metricas_opcionales = tuple(metricas_opcionales)
 
+  def contexto_simulacion(self, tabla):
+    """
+    ¿QUE HACE?
+    Agrega a la (tabla) de entrada al predictor (ids home_id y away_id de la app) lo que el LSTM recibe como contexto, con las mismas columnas que "construir_dataset": nombres de los equipos, categoria ("mundial"), neutral (0 si juega un anfitrion), local_0 / local_1 (el anfitrion juega en su cancha) y si el historico de metricas abstractas de cada equipo tiene penales o tiros reales (pk_real, sot_real). Usa los atributos (anfitriones) y (con_datos_reales) que deja "consulta_general"; sin ellos, todo partido es neutral y sin datos reales
+    """
+    anfitriones = getattr(self, "anfitriones", set())
+    reales = getattr(self, "con_datos_reales", {})
+    tabla = tabla.assign(
+      home=tabla["home_id"].map(self.id_pais), away=tabla["away_id"].map(self.id_pais), categoria="mundial",
+      neutral=[0 if h in anfitriones or a in anfitriones else 1 for h, a in zip(tabla["home_id"], tabla["away_id"])],
+      local_0=tabla["home_id"].isin(anfitriones).astype(int), local_1=tabla["away_id"].isin(anfitriones).astype(int),
+    )
+    for marca in ("pk_real", "sot_real"):
+      for i, lado in ((0, "home_id"), (1, "away_id")):
+        tabla[f"{marca}_{i}"] = tabla[lado].isin(reales.get(marca, set())).astype(int)
+    return tabla
+
   def intsc_prob_goles(self, X, model, alterno=0):
     """
     ¿QUE HACE?
@@ -1533,8 +1561,8 @@ class func_prediccion_orden(normali):
     """
     if alterno == 0:
       # X viene de "calculo_metricas_0" (esquema fijo); el predictor devuelve (n, 2) goles esperados de home y away
-      from .predictores import lote_desde_entrada
-      Y0 = model.predecir(lote_desde_entrada(X))
+      from .predictores import Lote, lote_desde_entrada
+      Y0 = model.predecir(Lote(self.contexto_simulacion(lote_desde_entrada(X).tabla)))
 
     elif alterno == 1:
       # X es el df de la fase (o la Serie de un partido): el marcador se busca por pareja en el mundial real
@@ -2250,7 +2278,7 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
 
   11-) Se define la variable (dir_modelo) con la carpeta del predictor en uso: (settings.MODEL_PATH) / (settings.MODEL_DIR), configurable desde .env
 
-  12-) Se carga el predictor con "cargar_predictor", que rechaza un modelo entrenado con otras metricas, y se almacena en la variable (modelo)
+  12-) Se obtiene el predictor con "predictor_en_uso" ("cargar_predictor", que rechaza un modelo entrenado con otras metricas, la primera vez; luego desde memoria) y se almacena en la variable (modelo)
 
   13-) Se crea una variable (dict_g) llamando al medtodo (grupos_anio_interes) del objeto (objs) con parametro igual al año del mundial de interes y se obtiene un diccionario con claves de cada grupo que jugó ese mundial ("Grupo A", "Grupo B", pj) y valor un df contenedor de los equipos del grupo, parametros de rendimiento seteados a 0, el grupo mismo y el año de juego
 
@@ -2323,11 +2351,17 @@ def consulta_general(pregunta_0, df5, reglamento_terceros=None, drop_metricas=DR
   objs.resultados_reales = resultados_reales(partidos_agno)
   # quien paso en los empates reales (tanda de penales o partido no jugado), para rejugar las fases previas
   objs.desempates = desempates_reales(partidos_agno)
+  # contexto del LSTM: anfitriones del mundial (no juegan en campo neutral) y equipos con penales / tiros reales en su historico
+  agno_consulta = int(pregunta_0[-4:])
+  objs.anfitriones = {objs.pais_id[n] for n in internacionales.objects.filter(categoria="mundial", agno=str(agno_consulta), neutral="0")
+                      .values_list("home", flat=True).distinct() if n in objs.pais_id}
+  proxy = formar_dataset_real("proxy_desempegno")
+  objs.con_datos_reales = {marca: {objs.pais_id[n] for n in proxy.loc[(proxy["agno"] < agno_consulta) & (proxy[marca] == 1), "pais"] if n in objs.pais_id}
+                           for marca in ("pk_real", "sot_real")}
   df1 = (partidos_agno.iloc[len(df2):].reset_index(drop=True), df1[1])
 
-  from .predictores import cargar_predictor
   dir_modelo = settings.MODEL_PATH / settings.MODEL_DIR
-  modelo, _ = cargar_predictor(dir_modelo)
+  modelo = predictor_en_uso(dir_modelo)
   
   dict_g = objs.grupos_anio_interes(pregunta_0[-4:])
 

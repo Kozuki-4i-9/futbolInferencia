@@ -124,7 +124,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 
     1.1) Se guarda el estado al cerrar el ciclo
 
-    1.2) Mundial Y: el progreso abstracto vuelve al historico previo a Y (como "reiniciar_opcionales" en la app). Un equipo sin partidos en este ciclo (anfitrion, campeon vigente) arranca con su estado al cierre del ciclo mas reciente en que jugo, o en 0 (como "agregar_features"). (neutral) sale de (internacionales); si no esta, vale 1
+    1.2) Mundial Y: el progreso abstracto vuelve al historico previo a Y (como "reiniciar_opcionales" en la app). Un equipo sin partidos en este ciclo (anfitrion, campeon vigente) arranca con su estado al cierre del ciclo mas reciente en que jugo, o en 0 (como "agregar_features"). (neutral) sale de (internacionales); si no esta, vale 1. local_0 / local_1 marcan al anfitrion, este listado de local o de visitante
 
   2-) Restaura "modulo.opcionales" al terminar, para no dejar estado global de entrenamiento en el proceso
 
@@ -146,7 +146,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 
   Returns:
 
-    - df con columnas agno, fase, orden, home, away, home_id, away_id, categoria, neutral, pk_real_0/1 y sot_real_0/1 (1 si el historico de metricas abstractas del equipo incluye datos reales de fbref), ALL_METRICS_0, ALL_METRICS_1, goles_0, goles_1
+    - df con columnas agno, fase, orden, home, away, home_id, away_id, categoria, neutral, local_0/1 (1 si ese equipo juega en su cancha), pk_real_0/1 y sot_real_0/1 (1 si el historico de metricas abstractas del equipo incluye datos reales de fbref), ALL_METRICS_0, ALL_METRICS_1, goles_0, goles_1
   """
   hay_internacionales = internacionales is not None and len(internacionales) > 0
   if ciclo == CICLO_INTERNACIONALES and not hay_internacionales:
@@ -173,8 +173,13 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
     """1 si el historico de (pais) que usa el mundial (agno) incluye algun mundial anterior con (marca) real"""
     return int(any(a < agno for a in reales[marca].get(pais, [])))
 
-  def neutral_de(agno, home, away):
-    return neutral_mundial.get((agno, home, away), neutral_mundial.get((agno, away, home), 1))
+  def sede_de(agno, home, away):
+    """(neutral, local_0, local_1) de un partido de mundial: el anfitrion juega de local aunque la tabla lo liste de visitante"""
+    if neutral_mundial.get((agno, home, away)) == 0:
+      return 0, 1, 0
+    if neutral_mundial.get((agno, away, home)) == 0:
+      return 0, 0, 1
+    return 1, 0, 0
 
   def procesar(df_partidos, agno, fase, estado):
     for orden, p in enumerate(df_partidos.itertuples(index=False)):
@@ -182,7 +187,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
       entrada = _jugar(estado, home, away, int(p.score_0), int(p.score_1))
       filas.append({
         "agno": agno, "fase": fase, "orden": orden, "home": p.home, "away": p.away, "home_id": home, "away_id": away,
-        "categoria": p.categoria, "neutral": int(p.neutral),
+        "categoria": p.categoria, "neutral": int(p.neutral), "local_0": int(p.local_0), "local_1": int(p.local_1),
         **{f"{marca}_{i}": con_dato_real(marca, nombre, agno) for marca in ("pk_real", "sot_real") for i, nombre in ((0, p.home), (1, p.away))},
         **entrada.to_dict(), "goles_0": int(p.score_0), "goles_1": int(p.score_1),
       })
@@ -200,6 +205,8 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
       else:
         previos = clasificaciones[(clasificaciones["agno"] > desde) & (clasificaciones["agno"] <= agno)]
         previos = previos.assign(categoria="eliminatoria_mundial", neutral=0)
+      # fuera de los mundiales el local juega en su cancha salvo campo neutral
+      previos = previos.assign(local_0=1 - previos["neutral"].astype(int), local_1=0)
       procesar(previos, agno, FASE_ELIMINATORIA, estado)
 
       # 1.1) estado al cerrar el ciclo
@@ -208,7 +215,8 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
       # 1.2) mundial
       modulo.opcionales = historico_abstractas(proxy, pais_id, agno)
       mundial = partidos[partidos["agno"] == agno]
-      mundial = mundial.assign(categoria="mundial", neutral=[neutral_de(agno, h, a) for h, a in zip(mundial["home"], mundial["away"])])
+      sedes = np.array([sede_de(agno, h, a) for h, a in zip(mundial["home"], mundial["away"])], dtype=int).reshape(-1, 3)
+      mundial = mundial.assign(categoria="mundial", neutral=sedes[:, 0], local_0=sedes[:, 1], local_1=sedes[:, 2])
       estado_mundial = dict(estado)
       for nombre in set(mundial["home"]) | set(mundial["away"]):
         equipo = pais_id[nombre]
@@ -227,7 +235,7 @@ def construir_dataset(partidos, clasificaciones, proxy, pais_id=None, agnos=None
 def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
   """
   ¿QUE HACE?
-  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta. Si (con_contexto), cada paso suma el contexto del partido: si el equipo jugo de local en su cancha (local y no neutral), si fue en campo neutral, su categoria en one-hot (CATEGORIAS) y si los penales y tiros a puerta de su historico son reales (pk_real, sot_real) o imputados
+  Convierte la tabla de "construir_dataset" en muestras de serie temporal: para cada partido, la historia de cada equipo como la secuencia de sus ultimos (k) partidos, terminando en el partido a predecir. Cada paso lleva las ALL_METRICS previas del equipo y, si (con_rival), tambien las de su rival en ese partido: los goles que hace un equipo dependen de a quien enfrenta. Si (con_contexto), cada paso suma el contexto del partido: si el equipo jugo en su cancha (local_0 / local_1), si fue en campo neutral, su categoria en one-hot (CATEGORIAS) y si los penales y tiros a puerta de su historico son reales (pk_real, sot_real) o imputados
 
   ¿COMO LO HACE?
   0-) Recorre la tabla en orden y guarda, por equipo, la lista de sus pasos: sus metricas (las de su lado: _0 si jugo de local, _1 si de visitante) seguidas de las del otro lado
@@ -260,6 +268,8 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
   matriz = {i: dataset[cols[i]].to_numpy(dtype=float) for i in (0, 1)}
   if con_contexto:
     neutral = dataset["neutral"].to_numpy(dtype=float)
+    # tablas sin local_0/1 (anteriores a esa columna): el local juega en su cancha salvo campo neutral
+    local = {i: dataset[f"local_{i}"].to_numpy(dtype=float) if f"local_{i}" in dataset else (1 - neutral) * (i == 0) for i in (0, 1)}
     categoria = np.array([[c == cat for cat in CATEGORIAS] for c in dataset["categoria"]], dtype=float)
     marcas = {i: dataset[[f"pk_real_{i}", f"sot_real_{i}"]].to_numpy(dtype=float) for i in (0, 1)}
 
@@ -270,8 +280,7 @@ def construir_secuencias(dataset, k=5, con_rival=True, con_contexto=True):
       if con_rival:
         paso = np.concatenate([paso, matriz[1 - lado][fila]])
       if con_contexto:
-        es_local = float(lado == 0 and neutral[fila] == 0)
-        paso = np.concatenate([paso, [es_local, neutral[fila]], categoria[fila], marcas[lado][fila]])
+        paso = np.concatenate([paso, [local[lado][fila], neutral[fila]], categoria[fila], marcas[lado][fila]])
       pasos.append(paso)
       ultimos = pasos[-k:]
       salida[f"seq_{lado}"][fila, k - len(ultimos):] = ultimos
