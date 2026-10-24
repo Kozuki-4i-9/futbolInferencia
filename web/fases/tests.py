@@ -276,3 +276,55 @@ class PuntajesPosicionTests(SimpleTestCase):
       ruta.write_text(json.dumps({"backend": "lstm", "metricas": list(ALL_METRICS), "config": {}}), encoding="utf-8")
       with self.assertRaisesRegex(ValueError, f"version 1 de las metricas y el codigo usa la {VERSION_METRICAS}"):
         cargar_predictor(carpeta)
+
+
+class DesempatesRealesTests(SimpleTestCase):
+
+  def test_partido_repetido_recibe_cada_marcador(self):
+    from .modulo import marcador_real, resultados_reales
+    reales = resultados_reales(pd.DataFrame({"home": [7, 7], "away": [6, 6], "score_0": [1, 1], "score_1": [1, 0]}))
+    # Italia - España 1934: el original 1:1 y la repeticion 1:0; con los equipos invertidos se gira
+    self.assertEqual(marcador_real(reales, 7, 6), (1, 1))
+    self.assertEqual(marcador_real(reales, 6, 7), (0, 1))
+
+  def test_repeticion_decide_el_partido_original(self):
+    from .modulo import func_prediccion_orden
+    objs = func_prediccion_orden.__new__(func_prediccion_orden)
+    objs.dic_matches = {f"Match {i}": {"ganador": None, "perdedor": None} for i in (12, 13)}
+    objs.registrar_partido("Match 12", 6, 7, empate=True)    # 1:1: provisoriamente pasa el visitante
+    objs.registrar_partido("Match 13", 7, 6, empate=False)   # la repeticion la gana Italia
+    self.assertEqual(objs.dic_matches["Match 12"], {"ganador": 7, "perdedor": 6})
+
+
+class ContextoTests(SimpleTestCase):
+
+  def internacionales(self, filas):
+    return pd.DataFrame(filas, columns=["fecha", "agno", "home", "away", "score_0", "score_1", "categoria", "neutral"])
+
+  def test_elo(self):
+    from .contexto import calcular_elo
+    # amistoso en casa entre dos de 1500: esperado del local 1/(1+10^(-100/400)) = 0,640; K 20; gana el local
+    antes_0, antes_1, despues_0, despues_1 = calcular_elo(self.internacionales([["2000-01-01", 2000, "A", "B", 1, 0, "amistoso", 0]]))
+    self.assertEqual((antes_0[0], antes_1[0]), (1500, 1500))
+    self.assertAlmostEqual(despues_0[0], 1500 + 20 * (1 - 1 / (1 + 10 ** (-100 / 400))))
+    self.assertAlmostEqual(despues_0[0] + despues_1[0], 3000)
+
+  def test_contexto_del_mundial(self):
+    from .contexto import contexto_de_mundiales
+    filas = [["1999-05-01", 1999, "A", "B", 3, 0, "amistoso", 0],
+             ["2000-06-01", 2000, "A", "B", 0, 1, "mundial", 0],     # A es el anfitrion (local, no neutral)
+             ["2000-06-05", 2000, "B", "C", 1, 1, "mundial", 1]]
+    ctx = contexto_de_mundiales(self.internacionales(filas))[2000]
+    self.assertEqual(ctx["anfitriones"], {"A"})
+    # Elo al inicio del mundial: despues del amistoso de 1999, antes de los partidos del mundial
+    self.assertGreater(ctx["elo"]["A"], 1500)
+    self.assertNotIn("C", ctx["elo"])
+
+  def test_umbral_de_empate_y_marcador(self):
+    from .evaluacion import resultado_y_marcador
+    resultado, marcador, _ = resultado_y_marcador(np.array([[1.8, 1.1], [1.2, 1.15], [0.6, 2.4]]))
+    self.assertEqual(resultado.tolist(), [1, 1, -1])
+    self.assertEqual(marcador.tolist(), [[1, 0], [1, 0], [0, 2]])
+    # con umbral 0,1 el partido parejo pasa a empate, con el marcador de empate mas probable
+    resultado, marcador, _ = resultado_y_marcador(np.array([[1.2, 1.15]]), umbral_empate=0.1)
+    self.assertEqual((resultado.tolist(), marcador.tolist()), ([0], [[1, 1]]))
