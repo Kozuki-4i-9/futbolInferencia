@@ -17,7 +17,7 @@ from typing import Optional, Protocol
 import numpy as np
 import pandas as pd
 
-from .modulo import ALL_METRICS
+from .modulo import ALL_METRICS, VERSION_METRICAS
 
 ESQUEMA = "esquema.json"
 
@@ -298,7 +298,7 @@ def guardar_predictor(predictor, carpeta, **extra):
   carpeta.mkdir(parents=True, exist_ok=True)
   if hasattr(predictor, "guardar_pesos"):
     predictor.guardar_pesos(carpeta)
-  esquema = {**predictor.a_esquema(), "metricas": list(ALL_METRICS), **extra}
+  esquema = {**predictor.a_esquema(), "metricas": list(ALL_METRICS), "version_metricas": VERSION_METRICAS, **extra}
   (carpeta / ESQUEMA).write_text(json.dumps(esquema, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -308,7 +308,7 @@ def cargar_predictor(carpeta):
   Reconstruye el predictor de (carpeta) con el backend que indica su esquema.json
 
   ¿COMO LO HACE?
-  0-) Lee el esquema; si sus metricas no son exactamente ALL_METRICS (mismas y en el mismo orden) lanza ValueError: ese modelo se entreno con otra entrada y predeciria mal
+  0-) Lee el esquema; si sus metricas no son exactamente ALL_METRICS (mismas y en el mismo orden), o es un LSTM entrenado con otra VERSION_METRICAS (otras formulas), lanza ValueError: ese modelo se entreno con otra entrada y predeciria mal
 
   1-) Busca el backend en (REGISTRO); si no esta registrado lanza ValueError
 
@@ -320,6 +320,9 @@ def cargar_predictor(carpeta):
   esquema = json.loads((carpeta / ESQUEMA).read_text(encoding="utf-8"))
   if esquema.get("metricas") != list(ALL_METRICS):
     raise ValueError(f"{carpeta.name} se entreno con las metricas {esquema.get('metricas')} y el codigo usa {list(ALL_METRICS)}; hay que reentrenarlo")
+  # el LSTM lee los valores de las metricas: si se entreno con otras formulas (otra version) recibiria otra escala sin avisar
+  if esquema.get("backend") == PredictorKeras.nombre and esquema.get("version_metricas", 1) != VERSION_METRICAS:
+    raise ValueError(f"{carpeta.name} se entreno con la version {esquema.get('version_metricas', 1)} de las metricas y el codigo usa la {VERSION_METRICAS}; hay que reentrenarlo")
   if esquema.get("backend") not in REGISTRO:
     raise ValueError(f"Backend desconocido {esquema.get('backend')!r}; registrados: {sorted(REGISTRO)}")
   return REGISTRO[esquema["backend"]](esquema, carpeta), esquema

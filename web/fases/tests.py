@@ -44,9 +44,10 @@ class ConstruirDatasetTests(SimpleTestCase):
     # rate_GF = GF / PJ * 10
     self.assertAlmostEqual(self.ds.loc[2, "rate_GF_0"], 20.0)
     self.assertAlmostEqual(self.ds.loc[2, "rate_GF_1"], 10.0)
-    # el progreso abstracto vuelve al historico al empezar el mundial (como en la app): sin datos VI = PKATTALLOW = 0.1
-    # gkps = (VI/PJ)*60 + 40 - ((GC - PKATTALLOW)/PJ)*10 = 6 + 40 + 1
-    self.assertAlmostEqual(self.ds.loc[2, "gkps_0"], 47.0)
+    # el progreso abstracto vuelve al historico al empezar el mundial (como en la app): sin historico se usan las tasas de
+    # referencia (VI 0,30 y penales 0,12 por partido); A llega con 1 partido y 0 goles en contra
+    # gkps = 60 * 0,30 + 40 - 10 * max(0, 0/1 - 0,75 * 0,12) = 58
+    self.assertAlmostEqual(self.ds.loc[2, "gkps_0"], 58.0)
 
   def test_equipo_sin_eliminatorias_hereda_su_ultimo_ciclo(self):
     clasif = partidos_df([["A", "B", 2, 0, 1934], ["B", "C", 1, 1, 1938]])
@@ -243,3 +244,35 @@ class PredictorKerasTests(SimpleTestCase):
     sec = construir_secuencias(ds, k=1, con_rival=False)
     self.assertEqual(sec["seq_1"][0, -1, len(ALL_METRICS)], 1.0)
     self.assertEqual(sec["seq_0"][0, -1, len(ALL_METRICS)], 0.0)
+
+
+class PuntajesPosicionTests(SimpleTestCase):
+
+  def serie(self, *valores):
+    return pd.Series(valores, dtype=float)
+
+  def test_historico_dividido_por_sus_propios_partidos(self):
+    from .modulo import calc_mms
+    # mismo ciclo (6 de 6 puntos) y misma tasa historica de tiros (5 por partido) con historicos de largo distinto:
+    # antes el equipo con mas mundiales sacaba mas; ahora los dos dan 100
+    mms = calc_mms(self.serie(2, 2), self.serie(6, 6), self.serie(2, 2), self.serie(10, 100), self.serie(2, 20))
+    self.assertEqual(mms.tolist(), [100.0, 100.0])
+
+  def test_rango_y_sin_partidos(self):
+    from .modulo import calc_gkps, calc_mds, calc_mos
+    PJ, goles, PJ_hist = self.serie(0, 1, 2), self.serie(0, 9, 0), self.serie(0, 3, 3)
+    for puntaje in (calc_gkps(PJ, goles, self.serie(0, 0, 3), self.serie(0, 0, 0), PJ_hist),
+                    calc_mds(PJ, goles, self.serie(0, 0, 3), self.serie(0, 0, 0), PJ_hist),
+                    calc_mos(PJ, goles, self.serie(0, 30, 0), self.serie(0, 0, 0), PJ_hist)):
+      self.assertEqual(puntaje[0], 0)                       # sin partidos en el ciclo
+      self.assertTrue(((puntaje >= 0) & (puntaje <= 100)).all())
+    # 3 vallas invictas en 3 partidos de historico y 0 goles en contra: porteria perfecta
+    self.assertEqual(calc_gkps(PJ, goles, self.serie(0, 0, 3), self.serie(0, 0, 0), PJ_hist)[2], 100.0)
+
+  def test_version_de_metricas(self):
+    from .modulo import VERSION_METRICAS
+    with tempfile.TemporaryDirectory() as carpeta:
+      ruta = Path(carpeta) / "esquema.json"
+      ruta.write_text(json.dumps({"backend": "lstm", "metricas": list(ALL_METRICS), "config": {}}), encoding="utf-8")
+      with self.assertRaisesRegex(ValueError, f"version 1 de las metricas y el codigo usa la {VERSION_METRICAS}"):
+        cargar_predictor(carpeta)

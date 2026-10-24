@@ -16,7 +16,7 @@ from decouple import config, Csv
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR.parent / 'data' / 'modelos'
 # carpeta del predictor en uso dentro de MODEL_PATH (con su esquema.json, ver fases/predictores.py)
-MODEL_DIR = config('MODEL_DIR', default='lstm-2026-10-19')
+MODEL_DIR = config('MODEL_DIR', default='lstm-2026-10-20')
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
