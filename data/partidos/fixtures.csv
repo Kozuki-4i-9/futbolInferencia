@@ -1,0 +1,1052 @@
+id,home,score,away,agno
+0,Suecia,Match 1,Argentina,1934
+1,Alemania,Match 2,Bélgica,1934
+2,Suiza,Match 3,Países Bajos,1934
+3,Checoslovaquia,Match 4,Rumania,1934
+4,Hungría,Match 5,Egipto,1934
+5,Austria,Match 6,Francia,1934
+6,España,Match 7,Brasil,1934
+7,Italia,Match 8,Estados Unidos,1934
+8,Winner Match 2,Match 9,Winner Match 1,1934
+9,Winner Match 4,Match 10,Winner Match 3,1934
+10,Winner Match 6,Match 11,Winner Match 5,1934
+11,Winner Match 8,Match 12,Winner Match 7,1934
+12,Winner Match 8,Match 13,Winner Match 7,1934
+13,Winner Match 10,Match 14,Winner Match 9,1934
+14,Winner Match 12,Match 15,Winner Match 11,1934
+15,Loser Match 14,Match 16,Loser Match 15,1934
+16,Winner Match 15,Match 17,Winner Match 14,1934
+17,Suiza,Match 1,Alemania,1938
+18,Francia,Match 2,Bélgica,1938
+19,Italia,Match 3,Noruega,1938
+20,Brasil,Match 4,Polonia,1938
+21,Checoslovaquia,Match 5,Países Bajos,1938
+22,Cuba,Match 6,Rumania,1938
+23,Suecia,Match 7,Austria,1938
+24,Hungría,Match 8,Indias Orientales Neerlandesas,1938
+25,Cuba,Match 9,Rumania,1938
+26,Suiza,Match 10,Alemania,1938
+27,Winner Match 3,Match 11,Winner Match 2,1938
+28,Winner Match 4,Match 12,Winner Match 5,1938
+29,Winner Match 8,Match 13,Winner Match 1,1938
+30,Winner Match 7,Match 14,Winner Match 6,1938
+31,Winner Match 4,Match 15,Winner Match 5,1938
+32,Winner Match 13,Match 16,Winner Match 14,1938
+33,Winner Match 11,Match 17,Winner Match 12,1938
+34,Loser Match 17,Match 18,Loser Match 16,1938
+35,Winner Match 17,Match 19,Winner Match 16,1938
+36,Brasil,4:0,México,1950
+37,Yugoslavia,3:0,Suiza,1950
+38,Brasil,2:2,Suiza,1950
+39,Yugoslavia,4:1,México,1950
+40,Brasil,2:0,Yugoslavia,1950
+41,Suiza,2:1,México,1950
+42,España,3:1,Estados Unidos,1950
+43,Inglaterra,2:0,Chile,1950
+44,España,2:0,Chile,1950
+45,Estados Unidos,1:0,Inglaterra,1950
+46,España,1:0,Inglaterra,1950
+47,Chile,5:2,Estados Unidos,1950
+48,Suecia,3:2,Italia,1950
+49,Suecia,2:2,Paraguay,1950
+50,Italia,2:0,Paraguay,1950
+51,Uruguay,8:0,Bolivia,1950
+52,Winner Grupo 1,Match 17,Winner Grupo 3,1950
+53,Winner Grupo 4,Match 18,Winner Grupo 2,1950
+54,Winner Grupo 4,Match 19,Winner Grupo 3,1950
+55,Winner Grupo 1,Match 20,Winner Grupo 2,1950
+56,Winner Grupo 3,Match 21,Winner Grupo 2,1950
+57,Winner Grupo 4,Match 22,Winner Grupo 1,1950
+58,Yugoslavia,1:0,Francia,1954
+59,Brasil,5:0,México,1954
+60,Brasil,1:1,Yugoslavia,1954
+61,Francia,3:2,México,1954
+62,Alemania,4:1,Turquía,1954
+63,Hungría,9:0,Corea del Sur,1954
+64,Hungría,8:3,Alemania,1954
+65,Turquía,7:0,Corea del Sur,1954
+66,Alemania,7:2,Turquía,1954
+67,Austria,1:0,Escocia,1954
+68,Uruguay,2:0,Checoslovaquia,1954
+69,Uruguay,7:0,Escocia,1954
+70,Austria,5:0,Checoslovaquia,1954
+71,Suiza,2:1,Italia,1954
+72,Inglaterra,4:4,Bélgica,1954
+73,Italia,4:1,Bélgica,1954
+74,Inglaterra,2:0,Suiza,1954
+75,Suiza,4:1,Italia,1954
+76,Runners-up Grupo 3,Match 19,Runners-up Grupo 4,1954
+77,Winner Grupo 3,Match 20,Winner Grupo 4,1954
+78,Winner Grupo 2,Match 21,Winner Grupo 1,1954
+79,Runners-up Grupo 2,Match 22,Runners-up Grupo 1,1954
+80,Winner Match 21,Match 23,Winner Match 20,1954
+81,Winner Match 22,Match 24,Winner Match 19,1954
+82,Loser Match 24,Match 25,Loser Match 23,1954
+83,Winner Match 24,Match 26,Winner Match 23,1954
+84,Argentina,1:3,Alemania,1958
+85,Irlanda del Norte,1:0,Checoslovaquia,1958
+86,Argentina,3:1,Irlanda del Norte,1958
+87,Alemania,2:2,Checoslovaquia,1958
+88,Checoslovaquia,6:1,Argentina,1958
+89,Alemania,2:2,Irlanda del Norte,1958
+90,Irlanda del Norte,2:1,Checoslovaquia,1958
+91,Yugoslavia,1:1,Escocia,1958
+92,Francia,7:3,Paraguay,1958
+93,Yugoslavia,3:2,Francia,1958
+94,Paraguay,3:2,Escocia,1958
+95,Paraguay,3:3,Yugoslavia,1958
+96,Francia,2:1,Escocia,1958
+97,Suecia,3:0,México,1958
+98,Hungría,1:1,Gales,1958
+99,México,1:1,Gales,1958
+100,Suecia,2:1,Hungría,1958
+101,Suecia,0:0,Gales,1958
+102,Hungría,4:0,México,1958
+103,Gales,2:1,Hungría,1958
+104,Rusia,2:2,Inglaterra,1958
+105,Brasil,3:0,Austria,1958
+106,Rusia,2:0,Austria,1958
+107,Brasil,0:0,Inglaterra,1958
+108,Brasil,2:0,Rusia,1958
+109,Inglaterra,2:2,Austria,1958
+110,Rusia,1:0,Inglaterra,1958
+111,Winner Grupo 4,Match 28,Runners-up Grupo 3,1958
+112,Winner Grupo 2,Match 29,Runners-up Grupo 1,1958
+113,Winner Grupo 1,Match 30,Runners-up Grupo 2,1958
+114,Winner Grupo 3,Match 31,Runners-up Grupo 4,1958
+115,Winner Match 31,Match 32,Winner Match 30,1958
+116,Winner Match 28,Match 33,Winner Match 29,1958
+117,Loser Match 33,Match 34,Loser Match 32,1958
+118,Winner Match 33,Match 35,Winner Match 32,1958
+119,Uruguay,2:1,Colombia,1962
+120,Rusia,2:0,Yugoslavia,1962
+121,Yugoslavia,3:1,Uruguay,1962
+122,Rusia,4:4,Colombia,1962
+123,Rusia,2:1,Uruguay,1962
+124,Yugoslavia,5:0,Colombia,1962
+125,Chile,3:1,Suiza,1962
+126,Alemania,0:0,Italia,1962
+127,Chile,2:0,Italia,1962
+128,Alemania,2:1,Suiza,1962
+129,Alemania,2:0,Chile,1962
+130,Italia,3:0,Suiza,1962
+131,Brasil,2:0,México,1962
+132,Checoslovaquia,1:0,España,1962
+133,Brasil,0:0,Checoslovaquia,1962
+134,España,1:0,México,1962
+135,Brasil,2:1,España,1962
+136,México,3:1,Checoslovaquia,1962
+137,Argentina,1:0,Bulgaria,1962
+138,Hungría,2:1,Inglaterra,1962
+139,Inglaterra,3:1,Argentina,1962
+140,Hungría,6:1,Bulgaria,1962
+141,Hungría,0:0,Argentina,1962
+142,Inglaterra,0:0,Bulgaria,1962
+143,Runners-up Grupo 2,Match 25,Winner Grupo 1,1962
+144,Winner Grupo 3,Match 26,Runners-up Grupo 4,1962
+145,Runners-up Grupo 3,Match 27,Winner Grupo 4,1962
+146,Runners-up Grupo 1,Match 28,Winner Grupo 2,1962
+147,Winner Match 26,Match 29,Winner Match 25,1962
+148,Winner Match 27,Match 30,Winner Match 28,1962
+149,Loser Match 29,Match 31,Loser Match 30,1962
+150,Winner Match 29,Match 32,Winner Match 30,1962
+151,Inglaterra,0:0,Uruguay,1966
+152,Francia,1:1,México,1966
+153,Uruguay,2:1,Francia,1966
+154,Inglaterra,2:0,México,1966
+155,Uruguay,0:0,México,1966
+156,Inglaterra,2:0,Francia,1966
+157,Alemania,5:0,Suiza,1966
+158,Argentina,2:1,España,1966
+159,España,2:1,Suiza,1966
+160,Alemania,0:0,Argentina,1966
+161,Argentina,2:0,Suiza,1966
+162,Alemania,2:1,España,1966
+163,Brasil,2:0,Bulgaria,1966
+164,Portugal,3:1,Hungría,1966
+165,Hungría,3:1,Brasil,1966
+166,Portugal,3:0,Bulgaria,1966
+167,Portugal,3:1,Brasil,1966
+168,Hungría,3:1,Bulgaria,1966
+169,Rusia,3:0,Corea del Norte,1966
+170,Italia,2:0,Chile,1966
+171,Corea del Norte,1:1,Chile,1966
+172,Rusia,1:0,Italia,1966
+173,Corea del Norte,1:0,Italia,1966
+174,Rusia,2:1,Chile,1966
+175,Winner Grupo 4,Match 25,Runners-up Grupo 3,1966
+176,Winner Grupo 2,Match 26,Runners-up Grupo 1,1966
+177,Winner Grupo 3,Match 27,Runners-up Grupo 4,1966
+178,Winner Grupo 1,Match 28,Runners-up Grupo 2,1966
+179,Winner Match 26,Match 29,Winner Match 25,1966
+180,Winner Match 28,Match 30,Winner Match 27,1966
+181,Loser Match 30,Match 31,Loser Match 29,1966
+182,Winner Match 30,Match 32,Winner Match 29,1966
+183,México,0:0,Rusia,1970
+184,Bélgica,3:0,El Salvador,1970
+185,Rusia,4:1,Bélgica,1970
+186,México,4:0,El Salvador,1970
+187,Rusia,2:0,El Salvador,1970
+188,México,1:0,Bélgica,1970
+189,Uruguay,2:0,Israel,1970
+190,Italia,1:0,Suecia,1970
+191,Uruguay,0:0,Italia,1970
+192,Suecia,1:1,Israel,1970
+193,Suecia,1:0,Uruguay,1970
+194,Italia,0:0,Israel,1970
+195,Inglaterra,1:0,Rumania,1970
+196,Brasil,4:1,Checoslovaquia,1970
+197,Rumania,2:1,Checoslovaquia,1970
+198,Brasil,1:0,Inglaterra,1970
+199,Brasil,3:2,Rumania,1970
+200,Inglaterra,1:0,Checoslovaquia,1970
+201,Perú,3:2,Bulgaria,1970
+202,Alemania,2:1,Marruecos,1970
+203,Perú,3:0,Marruecos,1970
+204,Alemania,5:2,Bulgaria,1970
+205,Alemania,3:1,Perú,1970
+206,Bulgaria,1:1,Marruecos,1970
+207,Runners-up Grupo 2,Match 25,Winner Grupo 1,1970
+208,Winner Grupo 3,Match 26,Runners-up Grupo 4,1970
+209,Winner Grupo 4,Match 27,Runners-up Grupo 3,1970
+210,Winner Grupo 2,Match 28,Runners-up Grupo 1,1970
+211,Winner Match 26,Match 29,Winner Match 25,1970
+212,Winner Match 28,Match 30,Winner Match 27,1970
+213,Loser Match 30,Match 31,Loser Match 29,1970
+214,Winner Match 29,Match 32,Winner Match 30,1970
+215,Alemania,1:0,Chile,1974
+216,Alemania Democrática,2:0,Australia,1974
+217,Australia,0:3,Alemania,1974
+218,Chile,1:1,Alemania Democrática,1974
+219,Australia,0:0,Chile,1974
+220,Alemania Democrática,1:0,Alemania,1974
+221,Brasil,0:0,Yugoslavia,1974
+222,República Democrática del Congo,0:2,Escocia,1974
+223,Escocia,0:0,Brasil,1974
+224,Yugoslavia,9:0,República Democrática del Congo,1974
+225,Escocia,1:1,Yugoslavia,1974
+226,República Democrática del Congo,0:3,Brasil,1974
+227,Suecia,0:0,Bulgaria,1974
+228,Uruguay,0:2,Países Bajos,1974
+229,Países Bajos,0:0,Suecia,1974
+230,Bulgaria,1:1,Uruguay,1974
+231,Bulgaria,1:4,Países Bajos,1974
+232,Suecia,3:0,Uruguay,1974
+233,Italia,3:1,Haití,1974
+234,Polonia,3:2,Argentina,1974
+235,Argentina,1:1,Italia,1974
+236,Haití,0:7,Polonia,1974
+237,Polonia,2:1,Italia,1974
+238,Argentina,4:1,Haití,1974
+239,Winner Grupo 3,Match 25,Runners-up Grupo 4,1974
+240,Runners-up Grupo 2,Match 26,Winner Grupo 1,1974
+241,Winner Grupo 1,Match 27,Winner Grupo 3,1974
+242,Runners-up Grupo 4,Match 28,Runners-up Grupo 2,1974
+243,Winner Grupo 3,Match 29,Runners-up Grupo 2,1974
+244,Runners-up Grupo 4,Match 30,Winner Grupo 1,1974
+245,Winner Grupo 2,Match 31,Runners-up Grupo 1,1974
+246,Runners-up Grupo 3,Match 32,Winner Grupo 4,1974
+247,Winner Grupo 4,Match 33,Winner Grupo 2,1974
+248,Runners-up Grupo 1,Match 34,Runners-up Grupo 3,1974
+249,Winner Grupo 4,Match 35,Runners-up Grupo 1,1974
+250,Runners-up Grupo 3,Match 36,Winner Grupo 2,1974
+251,Runners-up Grupo A,Match 37,Runners-up Grupo B,1974
+252,Winner Grupo A,Match 38,Winner Grupo B,1974
+253,Italia,2:1,Francia,1978
+254,Argentina,2:1,Hungría,1978
+255,Italia,3:1,Hungría,1978
+256,Argentina,2:1,Francia,1978
+257,Francia,3:1,Hungría,1978
+258,Italia,1:0,Argentina,1978
+259,Alemania,0:0,Polonia,1978
+260,Túnez,3:1,México,1978
+261,Alemania,6:0,México,1978
+262,Polonia,1:0,Túnez,1978
+263,Alemania,0:0,Túnez,1978
+264,Polonia,3:1,México,1978
+265,Austria,2:1,España,1978
+266,Suecia,1:1,Brasil,1978
+267,Austria,1:0,Suecia,1978
+268,Brasil,0:0,España,1978
+269,España,1:0,Suecia,1978
+270,Brasil,1:0,Austria,1978
+271,Perú,3:1,Escocia,1978
+272,Países Bajos,3:0,Irán,1978
+273,Escocia,1:1,Irán,1978
+274,Países Bajos,0:0,Perú,1978
+275,Perú,4:1,Irán,1978
+276,Escocia,3:2,Países Bajos,1978
+277,Runners-up Grupo 4,Match 25,Winner Grupo 3,1978
+278,Runners-up Grupo 2,Match 26,Winner Grupo 1,1978
+279,Runners-up Grupo 2,Match 27,Runners-up Grupo 4,1978
+280,Winner Grupo 1,Match 28,Winner Grupo 3,1978
+281,Winner Grupo 3,Match 29,Runners-up Grupo 2,1978
+282,Runners-up Grupo 4,Match 30,Winner Grupo 1,1978
+283,Runners-up Grupo 3,Match 31,Winner Grupo 4,1978
+284,Runners-up Grupo 1,Match 32,Winner Grupo 2,1978
+285,Winner Grupo 2,Match 33,Winner Grupo 4,1978
+286,Runners-up Grupo 1,Match 34,Runners-up Grupo 3,1978
+287,Runners-up Grupo 3,Match 35,Winner Grupo 2,1978
+288,Runners-up Grupo 1,Match 36,Winner Grupo 4,1978
+289,Runners-up Grupo B,Match 37,Runners-up Grupo A,1978
+290,Winner Grupo B,Match 38,Winner Grupo A,1978
+291,Italia,0:0,Polonia,1982
+292,Perú,0:0,Camerún,1982
+293,Italia,1:1,Perú,1982
+294,Polonia,0:0,Camerún,1982
+295,Polonia,5:1,Perú,1982
+296,Italia,1:1,Camerún,1982
+297,Alemania,1:2,Argelia,1982
+298,Chile,0:1,Austria,1982
+299,Alemania,4:1,Chile,1982
+300,Argelia,0:2,Austria,1982
+301,Argelia,3:2,Chile,1982
+302,Alemania,1:0,Austria,1982
+303,Argentina,0:1,Bélgica,1982
+304,Hungría,10:1,El Salvador,1982
+305,Argentina,4:1,Hungría,1982
+306,Bélgica,1:0,El Salvador,1982
+307,Bélgica,1:1,Hungría,1982
+308,Argentina,2:0,El Salvador,1982
+309,Inglaterra,3:1,Francia,1982
+310,Checoslovaquia,1:1,Kuwait,1982
+311,Inglaterra,2:0,Checoslovaquia,1982
+312,Francia,4:1,Kuwait,1982
+313,Francia,1:1,Checoslovaquia,1982
+314,Inglaterra,1:0,Kuwait,1982
+315,España,1:1,Honduras,1982
+316,Yugoslavia,0:0,Irlanda del Norte,1982
+317,España,2:1,Yugoslavia,1982
+318,Honduras,1:1,Irlanda del Norte,1982
+319,Honduras,0:1,Yugoslavia,1982
+320,Irlanda del Norte,1:0,España,1982
+321,Brasil,2:1,Rusia,1982
+322,Escocia,5:2,Nueva Zelanda,1982
+323,Brasil,4:1,Escocia,1982
+324,Rusia,3:0,Nueva Zelanda,1982
+325,Rusia,2:2,Escocia,1982
+326,Brasil,4:0,Nueva Zelanda,1982
+327,Winner Grupo 1,Match 37,Winner Grupo 3,1982
+328,Winner Grupo 3,Match 38,Runners-up Grupo 6,1982
+329,Winner Grupo 1,Match 39,Runners-up Grupo 6,1982
+330,Winner Grupo 2,Match 40,Winner Grupo 4,1982
+331,Winner Grupo 2,Match 41,Runners-up Grupo 5,1982
+332,Runners-up Grupo 5,Match 42,Winner Grupo 4,1982
+333,Runners-up Grupo 1,Match 43,Runners-up Grupo 3,1982
+334,Runners-up Grupo 3,Match 44,Winner Grupo 6,1982
+335,Runners-up Grupo 1,Match 45,Winner Grupo 6,1982
+336,Runners-up Grupo 2,Match 46,Runners-up Grupo 4,1982
+337,Runners-up Grupo 2,Match 47,Winner Grupo 5,1982
+338,Runners-up Grupo 4,Match 48,Winner Grupo 5,1982
+339,Winner Grupo A,Match 49,Winner Grupo C,1982
+340,Winner Grupo B,Match 50,Winner Grupo D,1982
+341,Loser Match 49,Match 51,Loser Match 50,1982
+342,Winner Match 49,Match 52,Winner Match 50,1982
+343,Bulgaria,1:1,Italia,1986
+344,Argentina,3:1,Corea del Sur,1986
+345,Italia,1:1,Argentina,1986
+346,Corea del Sur,1:1,Bulgaria,1986
+347,Corea del Sur,2:3,Italia,1986
+348,Argentina,2:0,Bulgaria,1986
+349,Bélgica,1:2,México,1986
+350,Paraguay,1:0,Irak,1986
+351,México,1:1,Paraguay,1986
+352,Irak,1:2,Bélgica,1986
+353,Paraguay,2:2,Bélgica,1986
+354,Irak,0:1,México,1986
+355,Canadá,0:1,Francia,1986
+356,Rusia,6:0,Hungría,1986
+357,Francia,1:1,Rusia,1986
+358,Hungría,2:0,Canadá,1986
+359,Hungría,0:3,Francia,1986
+360,Rusia,2:0,Canadá,1986
+361,España,0:1,Brasil,1986
+362,Argelia,1:1,Irlanda del Norte,1986
+363,Brasil,1:0,Argelia,1986
+364,Irlanda del Norte,1:2,España,1986
+365,Irlanda del Norte,0:3,Brasil,1986
+366,Argelia,0:3,España,1986
+367,Uruguay,1:1,Alemania,1986
+368,Escocia,0:1,Dinamarca,1986
+369,Alemania,2:1,Escocia,1986
+370,Dinamarca,6:1,Uruguay,1986
+371,Dinamarca,2:0,Alemania,1986
+372,Escocia,0:0,Uruguay,1986
+373,Marruecos,0:0,Polonia,1986
+374,Portugal,1:0,Inglaterra,1986
+375,Inglaterra,0:0,Marruecos,1986
+376,Polonia,1:0,Portugal,1986
+377,Inglaterra,3:0,Polonia,1986
+378,Portugal,1:3,Marruecos,1986
+379,Winner Grupo B,Match 37,Third-p Grupo A,1986
+380,Winner Grupo C,Match 38,Third-p Grupo B,1986
+381,Winner Grupo D,Match 39,Third-p Grupo F,1986
+382,Winner Grupo A,Match 40,Third-p Grupo E,1986
+383,Runners-up Grupo A,Match 41,Runners-up Grupo C,1986
+384,Winner Grupo F,Match 42,Runners-up Grupo E,1986
+385,Runners-up Grupo F,Match 43,Runners-up Grupo B,1986
+386,Winner Grupo E,Match 44,Runners-up Grupo D,1986
+387,Winner Match 39,Match 45,Winner Match 41,1986
+388,Winner Match 42,Match 46,Winner Match 37,1986
+389,Winner Match 40,Match 47,Winner Match 43,1986
+390,Winner Match 44,Match 48,Winner Match 38,1986
+391,Winner Match 45,Match 49,Winner Match 46,1986
+392,Winner Match 47,Match 50,Winner Match 48,1986
+393,Loser Match 49,Match 51,Loser Match 50,1986
+394,Winner Match 50,Match 52,Winner Match 49,1986
+395,Italia,1:0,Austria,1990
+396,Estados Unidos,1:5,Checoslovaquia,1990
+397,Italia,1:0,Estados Unidos,1990
+398,Austria,0:1,Checoslovaquia,1990
+399,Italia,2:0,Checoslovaquia,1990
+400,Austria,2:1,Estados Unidos,1990
+401,Argentina,0:1,Camerún,1990
+402,Rusia,0:2,Rumania,1990
+403,Argentina,2:0,Rusia,1990
+404,Camerún,2:1,Rumania,1990
+405,Argentina,1:1,Rumania,1990
+406,Camerún,0:4,Rusia,1990
+407,Brasil,2:1,Suecia,1990
+408,Costa Rica,1:0,Escocia,1990
+409,Brasil,1:0,Costa Rica,1990
+410,Suecia,1:2,Escocia,1990
+411,Suecia,1:2,Costa Rica,1990
+412,Brasil,1:0,Escocia,1990
+413,Emiratos Árabes Unidos,0:2,Colombia,1990
+414,Alemania,4:1,Yugoslavia,1990
+415,Yugoslavia,1:0,Colombia,1990
+416,Alemania,5:1,Emiratos Árabes Unidos,1990
+417,Alemania,1:1,Colombia,1990
+418,Yugoslavia,4:1,Emiratos Árabes Unidos,1990
+419,Bélgica,2:0,Corea del Sur,1990
+420,Uruguay,0:0,España,1990
+421,Corea del Sur,1:3,España,1990
+422,Bélgica,3:1,Uruguay,1990
+423,Corea del Sur,0:1,Uruguay,1990
+424,Bélgica,1:2,España,1990
+425,Inglaterra,1:1,Irlanda,1990
+426,Países Bajos,1:1,Egipto,1990
+427,Inglaterra,0:0,Países Bajos,1990
+428,Irlanda,0:0,Egipto,1990
+429,Inglaterra,1:0,Egipto,1990
+430,Irlanda,1:1,Países Bajos,1990
+431,Winner Grupo B,Match 37,Third-p Grupo D,1990
+432,Runners-up Grupo A,Match 38,Runners-up Grupo C,1990
+433,Winner Grupo C,Match 39,Third-p Grupo B,1990
+434,Winner Grupo D,Match 40,Third-p Grupo F,1990
+435,Runners-up Grupo F,Match 41,Runners-up Grupo B,1990
+436,Winner Grupo A,Match 42,Third-p Grupo E,1990
+437,Winner Grupo E,Match 43,Runners-up Grupo D,1990
+438,Winner Grupo F,Match 44,Runners-up Grupo E,1990
+439,Winner Match 43,Match 45,Winner Match 39,1990
+440,Winner Match 42,Match 46,Winner Match 41,1990
+441,Winner Match 40,Match 47,Winner Match 38,1990
+442,Winner Match 44,Match 48,Winner Match 37,1990
+443,Winner Match 46,Match 49,Winner Match 45,1990
+444,Winner Match 47,Match 50,Winner Match 48,1990
+445,Loser Match 49,Match 51,Loser Match 50,1990
+446,Winner Match 50,Match 52,Winner Match 49,1990
+447,Estados Unidos,1:1,Suiza,1994
+448,Colombia,1:3,Rumania,1994
+449,Rumania,1:4,Suiza,1994
+450,Estados Unidos,2:1,Colombia,1994
+451,Estados Unidos,0:1,Rumania,1994
+452,Suiza,0:2,Colombia,1994
+453,Camerún,2:2,Suecia,1994
+454,Brasil,2:0,Rusia,1994
+455,Brasil,3:0,Camerún,1994
+456,Suecia,3:1,Rusia,1994
+457,Rusia,6:1,Camerún,1994
+458,Brasil,1:1,Suecia,1994
+459,Alemania,1:0,Bolivia,1994
+460,España,2:2,Corea del Sur,1994
+461,Alemania,1:1,España,1994
+462,Corea del Sur,0:0,Bolivia,1994
+463,Bolivia,1:3,España,1994
+464,Alemania,3:2,Corea del Sur,1994
+465,Argentina,4:0,Grecia,1994
+466,Nigeria,3:0,Bulgaria,1994
+467,Argentina,2:1,Nigeria,1994
+468,Bulgaria,4:0,Grecia,1994
+469,Grecia,0:2,Nigeria,1994
+470,Argentina,0:2,Bulgaria,1994
+471,Italia,0:1,Irlanda,1994
+472,Noruega,1:0,México,1994
+473,Italia,1:0,Noruega,1994
+474,México,2:1,Irlanda,1994
+475,Irlanda,0:0,Noruega,1994
+476,Italia,1:1,México,1994
+477,Bélgica,1:0,Marruecos,1994
+478,Países Bajos,2:1,Arabia Saudita,1994
+479,Bélgica,1:0,Países Bajos,1994
+480,Arabia Saudita,2:1,Marruecos,1994
+481,Marruecos,1:2,Países Bajos,1994
+482,Bélgica,0:1,Arabia Saudita,1994
+483,Winner Grupo C,Match 37,Third-p Grupo F,1994
+484,Runners-up Grupo C,Match 38,Runners-up Grupo A,1994
+485,Runners-up Grupo F,Match 39,Runners-up Grupo B,1994
+486,Winner Grupo A,Match 40,Third-p Grupo D,1994
+487,Winner Grupo F,Match 41,Runners-up Grupo E,1994
+488,Winner Grupo B,Match 42,Third-p Grupo A,1994
+489,Winner Grupo D,Match 43,Third-p Grupo E,1994
+490,Winner Grupo E,Match 44,Runners-up Grupo D,1994
+491,Winner Match 43,Match 45,Winner Match 38,1994
+492,Winner Match 41,Match 46,Winner Match 42,1994
+493,Winner Match 44,Match 47,Winner Match 37,1994
+494,Winner Match 40,Match 48,Winner Match 39,1994
+495,Winner Match 47,Match 49,Winner Match 45,1994
+496,Winner Match 48,Match 50,Winner Match 46,1994
+497,Loser Match 50,Match 51,Loser Match 49,1994
+498,Winner Match 50,Match 52,Winner Match 49,1994
+499,Brasil,2:1,Escocia,1998
+500,Marruecos,2:2,Noruega,1998
+501,Escocia,1:1,Noruega,1998
+502,Brasil,3:0,Marruecos,1998
+503,Escocia,0:3,Marruecos,1998
+504,Brasil,1:2,Noruega,1998
+505,Italia,2:2,Chile,1998
+506,Camerún,1:1,Austria,1998
+507,Chile,1:1,Austria,1998
+508,Italia,3:0,Camerún,1998
+509,Italia,2:1,Austria,1998
+510,Chile,1:1,Camerún,1998
+511,Arabia Saudita,0:1,Dinamarca,1998
+512,Francia,3:0,Sudáfrica,1998
+513,Sudáfrica,1:1,Dinamarca,1998
+514,Francia,4:0,Arabia Saudita,1998
+515,Francia,2:1,Dinamarca,1998
+516,Sudáfrica,2:2,Arabia Saudita,1998
+517,Paraguay,0:0,Bulgaria,1998
+518,España,2:3,Nigeria,1998
+519,Nigeria,1:0,Bulgaria,1998
+520,España,0:0,Paraguay,1998
+521,España,6:1,Bulgaria,1998
+522,Nigeria,1:3,Paraguay,1998
+523,Corea del Sur,1:3,México,1998
+524,Países Bajos,0:0,Bélgica,1998
+525,Bélgica,2:2,México,1998
+526,Países Bajos,5:0,Corea del Sur,1998
+527,Bélgica,1:1,Corea del Sur,1998
+528,Países Bajos,2:2,México,1998
+529,Serbia,1:0,Irán,1998
+530,Alemania,2:0,Estados Unidos,1998
+531,Alemania,2:2,Serbia,1998
+532,Estados Unidos,1:2,Irán,1998
+533,Alemania,2:0,Irán,1998
+534,Estados Unidos,0:1,Serbia,1998
+535,Inglaterra,2:0,Túnez,1998
+536,Rumania,1:0,Colombia,1998
+537,Colombia,1:0,Túnez,1998
+538,Rumania,2:1,Inglaterra,1998
+539,Rumania,1:1,Túnez,1998
+540,Colombia,0:2,Inglaterra,1998
+541,Argentina,1:0,Japón,1998
+542,Jamaica,1:3,Croacia,1998
+543,Japón,0:1,Croacia,1998
+544,Argentina,5:0,Jamaica,1998
+545,Japón,1:2,Jamaica,1998
+546,Argentina,1:0,Croacia,1998
+547,Winner Grupo B,Match 49,Runners-up Grupo A,1998
+548,Winner Grupo A,Match 50,Runners-up Grupo B,1998
+549,Winner Grupo C,Match 51,Runners-up Grupo D,1998
+550,Winner Grupo D,Match 52,Runners-up Grupo C,1998
+551,Winner Grupo F,Match 53,Runners-up Grupo E,1998
+552,Winner Grupo E,Match 54,Runners-up Grupo F,1998
+553,Winner Grupo G,Match 55,Runners-up Grupo H,1998
+554,Winner Grupo H,Match 56,Runners-up Grupo G,1998
+555,Winner Match 49,Match 57,Winner Match 51,1998
+556,Winner Match 50,Match 58,Winner Match 52,1998
+557,Winner Match 54,Match 59,Winner Match 56,1998
+558,Winner Match 53,Match 60,Winner Match 55,1998
+559,Winner Match 58,Match 61,Winner Match 59,1998
+560,Winner Match 57,Match 62,Winner Match 60,1998
+561,Loser Match 61,Match 63,Loser Match 62,1998
+562,Winner Match 61,Match 64,Winner Match 62,1998
+563,Francia,0:1,Senegal,2002
+564,Uruguay,1:2,Dinamarca,2002
+565,Dinamarca,1:1,Senegal,2002
+566,Francia,0:0,Uruguay,2002
+567,Dinamarca,2:0,Francia,2002
+568,Senegal,3:3,Uruguay,2002
+569,Paraguay,2:2,Sudáfrica,2002
+570,España,3:1,Eslovenia,2002
+571,España,3:1,Paraguay,2002
+572,Sudáfrica,1:0,Eslovenia,2002
+573,Sudáfrica,2:3,España,2002
+574,Eslovenia,1:3,Paraguay,2002
+575,Brasil,2:1,Turquía,2002
+576,China,0:2,Costa Rica,2002
+577,Brasil,4:0,China,2002
+578,Costa Rica,1:1,Turquía,2002
+579,Costa Rica,2:5,Brasil,2002
+580,Turquía,3:0,China,2002
+581,Corea del Sur,2:0,Polonia,2002
+582,Estados Unidos,3:2,Portugal,2002
+583,Corea del Sur,1:1,Estados Unidos,2002
+584,Portugal,4:0,Polonia,2002
+585,Portugal,0:1,Corea del Sur,2002
+586,Polonia,3:1,Estados Unidos,2002
+587,Irlanda,1:1,Camerún,2002
+588,Alemania,8:0,Arabia Saudita,2002
+589,Alemania,1:1,Irlanda,2002
+590,Camerún,1:0,Arabia Saudita,2002
+591,Camerún,0:2,Alemania,2002
+592,Arabia Saudita,0:3,Irlanda,2002
+593,Argentina,1:0,Nigeria,2002
+594,Inglaterra,1:1,Suecia,2002
+595,Suecia,2:1,Nigeria,2002
+596,Argentina,0:1,Inglaterra,2002
+597,Suecia,1:1,Argentina,2002
+598,Nigeria,0:0,Inglaterra,2002
+599,Croacia,0:1,México,2002
+600,Italia,2:0,Ecuador,2002
+601,Italia,1:2,Croacia,2002
+602,México,2:1,Ecuador,2002
+603,México,1:1,Italia,2002
+604,Ecuador,1:0,Croacia,2002
+605,Japón,2:2,Bélgica,2002
+606,Rusia,2:0,Túnez,2002
+607,Japón,1:0,Rusia,2002
+608,Túnez,1:1,Bélgica,2002
+609,Túnez,0:2,Japón,2002
+610,Bélgica,3:2,Rusia,2002
+611,Winner Grupo E,Match 49,Runners-up Grupo B,2002
+612,Winner Grupo A,Match 50,Runners-up Grupo F,2002
+613,Winner Grupo F,Match 51,Runners-up Grupo A,2002
+614,Winner Grupo B,Match 52,Runners-up Grupo E,2002
+615,Winner Grupo G,Match 53,Runners-up Grupo D,2002
+616,Winner Grupo C,Match 54,Runners-up Grupo H,2002
+617,Winner Grupo H,Match 55,Runners-up Grupo C,2002
+618,Winner Grupo D,Match 56,Runners-up Grupo G,2002
+619,Winner Match 50,Match 57,Winner Match 54,2002
+620,Winner Match 49,Match 58,Winner Match 53,2002
+621,Winner Match 52,Match 59,Winner Match 56,2002
+622,Winner Match 51,Match 60,Winner Match 55,2002
+623,Winner Match 58,Match 61,Winner Match 59,2002
+624,Winner Match 57,Match 62,Winner Match 60,2002
+625,Loser Match 61,Match 63,Loser Match 62,2002
+626,Winner Match 61,Match 64,Winner Match 62,2002
+627,Alemania,4:2,Costa Rica,2006
+628,Polonia,0:2,Ecuador,2006
+629,Alemania,1:0,Polonia,2006
+630,Ecuador,3:0,Costa Rica,2006
+631,Ecuador,0:3,Alemania,2006
+632,Costa Rica,1:2,Polonia,2006
+633,Inglaterra,1:0,Paraguay,2006
+634,Trinidad y Tobago,0:0,Suecia,2006
+635,Inglaterra,2:0,Trinidad y Tobago,2006
+636,Suecia,1:0,Paraguay,2006
+637,Suecia,2:2,Inglaterra,2006
+638,Paraguay,2:0,Trinidad y Tobago,2006
+639,Argentina,2:1,Costa de Marfil,2006
+640,Serbia,0:1,Países Bajos,2006
+641,Argentina,6:0,Serbia,2006
+642,Países Bajos,2:1,Costa de Marfil,2006
+643,Países Bajos,0:0,Argentina,2006
+644,Costa de Marfil,3:2,Serbia,2006
+645,México,3:1,Irán,2006
+646,Angola,0:1,Portugal,2006
+647,México,0:0,Angola,2006
+648,Portugal,2:0,Irán,2006
+649,Portugal,2:1,México,2006
+650,Irán,1:1,Angola,2006
+651,Estados Unidos,0:3,República Checa,2006
+652,Italia,2:0,Ghana,2006
+653,República Checa,0:2,Ghana,2006
+654,Italia,1:1,Estados Unidos,2006
+655,República Checa,0:2,Italia,2006
+656,Ghana,2:1,Estados Unidos,2006
+657,Australia,3:1,Japón,2006
+658,Brasil,1:0,Croacia,2006
+659,Japón,0:0,Croacia,2006
+660,Brasil,2:0,Australia,2006
+661,Japón,1:4,Brasil,2006
+662,Croacia,2:2,Australia,2006
+663,Corea del Sur,2:1,Togo,2006
+664,Francia,0:0,Suiza,2006
+665,Francia,1:1,Corea del Sur,2006
+666,Togo,0:2,Suiza,2006
+667,Togo,0:2,Francia,2006
+668,Suiza,2:0,Corea del Sur,2006
+669,España,4:0,Ucrania,2006
+670,Túnez,2:2,Arabia Saudita,2006
+671,Arabia Saudita,0:4,Ucrania,2006
+672,España,3:1,Túnez,2006
+673,Arabia Saudita,0:1,España,2006
+674,Ucrania,1:0,Túnez,2006
+675,Winner Grupo A,Match 49,Runners-up Grupo B,2006
+676,Winner Grupo C,Match 50,Runners-up Grupo D,2006
+677,Winner Grupo B,Match 51,Runners-up Grupo A,2006
+678,Winner Grupo D,Match 52,Runners-up Grupo C,2006
+679,Winner Grupo E,Match 53,Runners-up Grupo F,2006
+680,Winner Grupo G,Match 54,Runners-up Grupo H,2006
+681,Winner Grupo F,Match 55,Runners-up Grupo E,2006
+682,Winner Grupo H,Match 56,Runners-up Grupo G,2006
+683,Winner Match 49,Match 57,Winner Match 50,2006
+684,Winner Match 53,Match 58,Winner Match 54,2006
+685,Winner Match 51,Match 59,Winner Match 52,2006
+686,Winner Match 55,Match 60,Winner Match 56,2006
+687,Winner Match 57,Match 61,Winner Match 58,2006
+688,Winner Match 59,Match 62,Winner Match 60,2006
+689,Loser Match 61,Match 63,Loser Match 62,2006
+690,Winner Match 61,Match 64,Winner Match 62,2006
+691,Sudáfrica,1:1,México,2010
+692,Uruguay,0:0,Francia,2010
+693,Sudáfrica,0:3,Uruguay,2010
+694,Francia,0:2,México,2010
+695,México,0:1,Uruguay,2010
+696,Francia,1:2,Sudáfrica,2010
+697,Corea del Sur,2:0,Grecia,2010
+698,Argentina,1:0,Nigeria,2010
+699,Argentina,4:1,Corea del Sur,2010
+700,Grecia,2:1,Nigeria,2010
+701,Grecia,0:2,Argentina,2010
+702,Nigeria,2:2,Corea del Sur,2010
+703,Inglaterra,1:1,Estados Unidos,2010
+704,Argelia,0:1,Eslovenia,2010
+705,Eslovenia,2:2,Estados Unidos,2010
+706,Inglaterra,0:0,Argelia,2010
+707,Eslovenia,0:1,Inglaterra,2010
+708,Estados Unidos,1:0,Argelia,2010
+709,Serbia,0:1,Ghana,2010
+710,Alemania,4:0,Australia,2010
+711,Alemania,0:1,Serbia,2010
+712,Ghana,1:1,Australia,2010
+713,Ghana,0:1,Alemania,2010
+714,Australia,2:1,Serbia,2010
+715,Países Bajos,2:0,Dinamarca,2010
+716,Japón,1:0,Camerún,2010
+717,Países Bajos,1:0,Japón,2010
+718,Camerún,1:2,Dinamarca,2010
+719,Dinamarca,1:3,Japón,2010
+720,Camerún,1:2,Países Bajos,2010
+721,Italia,1:1,Paraguay,2010
+722,Nueva Zelanda,1:1,Eslovaquia,2010
+723,Eslovaquia,0:2,Paraguay,2010
+724,Italia,1:1,Nueva Zelanda,2010
+725,Eslovaquia,3:2,Italia,2010
+726,Paraguay,0:0,Nueva Zelanda,2010
+727,Costa de Marfil,0:0,Portugal,2010
+728,Brasil,2:1,Corea del Norte,2010
+729,Brasil,3:1,Costa de Marfil,2010
+730,Portugal,7:0,Corea del Norte,2010
+731,Portugal,0:0,Brasil,2010
+732,Corea del Norte,0:3,Costa de Marfil,2010
+733,Honduras,0:1,Chile,2010
+734,España,0:1,Suiza,2010
+735,Chile,1:0,Suiza,2010
+736,España,2:0,Honduras,2010
+737,Chile,1:2,España,2010
+738,Suiza,0:0,Honduras,2010
+739,Winner Grupo A,Match 49,Runners-up Grupo B,2010
+740,Winner Grupo C,Match 50,Runners-up Grupo D,2010
+741,Winner Grupo D,Match 51,Runners-up Grupo C,2010
+742,Winner Grupo B,Match 52,Runners-up Grupo A,2010
+743,Winner Grupo E,Match 53,Runners-up Grupo F,2010
+744,Winner Grupo G,Match 54,Runners-up Grupo H,2010
+745,Winner Grupo F,Match 55,Runners-up Grupo E,2010
+746,Winner Grupo H,Match 56,Runners-up Grupo G,2010
+747,Winner Match 53,Match 57,Winner Match 54,2010
+748,Winner Match 49,Match 58,Winner Match 50,2010
+749,Winner Match 52,Match 59,Winner Match 51,2010
+750,Winner Match 55,Match 60,Winner Match 56,2010
+751,Winner Match 58,Match 61,Winner Match 57,2010
+752,Winner Match 59,Match 62,Winner Match 60,2010
+753,Loser Match 61,Match 63,Loser Match 62,2010
+754,Winner Match 61,Match 64,Winner Match 62,2010
+755,Brasil,3:1,Croacia,2014
+756,México,1:0,Camerún,2014
+757,Brasil,0:0,México,2014
+758,Camerún,0:4,Croacia,2014
+759,Camerún,1:4,Brasil,2014
+760,Croacia,1:3,México,2014
+761,España,1:5,Países Bajos,2014
+762,Chile,3:1,Australia,2014
+763,Australia,2:3,Países Bajos,2014
+764,España,0:2,Chile,2014
+765,Australia,0:3,España,2014
+766,Países Bajos,2:0,Chile,2014
+767,Colombia,3:0,Grecia,2014
+768,Costa de Marfil,2:1,Japón,2014
+769,Colombia,2:1,Costa de Marfil,2014
+770,Japón,0:0,Grecia,2014
+771,Japón,1:4,Colombia,2014
+772,Grecia,2:1,Costa de Marfil,2014
+773,Uruguay,1:3,Costa Rica,2014
+774,Inglaterra,1:2,Italia,2014
+775,Uruguay,2:1,Inglaterra,2014
+776,Italia,0:1,Costa Rica,2014
+777,Italia,0:1,Uruguay,2014
+778,Costa Rica,0:0,Inglaterra,2014
+779,Suiza,2:1,Ecuador,2014
+780,Francia,3:0,Honduras,2014
+781,Suiza,2:5,Francia,2014
+782,Honduras,1:2,Ecuador,2014
+783,Honduras,0:3,Suiza,2014
+784,Ecuador,0:0,Francia,2014
+785,Argentina,2:1,Bosnia y Herzegovina,2014
+786,Irán,0:0,Nigeria,2014
+787,Argentina,1:0,Irán,2014
+788,Nigeria,1:0,Bosnia y Herzegovina,2014
+789,Nigeria,2:3,Argentina,2014
+790,Bosnia y Herzegovina,3:1,Irán,2014
+791,Alemania,4:0,Portugal,2014
+792,Ghana,1:2,Estados Unidos,2014
+793,Alemania,2:2,Ghana,2014
+794,Estados Unidos,2:2,Portugal,2014
+795,Estados Unidos,0:1,Alemania,2014
+796,Portugal,2:1,Ghana,2014
+797,Bélgica,2:1,Argelia,2014
+798,Rusia,1:1,Corea del Sur,2014
+799,Bélgica,1:0,Rusia,2014
+800,Corea del Sur,2:4,Argelia,2014
+801,Corea del Sur,0:1,Bélgica,2014
+802,Argelia,1:1,Rusia,2014
+803,Winner Grupo A,Match 49,Runners-up Grupo B,2014
+804,Winner Grupo C,Match 50,Runners-up Grupo D,2014
+805,Winner Grupo B,Match 51,Runners-up Grupo A,2014
+806,Winner Grupo D,Match 52,Runners-up Grupo C,2014
+807,Winner Grupo E,Match 53,Runners-up Grupo F,2014
+808,Winner Grupo G,Match 54,Runners-up Grupo H,2014
+809,Winner Grupo F,Match 55,Runners-up Grupo E,2014
+810,Winner Grupo H,Match 56,Runners-up Grupo G,2014
+811,Winner Match 53,Match 57,Winner Match 54,2014
+812,Winner Match 49,Match 58,Winner Match 50,2014
+813,Winner Match 55,Match 59,Winner Match 56,2014
+814,Winner Match 51,Match 60,Winner Match 52,2014
+815,Winner Match 58,Match 61,Winner Match 57,2014
+816,Winner Match 60,Match 62,Winner Match 59,2014
+817,Loser Match 61,Match 63,Loser Match 62,2014
+818,Winner Match 61,Match 64,Winner Match 62,2014
+819,Rusia,5:0,Arabia Saudita,2018
+820,Egipto,0:1,Uruguay,2018
+821,Rusia,3:1,Egipto,2018
+822,Uruguay,1:0,Arabia Saudita,2018
+823,Uruguay,3:0,Rusia,2018
+824,Arabia Saudita,2:1,Egipto,2018
+825,Marruecos,0:1,Irán,2018
+826,Portugal,3:3,España,2018
+827,Portugal,1:0,Marruecos,2018
+828,Irán,0:1,España,2018
+829,Irán,1:1,Portugal,2018
+830,España,2:2,Marruecos,2018
+831,Francia,2:1,Australia,2018
+832,Perú,0:1,Dinamarca,2018
+833,Dinamarca,1:1,Australia,2018
+834,Francia,1:0,Perú,2018
+835,Dinamarca,0:0,Francia,2018
+836,Australia,0:2,Perú,2018
+837,Argentina,1:1,Islandia,2018
+838,Croacia,2:0,Nigeria,2018
+839,Argentina,0:3,Croacia,2018
+840,Nigeria,2:0,Islandia,2018
+841,Nigeria,1:2,Argentina,2018
+842,Islandia,1:2,Croacia,2018
+843,Costa Rica,0:1,Serbia,2018
+844,Brasil,1:1,Suiza,2018
+845,Brasil,2:0,Costa Rica,2018
+846,Serbia,1:2,Suiza,2018
+847,Serbia,0:2,Brasil,2018
+848,Suiza,2:2,Costa Rica,2018
+849,Alemania,0:1,México,2018
+850,Suecia,1:0,Corea del Sur,2018
+851,Corea del Sur,1:2,México,2018
+852,Alemania,2:1,Suecia,2018
+853,Corea del Sur,2:0,Alemania,2018
+854,México,0:3,Suecia,2018
+855,Bélgica,3:0,Panamá,2018
+856,Túnez,1:2,Inglaterra,2018
+857,Bélgica,5:2,Túnez,2018
+858,Inglaterra,6:1,Panamá,2018
+859,Inglaterra,0:1,Bélgica,2018
+860,Panamá,1:2,Túnez,2018
+861,Colombia,1:2,Japón,2018
+862,Polonia,1:2,Senegal,2018
+863,Japón,2:2,Senegal,2018
+864,Polonia,0:3,Colombia,2018
+865,Japón,0:1,Polonia,2018
+866,Senegal,0:1,Colombia,2018
+867,Winner Grupo C,Match 49,Runners-up Grupo D,2018
+868,Winner Grupo A,Match 50,Runners-up Grupo B,2018
+869,Winner Grupo B,Match 51,Runners-up Grupo A,2018
+870,Winner Grupo D,Match 52,Runners-up Grupo C,2018
+871,Winner Grupo E,Match 53,Runners-up Grupo F,2018
+872,Winner Grupo G,Match 54,Runners-up Grupo H,2018
+873,Winner Grupo F,Match 55,Runners-up Grupo E,2018
+874,Winner Grupo H,Match 56,Runners-up Grupo G,2018
+875,Winner Match 50,Match 57,Winner Match 49,2018
+876,Winner Match 53,Match 58,Winner Match 54,2018
+877,Winner Match 55,Match 59,Winner Match 56,2018
+878,Winner Match 51,Match 60,Winner Match 52,2018
+879,Winner Match 57,Match 61,Winner Match 58,2018
+880,Winner Match 60,Match 62,Winner Match 59,2018
+881,Loser Match 61,Match 63,Loser Match 62,2018
+882,Winner Match 61,Match 64,Winner Match 62,2018
+883,Catar,0:2,Ecuador,2022
+884,Senegal,0:2,Países Bajos,2022
+885,Catar,1:3,Senegal,2022
+886,Países Bajos,1:1,Ecuador,2022
+887,Ecuador,1:2,Senegal,2022
+888,Países Bajos,2:0,Catar,2022
+889,Inglaterra,6:2,Irán,2022
+890,Estados Unidos,1:1,Gales,2022
+891,Gales,0:2,Irán,2022
+892,Inglaterra,0:0,Estados Unidos,2022
+893,Gales,0:3,Inglaterra,2022
+894,Irán,0:1,Estados Unidos,2022
+895,Argentina,1:2,Arabia Saudita,2022
+896,México,0:0,Polonia,2022
+897,Polonia,2:0,Arabia Saudita,2022
+898,Argentina,2:0,México,2022
+899,Polonia,0:2,Argentina,2022
+900,Arabia Saudita,1:2,México,2022
+901,Dinamarca,0:0,Túnez,2022
+902,Francia,4:1,Australia,2022
+903,Túnez,0:1,Australia,2022
+904,Francia,2:1,Dinamarca,2022
+905,Australia,1:0,Dinamarca,2022
+906,Túnez,1:0,Francia,2022
+907,Alemania,1:2,Japón,2022
+908,España,7:0,Costa Rica,2022
+909,Japón,0:1,Costa Rica,2022
+910,España,1:1,Alemania,2022
+911,Japón,2:1,España,2022
+912,Costa Rica,2:4,Alemania,2022
+913,Marruecos,0:0,Croacia,2022
+914,Bélgica,1:0,Canadá,2022
+915,Bélgica,0:2,Marruecos,2022
+916,Croacia,4:1,Canadá,2022
+917,Croacia,0:0,Bélgica,2022
+918,Canadá,1:2,Marruecos,2022
+919,Suiza,1:0,Camerún,2022
+920,Brasil,2:0,Serbia,2022
+921,Camerún,3:3,Serbia,2022
+922,Brasil,1:0,Suiza,2022
+923,Serbia,2:3,Suiza,2022
+924,Camerún,1:0,Brasil,2022
+925,Uruguay,0:0,Corea del Sur,2022
+926,Portugal,3:2,Ghana,2022
+927,Corea del Sur,2:3,Ghana,2022
+928,Portugal,2:0,Uruguay,2022
+929,Ghana,0:2,Uruguay,2022
+930,Corea del Sur,2:1,Portugal,2022
+931,Winner Grupo A,Match 49,Runners-up Grupo B,2022
+932,Winner Grupo C,Match 50,Runners-up Grupo D,2022
+933,Winner Grupo D,Match 51,Runners-up Grupo C,2022
+934,Winner Grupo B,Match 52,Runners-up Grupo A,2022
+935,Winner Grupo E,Match 53,Runners-up Grupo F,2022
+936,Winner Grupo G,Match 54,Runners-up Grupo H,2022
+937,Winner Grupo F,Match 55,Runners-up Grupo E,2022
+938,Winner Grupo H,Match 56,Runners-up Grupo G,2022
+939,Winner Match 53,Match 57,Winner Match 54,2022
+940,Winner Match 49,Match 58,Winner Match 50,2022
+941,Winner Match 55,Match 59,Winner Match 56,2022
+942,Winner Match 52,Match 60,Winner Match 51,2022
+943,Winner Match 58,Match 61,Winner Match 57,2022
+944,Winner Match 60,Match 62,Winner Match 59,2022
+945,Loser Match 61,Match 63,Loser Match 62,2022
+946,Winner Match 61,Match 64,Winner Match 62,2022
+947,México,2:0,Sudáfrica,2026
+948,Corea del Sur,2:1,República Checa,2026
+949,República Checa,1:1,Sudáfrica,2026
+950,México,1:0,Corea del Sur,2026
+951,México,3:0,República Checa,2026
+952,Sudáfrica,1:0,Corea del Sur,2026
+953,Canadá,1:1,Bosnia y Herzegovina,2026
+954,Catar,1:1,Suiza,2026
+955,Suiza,4:1,Bosnia y Herzegovina,2026
+956,Canadá,6:0,Catar,2026
+957,Canadá,1:2,Suiza,2026
+958,Bosnia y Herzegovina,3:1,Catar,2026
+959,Brasil,1:1,Marruecos,2026
+960,Haití,0:1,Escocia,2026
+961,Escocia,0:1,Marruecos,2026
+962,Brasil,3:0,Haití,2026
+963,Escocia,0:3,Brasil,2026
+964,Marruecos,4:2,Haití,2026
+965,Estados Unidos,4:1,Paraguay,2026
+966,Australia,2:0,Turquía,2026
+967,Estados Unidos,2:0,Australia,2026
+968,Turquía,0:1,Paraguay,2026
+969,Estados Unidos,2:3,Turquía,2026
+970,Paraguay,0:0,Australia,2026
+971,Alemania,7:1,Curazao,2026
+972,Costa de Marfil,1:0,Ecuador,2026
+973,Alemania,2:1,Costa de Marfil,2026
+974,Ecuador,0:0,Curazao,2026
+975,Curazao,0:2,Costa de Marfil,2026
+976,Ecuador,2:1,Alemania,2026
+977,Países Bajos,2:2,Japón,2026
+978,Suecia,5:1,Túnez,2026
+979,Países Bajos,5:1,Suecia,2026
+980,Túnez,0:4,Japón,2026
+981,Japón,1:1,Suecia,2026
+982,Túnez,1:3,Países Bajos,2026
+983,Bélgica,1:1,Egipto,2026
+984,Irán,2:2,Nueva Zelanda,2026
+985,Bélgica,0:0,Irán,2026
+986,Nueva Zelanda,1:3,Egipto,2026
+987,Egipto,1:1,Irán,2026
+988,Nueva Zelanda,1:5,Bélgica,2026
+989,España,0:0,Cabo Verde,2026
+990,Arabia Saudita,1:1,Uruguay,2026
+991,España,4:0,Arabia Saudita,2026
+992,Uruguay,2:2,Cabo Verde,2026
+993,Cabo Verde,0:0,Arabia Saudita,2026
+994,Uruguay,0:1,España,2026
+995,Francia,3:1,Senegal,2026
+996,Irak,1:4,Noruega,2026
+997,Francia,3:0,Irak,2026
+998,Noruega,3:2,Senegal,2026
+999,Noruega,1:4,Francia,2026
+1000,Senegal,5:0,Irak,2026
+1001,Argentina,3:0,Argelia,2026
+1002,Austria,3:1,Jordania,2026
+1003,Argentina,2:0,Austria,2026
+1004,Jordania,1:2,Argelia,2026
+1005,Argelia,3:3,Austria,2026
+1006,Jordania,1:3,Argentina,2026
+1007,Portugal,1:1,República Democrática del Congo,2026
+1008,Uzbekistán,1:3,Colombia,2026
+1009,Portugal,5:0,Uzbekistán,2026
+1010,Colombia,1:0,República Democrática del Congo,2026
+1011,Colombia,0:0,Portugal,2026
+1012,República Democrática del Congo,3:1,Uzbekistán,2026
+1013,Inglaterra,4:2,Croacia,2026
+1014,Ghana,1:0,Panamá,2026
+1015,Inglaterra,0:0,Ghana,2026
+1016,Panamá,0:1,Croacia,2026
+1017,Panamá,0:2,Inglaterra,2026
+1018,Croacia,2:1,Ghana,2026
+1019,Runners-up Grupo A,Match 73,Runners-up Grupo B,2026
+1020,Winner Grupo E,Match 74,Third-p Grupo D,2026
+1021,Winner Grupo F,Match 75,Runners-up Grupo C,2026
+1022,Winner Grupo C,Match 76,Runners-up Grupo F,2026
+1023,Winner Grupo I,Match 77,Third-p Grupo F,2026
+1024,Runners-up Grupo E,Match 78,Runners-up Grupo I,2026
+1025,Winner Grupo A,Match 79,Third-p Grupo E,2026
+1026,Winner Grupo L,Match 80,Third-p Grupo K,2026
+1027,Winner Grupo D,Match 81,Third-p Grupo B,2026
+1028,Winner Grupo G,Match 82,Third-p Grupo I,2026
+1029,Runners-up Grupo K,Match 83,Runners-up Grupo L,2026
+1030,Winner Grupo H,Match 84,Runners-up Grupo J,2026
+1031,Winner Grupo B,Match 85,Third-p Grupo J,2026
+1032,Winner Grupo J,Match 86,Runners-up Grupo H,2026
+1033,Winner Grupo K,Match 87,Third-p Grupo L,2026
+1034,Runners-up Grupo D,Match 88,Runners-up Grupo G,2026
+1035,Winner Match 73,Match 89,Winner Match 75,2026
+1036,Winner Match 74,Match 90,Winner Match 77,2026
+1037,Winner Match 76,Match 91,Winner Match 78,2026
+1038,Winner Match 79,Match 92,Winner Match 80,2026
+1039,Winner Match 83,Match 93,Winner Match 84,2026
+1040,Winner Match 81,Match 94,Winner Match 82,2026
+1041,Winner Match 86,Match 95,Winner Match 88,2026
+1042,Winner Match 85,Match 96,Winner Match 87,2026
+1043,Winner Match 90,Match 97,Winner Match 89,2026
+1044,Winner Match 93,Match 98,Winner Match 94,2026
+1045,Winner Match 91,Match 99,Winner Match 92,2026
+1046,Winner Match 95,Match 100,Winner Match 96,2026
+1047,Winner Match 97,Match 101,Winner Match 98,2026
+1048,Winner Match 99,Match 102,Winner Match 100,2026
+1049,Loser Match 101,Match 103,Loser Match 102,2026
+1050,Winner Match 101,Match 104,Winner Match 102,2026

@@ -1,11 +1,13 @@
 from django.db import models
 
-# home,score,away,agno
+# home,score,away,agno,penales,jugado (score a los 90 o 120 minutos; la tanda va aparte en penales, "4:2" o "")
 class partidos(models.Model):
     home = models.CharField(max_length=50)
     score = models.CharField(max_length=6)
     away = models.CharField(max_length=50)
     agno = models.CharField(max_length=4)
+    penales = models.CharField(max_length=6, blank=True, default="")
+    jugado = models.CharField(max_length=1, default="1")
 
 # home,score,away,year
 class fixtures(models.Model):
@@ -37,9 +39,10 @@ class clasificaciones(models.Model):
     score_1 = models.CharField(max_length=10)
     tournament = models.CharField(max_length=50)
 
-# pais, gkps, mds, mos, mms, VI, SOT, PKATT, PKATTALLOW
+# pais, agno, gkps, mds, mos, mms, VI, SOT, PKATT, PKATTALLOW (una fila por pais y mundial)
 class proxy_desempegno(models.Model):
     pais = models.CharField(max_length=50)
+    agno = models.CharField(max_length=6, default="")
     gkps = models.CharField(max_length=50)
     mds = models.CharField(max_length=50)
     mos = models.CharField(max_length=50)
@@ -48,3 +51,20 @@ class proxy_desempegno(models.Model):
     SOT = models.CharField(max_length=50)
     PKATT = models.CharField(max_length=50)
     PKATTALLOW = models.CharField(max_length=50)
+    # partidos de esa seleccion en ese mundial: denominador de las tasas por partido del historico
+    PJ = models.CharField(max_length=6, blank=True, default="")
+    # 1 si los penales (PKATT, PKATTALLOW) o los tiros a puerta (SOT) son de fbref; 0 si los imputo etl/construye_proxy.py
+    pk_real = models.CharField(max_length=1, default="0")
+    sot_real = models.CharField(max_length=1, default="0")
+
+# fecha, agno, home, away, score_0, score_1, tournament, categoria, neutral (etl/busca_internacionales.py)
+class internacionales(models.Model):
+    fecha = models.CharField(max_length=10)
+    agno = models.CharField(max_length=4)
+    home = models.CharField(max_length=50)
+    away = models.CharField(max_length=50)
+    score_0 = models.CharField(max_length=3)
+    score_1 = models.CharField(max_length=3)
+    tournament = models.CharField(max_length=80)
+    categoria = models.CharField(max_length=30)
+    neutral = models.CharField(max_length=1)

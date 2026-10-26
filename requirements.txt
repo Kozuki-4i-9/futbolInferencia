@@ -1,0 +1,10 @@
+# Dependencias de la app web (Django + inferencia). Python 3.12.
+# Instalar: python -m pip install -r requirements.txt
+Django==6.1.1
+python-decouple==3.8
+psycopg2-binary==2.9.13
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+# el paquete completo (en Windows corre solo en CPU); para Docker en Linux se puede cambiar por tensorflow-cpu, mas liviano
+tensorflow==2.21.0

@@ -1,0 +1,12 @@
+# Todo lo de la app mas notebooks/entrenamiento y scraping (etl/). No hace falta para desplegar.
+# Instalar: python -m pip install -r requirements-dev.txt
+-r requirements.txt
+
+# notebooks y entrenamiento
+scikit-learn==1.9.1
+matplotlib==3.11.2
+jupyterlab==4.6.4
+
+# scraping (etl/)
+selenium==4.51.0
+fake-useragent==2.2.0

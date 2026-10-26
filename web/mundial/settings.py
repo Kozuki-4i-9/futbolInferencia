@@ -13,9 +13,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from decouple import config, Csv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+MODEL_PATH = BASE_DIR.parent / 'data' / 'modelos'
+# carpeta del predictor en uso dentro de MODEL_PATH (con su esquema.json, ver fases/predictores.py)
+MODEL_DIR = config('MODEL_DIR', default='lstm-2026-10-23')
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)

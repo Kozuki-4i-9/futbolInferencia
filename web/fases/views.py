@@ -29,7 +29,7 @@ def formar_dataset_consulta(valores):
     #print(f"dfd\n{dfd[["home", "score_0", "score_1", "away"]]}, {dfd.shape}")
     return(dfd)
 
-dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
+dic_torneos = {"Fase de Grupos": "grupo", "Fase Inicial":"doce", "Fase Final": "Fase Final", "16vos": "dieciseisavos", "octavos": "knockout", "cuartos":"quarter", "semifinal":"semi", "3er_lugar":"third", "final": "final"}
 
 def leer_reglamento(agno, datos):
     """
@@ -84,7 +84,7 @@ def procesar_recepcion_0(request):
             print(f"Estos son mis partidos\n{df}")
             return(JsonResponse(context))
 
-    return(render(request, "prediccion_2.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
+    return(render(request, "prediccion.html", {"reglamentos_terceros": reglamentos_oficiales(), "catalogo_metricas": catalogo_metricas()}))
 
 def procesar_recepcion_1(request):
     """Vista usada al precionar el boton "predecir" """

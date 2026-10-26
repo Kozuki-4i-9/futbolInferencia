@@ -65,6 +65,11 @@ Thumbs.db
 # data/grupos/*_mo.csv
 
 
-# ¿Datos y notebooks NO deben subirse?
-data/
+# datos: se versiona lo que necesitan load_data y la app; notas, prompts e intermedios quedan fuera
+data/*
+!data/partidos/
+!data/grupos/
+!data/proxy_desempegno/
+!data/modelos/
+data/**/*_mo.csv
 *.pdf
