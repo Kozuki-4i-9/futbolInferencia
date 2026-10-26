@@ -8,8 +8,8 @@ from django.test import SimpleTestCase
 
 from .dataset import CATEGORIAS, CICLO_INTERNACIONALES, N_CONTEXTO, construir_dataset, construir_secuencias, mapa_paises
 from .modulo import ALL_METRICS, COLS_MODELO_POR_EQUIPO, METRICAS_ABSTRACTAS, historico_abstractas
-from .evaluacion import metricas, particion
-from .predictores import Lote, PredictorEmpate, PredictorKeras, PredictorMasPuntos, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
+from .evaluacion import comparar, intervalos_bootstrap, metricas, metricas_por_partido, metricas_probabilidad, particion, probabilidades_deterministas, tabla_calibracion
+from .predictores import Lote, PredictorElo, PredictorEmpate, PredictorKeras, PredictorMasPuntos, PredictorMedias, cargar_predictor, guardar_predictor, lote_desde_entrada
 
 
 def partidos_df(filas):
@@ -206,6 +206,65 @@ class EvaluacionTests(SimpleTestCase):
     # 2,5 contra 0,3 goles esperados: lo mas probable es que gane el local
     self.assertEqual(metricas([[3, 0]], [[2.5, 0.3]])["acierto_resultado"], 100.0)
 
+  def test_metricas_probabilidad_a_mano(self):
+    # partido 1: gana el local con probabilidades (0,5 0,3 0,2); partido 2: empate con (0,2 0,5 0,3)
+    r = metricas_probabilidad([1, 0], [[0.5, 0.3, 0.2], [0.2, 0.5, 0.3]])
+    self.assertAlmostEqual(r["log_loss"], -np.log(0.5))
+    # Brier: (0,5^2 + 0,3^2 + 0,2^2) = 0,38 en los dos partidos
+    self.assertAlmostEqual(r["brier"], 0.38)
+    # RPS: acumuladas (0,5 0,8) contra (1 1) -> (0,25 + 0,04) / 2 = 0,145; (0,2 0,7) contra (0 1) -> (0,04 + 0,09) / 2 = 0,065
+    self.assertAlmostEqual(r["rps"], (0.145 + 0.065) / 2)
+
+  def test_rps_respeta_el_orden(self):
+    # gana el local: equivocarse por empate cuesta menos que por visitante; log-loss y Brier no lo distinguen
+    por_empate = metricas_probabilidad([1], [[0.2, 0.6, 0.2]])
+    por_visitante = metricas_probabilidad([1], [[0.2, 0.2, 0.6]])
+    self.assertLess(por_empate["rps"], por_visitante["rps"])
+    self.assertAlmostEqual(por_empate["log_loss"], por_visitante["log_loss"])
+    self.assertAlmostEqual(por_empate["brier"], por_visitante["brier"])
+
+  def test_deterministas_suavizadas(self):
+    np.testing.assert_allclose(probabilidades_deterministas([1, -1], epsilon=0.3), [[0.8, 0.1, 0.1], [0.1, 0.1, 0.8]])
+    # siempre 1-1 en un 2-1: log-loss finito, -log(epsilon / 3)
+    r = metricas([[2, 1]], [[1, 1]], determinista=True)
+    self.assertAlmostEqual(r["log_loss"], -np.log(0.05 / 3))
+
+  def test_tabla_calibracion(self):
+    tabla = tabla_calibracion([1, 1], [[0.75, 0.15, 0.10], [0.75, 0.05, 0.20]])
+    self.assertEqual(len(tabla), 10)
+    self.assertEqual(sum(t["n"] for t in tabla), 6)
+    self.assertEqual((tabla[7]["n"], tabla[7]["probabilidad"], tabla[7]["frecuencia"]), (2, 0.75, 1.0))
+    # 0,10 y 0,15 caen en el tramo [0,1 0,2): ninguno de los dos paso
+    self.assertEqual((tabla[1]["n"], tabla[1]["frecuencia"]), (2, 0.0))
+    self.assertIsNone(tabla[9]["probabilidad"])
+
+  def test_metricas_es_la_media_por_partido(self):
+    goles, lambdas = [[2, 1], [0, 0], [1, 3]], [[1.5, 0.8], [1.0, 1.2], [0.9, 1.6]]
+    r = metricas(goles, lambdas)
+    pp, _, _ = metricas_por_partido(goles, lambdas)
+    for m, v in pp.items():
+      self.assertAlmostEqual(r[m], v.mean())
+
+  def test_intervalos_bootstrap(self):
+    pp = {"log_loss": np.random.default_rng(0).exponential(1, 300)}
+    desde, hasta = intervalos_bootstrap(pp)["log_loss"]
+    self.assertLess(desde, pp["log_loss"].mean())
+    self.assertGreater(hasta, pp["log_loss"].mean())
+    # sin variacion el intervalo es un punto
+    np.testing.assert_allclose(intervalos_bootstrap({"rps": np.full(50, 0.2)})["rps"], [0.2, 0.2])
+
+  def test_comparar_pareado(self):
+    a = {"log_loss": np.array([0.5, 0.6, 0.7, 0.8]), "acierto_resultado": np.array([100, 100, 100, 100.0])}
+    igual = comparar(a, a)
+    self.assertEqual((igual["diferencia"], igual["p_dm"], igual["p_mcnemar"]), (0.0, 1.0, 1.0))
+    # b pierde 0,1 en cada partido y falla los 4 que a acierta: McNemar exacta 2 * 0,5^4 = 0,125
+    b = {"log_loss": a["log_loss"] + 0.1, "acierto_resultado": np.zeros(4)}
+    c = comparar(a, b)
+    self.assertAlmostEqual(c["diferencia"], -0.1)
+    self.assertEqual((c["solo_a"], c["solo_b"]), (4, 0))
+    self.assertAlmostEqual(c["p_mcnemar"], 0.125)
+    self.assertEqual(c["p_bootstrap"], 0.0)
+
   def test_particion_temporal(self):
     ds = pd.DataFrame({"agno": [2010, 2014, 2014, 2018], "fase": ["mundial", "eliminatoria", "mundial", "mundial"]})
     tr, va, pr = particion(ds, hasta=2010, validacion=2014, prueba=[2018])
@@ -215,6 +274,41 @@ class EvaluacionTests(SimpleTestCase):
     tabla = pd.DataFrame({"PTS_0": [6, 1], "PJ_0": [2, 1], "PTS_1": [3, 3], "PJ_1": [2, 1]})
     self.assertEqual(PredictorMasPuntos().predecir(Lote(tabla)).tolist(), [[1, 0], [0, 1]])
     self.assertEqual(PredictorEmpate().predecir(Lote(tabla)).tolist(), [[1, 1], [1, 1]])
+
+
+class PredictorEloTests(SimpleTestCase):
+
+  def tabla(self, n=600, semilla=0):
+    # partidos inventados donde el de mas Elo gana mas seguido y hace mas goles
+    rng = np.random.default_rng(semilla)
+    dif = rng.normal(0, 200, n)
+    goles_0, goles_1 = rng.poisson(np.exp(0.2 + dif / 400)), rng.poisson(np.exp(0.2 - dif / 400))
+    return pd.DataFrame({"elo_0": 1500 + dif, "elo_1": 1500.0, "local_0": 0, "local_1": 0, "goles_0": goles_0, "goles_1": goles_1})
+
+  def test_aprende_la_direccion_del_elo(self):
+    p = PredictorElo.entrenar(self.tabla())
+    self.assertGreater(p.coef["pendiente"], 0)
+    # la Poisson inventada tiene 0,25 por centena de Elo
+    self.assertAlmostEqual(p.coef["goles_pendiente"], 0.25, delta=0.05)
+    probs = p.probabilidades(Lote(pd.DataFrame({"elo_0": [1800.0, 1500.0], "elo_1": [1500.0, 1800.0], "local_0": 0, "local_1": 0})))
+    np.testing.assert_allclose(probs.sum(axis=1), 1)
+    self.assertGreater(probs[0, 0], probs[0, 2])
+    self.assertGreater(probs[1, 2], probs[1, 0])
+
+  def test_ventaja_de_local(self):
+    p = PredictorElo.entrenar(self.tabla())
+    neutral, local = (Lote(pd.DataFrame({"elo_0": [1500.0], "elo_1": [1500.0], "local_0": [l], "local_1": [0]})) for l in (0, 1))
+    self.assertGreater(p.probabilidades(local)[0, 0], p.probabilidades(neutral)[0, 0])
+    self.assertGreater(p.predecir(local)[0, 0], p.predecir(neutral)[0, 0])
+
+  def test_guardar_y_cargar(self):
+    p = PredictorElo.entrenar(self.tabla())
+    with tempfile.TemporaryDirectory() as carpeta:
+      guardar_predictor(p, carpeta)
+      cargado, _ = cargar_predictor(carpeta)
+    lote = Lote(self.tabla(5, semilla=1))
+    np.testing.assert_allclose(cargado.probabilidades(lote), p.probabilidades(lote))
+    np.testing.assert_allclose(cargado.predecir(lote), p.predecir(lote))
 
 
 class PredictorKerasTests(SimpleTestCase):
