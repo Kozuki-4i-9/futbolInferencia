@@ -1635,8 +1635,10 @@ class func_prediccion_orden(normali):
       # X viene de "calculo_metricas_0" (esquema fijo); el predictor devuelve (n, 2) goles esperados de home y away
       from .predictores import Lote, lote_desde_entrada
       from .evaluacion import resultado_y_marcador
-      Y0 = model.predecir(Lote(self.contexto_simulacion(lote_desde_entrada(X).tabla)))
-      resultado, marcador, probs = resultado_y_marcador(Y0, getattr(model, "config", {}).get("umbral_empate", 0.0))
+      entrada = Lote(self.contexto_simulacion(lote_desde_entrada(X).tabla))
+      Y0 = model.predecir(entrada)
+      resultado, marcador, probs = resultado_y_marcador(Y0, getattr(model, "config", {}).get("umbral_empate", 0.0),
+                                                        model.probabilidades(entrada) if hasattr(model, "probabilidades") else None)
       victoria = 2 if isinstance(self.obj0, int) and self.obj0 < 1994 else 3
       self.__dict__.setdefault("ganador_empate", {})
       for r, (g0, g1), p, fila in zip(resultado, marcador, probs, np.atleast_2d(X)):

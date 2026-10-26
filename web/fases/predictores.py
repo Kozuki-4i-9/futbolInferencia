@@ -16,7 +16,10 @@ from typing import Optional, Protocol
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
+from scipy.special import expit, gammaln
 
+from .contexto import VENTAJA_LOCAL
 from .modulo import ALL_METRICS, VERSION_METRICAS
 
 ESQUEMA = "esquema.json"
@@ -61,6 +64,9 @@ class Predictor(Protocol):
   def predecir(self, lote: Lote) -> np.ndarray:
     """Goles esperados (lambda de Poisson) de home y away: array (n, 2), una fila por partido de (lote)"""
     ...
+
+  # opcional: def probabilidades(self, lote) -> (n, 3) de gana local / empate / gana visitante; si el predictor la tiene,
+  # la evaluacion y la app deciden el resultado con ella en vez de con las dos Poisson de sus goles esperados
 
   def a_esquema(self) -> dict:
     """Todo lo necesario para reconstruir el predictor (se guarda en esquema.json); debe incluir "backend\""""
@@ -283,11 +289,78 @@ class PredictorKeras:
     return {"backend": self.nombre, "config": self.config}
 
 
+class PredictorElo:
+  """
+  ¿QUE HACE?
+  Linea base fuerte (Etapa A): todo sale de una sola variable, la diferencia de Elo antes del partido mas la ventaja de local (VENTAJA_LOCAL de contexto.py) si un equipo juega en su cancha, en centenas de puntos
+
+  ¿COMO LO HACE?
+  0-) Resultado: regresion logistica ordinal (visitante < empate < local): P(resultado <= j) = sigmoide(corte_j - pendiente * x), con dos cortes; da las probabilidades de local / empate / visitante
+
+  1-) Goles: regresion de Poisson con log(lambda) = base + goles_pendiente * x para home y base - goles_pendiente * x para away (una fila por equipo y partido)
+
+  Ambas se ajustan por maxima verosimilitud con scipy en las filas de entrenamiento. Cualquier modelo que no le gane a este no aporta: el Elo ya resume casi todo
+
+  Atributos:
+
+    - coef: {"corte_visitante", "corte_empate", "pendiente", "base", "goles_pendiente"}
+  """
+  nombre = "elo"
+
+  def __init__(self, coef):
+    self.coef = {k: float(v) for k, v in coef.items()}
+
+  @staticmethod
+  def diferencia(tabla):
+    """Diferencia de Elo de home menos away, con la ventaja de local del que juega en su cancha, en centenas"""
+    local = tabla["local_0"].to_numpy(dtype=float) - tabla["local_1"].to_numpy(dtype=float)
+    return (tabla["elo_0"].to_numpy(dtype=float) - tabla["elo_1"].to_numpy(dtype=float) + VENTAJA_LOCAL * local) / 100
+
+  @staticmethod
+  def _ordinal(params, x):
+    """(n, 3) probabilidades de local / empate / visitante con params = (corte_visitante, log(corte_empate - corte_visitante), pendiente)"""
+    c_0, c_1 = params[0], params[0] + np.exp(params[1])
+    hasta_visitante, hasta_empate = expit(c_0 - params[2] * x), expit(c_1 - params[2] * x)
+    return np.stack([1 - hasta_empate, hasta_empate - hasta_visitante, hasta_visitante], axis=1)
+
+  @classmethod
+  def entrenar(cls, dataset):
+    """Ajusta las dos regresiones con las columnas elo_0/1, local_0/1 y goles_0/1 de (dataset) ("construir_dataset")"""
+    x = cls.diferencia(dataset)
+    goles = dataset[["goles_0", "goles_1"]].to_numpy(dtype=float)
+    real = 1 - np.sign(goles[:, 0] - goles[:, 1]).astype(int)          # columna 0 local, 1 empate, 2 visitante
+    ordinal = minimize(lambda q: -np.log(np.clip(cls._ordinal(q, x)[np.arange(len(x)), real], 1e-12, 1)).sum(),
+                       [-0.5, 0.0, 0.5], method="BFGS")
+    z, y = np.concatenate([x, -x]), np.concatenate([goles[:, 0], goles[:, 1]])
+    poisson = minimize(lambda q: (np.exp(q[0] + q[1] * z) - y * (q[0] + q[1] * z) + gammaln(y + 1)).sum(),
+                       [np.log(y.mean()), 0.0], method="BFGS")
+    c_0, log_ancho, pendiente = ordinal.x
+    return cls({"corte_visitante": c_0, "corte_empate": c_0 + np.exp(log_ancho), "pendiente": pendiente,
+                "base": poisson.x[0], "goles_pendiente": poisson.x[1]})
+
+  @classmethod
+  def desde_esquema(cls, esquema, carpeta):
+    return cls(esquema["coef"])
+
+  def probabilidades(self, lote):
+    c = self.coef
+    return self._ordinal([c["corte_visitante"], np.log(c["corte_empate"] - c["corte_visitante"]), c["pendiente"]],
+                         self.diferencia(lote.tabla))
+
+  def predecir(self, lote):
+    x = self.diferencia(lote.tabla)
+    return np.exp(self.coef["base"] + self.coef["goles_pendiente"] * np.stack([x, -x], axis=1))
+
+  def a_esquema(self):
+    return {"backend": self.nombre, "coef": self.coef}
+
+
 # backend -> constructor desde (esquema, carpeta); cada backend nuevo se registra aqui
 REGISTRO = {
   PredictorMedias.nombre: PredictorMedias.desde_esquema,
   PredictorMasPuntos.nombre: PredictorMasPuntos.desde_esquema,
   PredictorEmpate.nombre: PredictorEmpate.desde_esquema,
+  PredictorElo.nombre: PredictorElo.desde_esquema,
   PredictorKeras.nombre: PredictorKeras.desde_esquema,
 }
 
